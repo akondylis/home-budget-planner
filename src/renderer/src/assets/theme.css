@@ -1,0 +1,359 @@
+/*
+ * Theme tokens. Colours are R G B channels so Tailwind opacity modifiers work
+ * (tailwind.config.ts maps gray/blue/red/amber/green/yellow/purple/orange and
+ * the semantic names onto these). Light values are stock Tailwind, so the light
+ * theme matches the original look. Palette values generated from tailwindcss/colors.
+ */
+
+:root,
+.theme-light {
+  color-scheme: light;
+  --c-bg: 249 250 251;
+  --c-surface: 255 255 255;
+  --c-surface-2: 249 250 251;
+  --c-border: 229 231 235;
+  --c-accent: 29 78 216;
+  --c-accent-fg: 255 255 255;
+  --c-text-primary: 17 24 39;
+  --c-text-secondary: 75 85 99;
+  --c-text-muted: 156 163 175;
+  --c-glass: 255 255 255;
+  /*
+   * Semantic status and surface tokens. They alias palette shades, so .dark
+   * flips them through the palette remap below (both sit on <html>).
+   * Spec names: --bg-app = --c-bg, --bg-surface = --c-surface,
+   * --border-subtle = --c-border, --text-primary = --c-text-primary,
+   * --text-muted = --c-text-secondary, --color-{success,danger,warning,neutral}-{bg,text}
+   * = --c-{…}-bg / --c-{…}-fg.
+   */
+  --c-surface-hover: var(--gray-100);
+  --c-surface-input: var(--gray-50);
+  --c-success-bg: var(--green-50);
+  --c-success-fg: var(--green-700);
+  --c-danger-bg: var(--red-50);
+  --c-danger-fg: var(--red-700);
+  --c-warning-bg: var(--amber-50);
+  --c-warning-fg: var(--amber-800);
+  --c-neutral-bg: var(--gray-100);
+  --c-neutral-fg: var(--gray-700);
+  --c-info-bg: var(--blue-50);
+  --c-info-fg: var(--blue-700);
+  /* Chart series (income, expense): blue/orange stays distinguishable for colour-blind readers; dark steps are chosen separately, validated against the dark surface */
+  --c-chart-income: 37 99 235;
+  --c-chart-expense: 234 88 12;
+  /* Toast is a dark chip in both themes, so these are not overridden in .dark */
+  --c-toast-bg: 38 38 38;
+  --c-toast-fg: 255 255 255;
+  --c-toast-action: 252 211 77;
+  --c-toast-action-hover: 253 230 138;
+  --gray-50: 249 250 251;
+  --gray-100: 243 244 246;
+  --gray-200: 229 231 235;
+  --gray-300: 209 213 219;
+  --gray-400: 156 163 175;
+  --gray-500: 107 114 128;
+  --gray-600: 75 85 99;
+  --gray-700: 55 65 81;
+  --gray-800: 31 41 55;
+  --gray-900: 17 24 39;
+  --gray-950: 3 7 18;
+  --blue-50: 239 246 255;
+  --blue-100: 219 234 254;
+  --blue-200: 191 219 254;
+  --blue-300: 147 197 253;
+  --blue-400: 96 165 250;
+  --blue-500: 59 130 246;
+  --blue-600: 37 99 235;
+  --blue-700: 29 78 216;
+  --blue-800: 30 64 175;
+  --blue-900: 30 58 138;
+  --blue-950: 23 37 84;
+  --red-50: 254 242 242;
+  --red-100: 254 226 226;
+  --red-200: 254 202 202;
+  --red-300: 252 165 165;
+  --red-400: 248 113 113;
+  --red-500: 239 68 68;
+  --red-600: 220 38 38;
+  --red-700: 185 28 28;
+  --red-800: 153 27 27;
+  --red-900: 127 29 29;
+  --red-950: 69 10 10;
+  --amber-50: 255 251 235;
+  --amber-100: 254 243 199;
+  --amber-200: 253 230 138;
+  --amber-300: 252 211 77;
+  --amber-400: 251 191 36;
+  --amber-500: 245 158 11;
+  --amber-600: 217 119 6;
+  --amber-700: 180 83 9;
+  --amber-800: 146 64 14;
+  --amber-900: 120 53 15;
+  --amber-950: 69 26 3;
+  --green-50: 240 253 244;
+  --green-100: 220 252 231;
+  --green-200: 187 247 208;
+  --green-300: 134 239 172;
+  --green-400: 74 222 128;
+  --green-500: 34 197 94;
+  --green-600: 22 163 74;
+  --green-700: 21 128 61;
+  --green-800: 22 101 52;
+  --green-900: 20 83 45;
+  --green-950: 5 46 22;
+  --yellow-50: 254 252 232;
+  --yellow-100: 254 249 195;
+  --yellow-200: 254 240 138;
+  --yellow-300: 253 224 71;
+  --yellow-400: 250 204 21;
+  --yellow-500: 234 179 8;
+  --yellow-600: 202 138 4;
+  --yellow-700: 161 98 7;
+  --yellow-800: 133 77 14;
+  --yellow-900: 113 63 18;
+  --yellow-950: 66 32 6;
+  --purple-50: 250 245 255;
+  --purple-100: 243 232 255;
+  --purple-200: 233 213 255;
+  --purple-300: 216 180 254;
+  --purple-400: 192 132 252;
+  --purple-500: 168 85 247;
+  --purple-600: 147 51 234;
+  --purple-700: 126 34 206;
+  --purple-800: 107 33 168;
+  --purple-900: 88 28 135;
+  --purple-950: 59 7 100;
+  --orange-50: 255 247 237;
+  --orange-100: 255 237 213;
+  --orange-200: 254 215 170;
+  --orange-300: 253 186 116;
+  --orange-400: 251 146 60;
+  --orange-500: 249 115 22;
+  --orange-600: 234 88 12;
+  --orange-700: 194 65 12;
+  --orange-800: 154 52 18;
+  --orange-900: 124 45 18;
+  --orange-950: 67 20 7;
+}
+
+.dark {
+  color-scheme: dark;
+  --c-bg: 11 15 23;
+  --c-surface: 18 23 34;
+  --c-surface-2: 26 32 44;
+  --c-border: 42 50 65;
+  --c-accent: 96 165 250;
+  --c-accent-fg: 11 15 23;
+  --c-text-primary: 238 241 245;
+  --c-text-secondary: 139 148 163;
+  --c-text-muted: 107 117 133;
+  --c-glass: 18 23 34;
+  /* Dark amber-50 is close to gray, so warning (and the draft badge) uses the 100 tint */
+  --c-warning-bg: var(--amber-100);
+  --c-chart-income: 59 130 246;
+  --c-chart-expense: 234 88 12;
+  --gray-50: 11 15 23;
+  --gray-100: 26 32 44;
+  --gray-200: 42 50 65;
+  --gray-300: 59 68 84;
+  --gray-400: 74 84 102;
+  --gray-500: 139 148 163;
+  --gray-600: 169 177 189;
+  --gray-700: 197 204 214;
+  --gray-800: 221 226 233;
+  --gray-900: 238 241 245;
+  --gray-950: 248 250 252;
+  --blue-50: 23 36 59;
+  --blue-100: 26 44 76;
+  --blue-200: 30 55 98;
+  --blue-300: 36 71 129;
+  --blue-400: 96 165 250;
+  --blue-500: 96 165 250;
+  --blue-600: 96 165 250;
+  --blue-700: 122 181 252;
+  --blue-800: 147 197 253;
+  --blue-900: 191 219 254;
+  --blue-950: 219 234 254;
+  --red-50: 45 28 38;
+  --red-100: 62 32 41;
+  --red-200: 84 37 44;
+  --red-300: 117 43 49;
+  --red-400: 248 113 113;
+  --red-500: 248 113 113;
+  --red-600: 248 113 113;
+  --red-700: 250 139 139;
+  --red-800: 252 165 165;
+  --red-900: 254 202 202;
+  --red-950: 254 226 226;
+  --amber-50: 45 39 31;
+  --amber-100: 63 50 29;
+  --amber-200: 86 64 27;
+  --amber-300: 120 84 24;
+  --amber-400: 251 191 36;
+  --amber-500: 251 191 36;
+  --amber-600: 251 191 36;
+  --amber-700: 252 201 57;
+  --amber-800: 252 211 77;
+  --amber-900: 253 230 138;
+  --amber-950: 254 243 199;
+  --green-50: 20 44 41;
+  --green-100: 21 58 46;
+  --green-200: 23 75 52;
+  --green-300: 25 101 61;
+  --green-400: 74 222 128;
+  --green-500: 74 222 128;
+  --green-600: 74 222 128;
+  --green-700: 104 231 150;
+  --green-800: 134 239 172;
+  --green-900: 187 247 208;
+  --green-950: 220 252 231;
+  --yellow-50: 44 42 31;
+  --yellow-100: 61 54 29;
+  --yellow-200: 83 70 26;
+  --yellow-300: 115 93 22;
+  --yellow-400: 250 204 21;
+  --yellow-500: 250 204 21;
+  --yellow-600: 250 204 21;
+  --yellow-700: 252 214 46;
+  --yellow-800: 253 224 71;
+  --yellow-900: 254 240 138;
+  --yellow-950: 254 249 195;
+  --purple-50: 36 30 60;
+  --purple-100: 48 35 77;
+  --purple-200: 63 42 98;
+  --purple-300: 86 51 130;
+  --purple-400: 192 132 252;
+  --purple-500: 192 132 252;
+  --purple-600: 192 132 252;
+  --purple-700: 204 156 253;
+  --purple-800: 216 180 254;
+  --purple-900: 233 213 255;
+  --purple-950: 243 232 255;
+  --orange-50: 46 34 33;
+  --orange-100: 64 41 32;
+  --orange-200: 87 51 30;
+  --orange-300: 122 64 29;
+  --orange-400: 251 146 60;
+  --orange-500: 251 146 60;
+  --orange-600: 251 146 60;
+  --orange-700: 252 166 88;
+  --orange-800: 253 186 116;
+  --orange-900: 254 215 170;
+  --orange-950: 255 237 213;
+}
+
+/*
+ * Solid coloured fills (500-700) are light tones in dark mode, so white text on
+ * them switches to near-black. Covers raw classes and the .btn-* components.
+ */
+.dark :is(
+  .bg-blue-500, .bg-blue-600, .bg-blue-700,
+  .bg-red-500, .bg-red-600, .bg-red-700,
+  .bg-green-500, .bg-green-600, .bg-green-700,
+  .bg-amber-500, .bg-amber-600, .bg-amber-700,
+  .bg-yellow-500, .bg-yellow-600, .bg-yellow-700,
+  .bg-orange-500, .bg-orange-600, .bg-orange-700,
+  .bg-purple-500, .bg-purple-600, .bg-purple-700
+).text-white,
+.dark :is(.btn-primary, .btn-danger, .btn-success, .btn-warning, .btn-finalize),
+.dark .hover\:text-white:hover:is(
+  .hover\:bg-blue-600, .hover\:bg-red-500, .hover\:bg-red-600, .hover\:bg-green-600
+) {
+  color: rgb(11 15 23);
+}
+
+/* Elements that must stay light in every theme (e.g. a printed statement preview) */
+.theme-light {
+  color: rgb(var(--c-text-primary));
+}
+
+html,
+body {
+  background-color: rgb(var(--c-bg));
+  color: rgb(var(--c-text-primary));
+}
+
+/* The window never scrolls: only <main> inside the app shell does */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body,
+#root {
+  overflow: clip;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--gray-400) / 0.5);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--gray-500) / 0.8);
+}
+
+/* ── Window regions (frameless titlebar) ────────────────────────────────────── */
+
+.app-drag {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.app-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/*
+ * Keeps titlebar content clear of the Windows caption buttons drawn by
+ * titleBarOverlay. env(titlebar-area-*) is set by Chromium while the overlay is
+ * active; the fallback reserves room for the three standard buttons.
+ */
+.titlebar-inset {
+  padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - 140px)) + 8px);
+}
+
+/* ── Transitions ────────────────────────────────────────────────────────────── */
+
+/* Added briefly by setTheme() so a theme change fades instead of snapping */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-anim,
+  html.theme-anim *,
+  html.theme-anim *::before,
+  html.theme-anim *::after {
+    transition: none !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

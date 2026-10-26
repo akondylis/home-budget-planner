@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1242" height="790" viewBox="0 0 1242 790" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#57606a"/></marker></defs>
+<rect width="1242" height="790" fill="#ffffff"/>
+<text x="40" y="58" font-size="28" font-weight="700" fill="#1f2328">Home Budget: how a click reaches the database</text>
+<text x="40" y="84" font-size="14" fill="#57606a">The renderer only calls window.api; each call crosses the preload bridge as a 'domain:action' channel to a thin handler and its service.</text>
+<rect x="40" y="118" width="170" height="181" rx="10" fill="#1f6feb"/>
+<text x="54" y="148" font-size="19" font-weight="700" fill="#fff">Renderer</text>
+<text x="54" y="168" font-size="12" fill="#fff">React UI · window.api only</text>
+<rect x="40" y="345" width="170" height="119" rx="10" fill="#8250df"/>
+<text x="54" y="375" font-size="19" font-weight="700" fill="#fff">Preload</text>
+<text x="54" y="395" font-size="12" fill="#fff">contextBridge bridge</text>
+<rect x="40" y="510" width="170" height="86" rx="10" fill="#bc4c00"/>
+<text x="54" y="540" font-size="19" font-weight="700" fill="#fff">Main</text>
+<text x="54" y="560" font-size="12" fill="#fff">ipc/&lt;domain&gt;.ts → services/</text>
+<rect x="40" y="642" width="170" height="44" rx="10" fill="#1a7f37"/>
+<text x="54" y="670" font-size="19" font-weight="700" fill="#fff">Data</text>
+<rect x="230" y="118" width="300" height="181" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="230" y="118" width="6" height="181" rx="3" fill="#1f6feb"/>
+<text x="248" y="144" font-size="16" font-weight="700" fill="#1f2328">Settings</text>
+<text x="248" y="166" font-size="13" fill="#57606a">Settings page</text>
+<text x="248" y="184" font-size="13" fill="#57606a">Title bar badge</text>
+<text x="248" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.getSettings()</text>
+<text x="248" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setLanguage()</text>
+<text x="248" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setDateFormat()</text>
+<text x="248" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.getAppInfo()</text>
+<text x="248" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openDataDir()</text>
+<rect x="230" y="345" width="300" height="119" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="230" y="345" width="6" height="119" rx="3" fill="#8250df"/>
+<text x="248" y="371" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:get'</text>
+<text x="248" y="388" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setLanguage'</text>
+<text x="248" y="405" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setDateFormat'</text>
+<text x="248" y="422" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:appInfo'</text>
+<text x="248" y="439" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:openDataDir'</text>
+<rect x="230" y="510" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="230" y="510" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="248" y="536" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/settings.ts</text>
+<text x="248" y="558" font-size="13" fill="#57606a">→ services/settings.ts</text>
+<text x="248" y="576" font-size="13" fill="#57606a">→ user-data.ts (portable)</text>
+<rect x="230" y="642" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="380" y="669" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · AppSettings (Prisma)</text>
+<path d="M380 299 V342" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M380 464 V507" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M380 596 V639" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="566" y="118" width="300" height="181" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="566" y="118" width="6" height="181" rx="3" fill="#1f6feb"/>
+<text x="584" y="144" font-size="16" font-weight="700" fill="#1f2328">PDF export</text>
+<text x="584" y="166" font-size="13" fill="#57606a">Report preview modal</text>
+<text x="584" y="184" font-size="13" fill="#57606a">(Overview, Ctrl+K)</text>
+<text x="584" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.exportPdf()</text>
+<text x="584" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openFile()</text>
+<rect x="566" y="345" width="300" height="119" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="566" y="345" width="6" height="119" rx="3" fill="#8250df"/>
+<text x="584" y="371" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'pdf:export'</text>
+<text x="584" y="388" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'shell:openFile'</text>
+<rect x="566" y="510" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="566" y="510" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="584" y="536" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/pdf.ts</text>
+<text x="584" y="558" font-size="13" fill="#57606a">→ services/pdf/pdf-export.ts</text>
+<text x="584" y="576" font-size="13" fill="#57606a">→ services/pdf/report-pdf.ts</text>
+<rect x="566" y="642" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="716" y="669" font-size="13" text-anchor="middle" fill="#1f2328">File on disk (save dialog)</text>
+<path d="M716 299 V342" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M716 464 V507" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M716 596 V639" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="902" y="118" width="300" height="181" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="902" y="118" width="6" height="181" rx="3" fill="#1f6feb"/>
+<text x="920" y="144" font-size="16" font-weight="700" fill="#1f2328">Window</text>
+<text x="920" y="166" font-size="13" fill="#57606a">Theme switch</text>
+<text x="920" y="184" font-size="13" fill="#57606a">(title bar, Settings)</text>
+<text x="920" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setTheme()</text>
+<rect x="902" y="345" width="300" height="119" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="902" y="345" width="6" height="119" rx="3" fill="#8250df"/>
+<text x="920" y="371" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'window:setTheme'</text>
+<rect x="902" y="510" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="902" y="510" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="920" y="536" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/window.ts</text>
+<text x="920" y="558" font-size="13" fill="#57606a">→ nativeTheme</text>
+<text x="920" y="576" font-size="13" fill="#57606a">→ title bar colours</text>
+<rect x="902" y="642" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="1052" y="669" font-size="13" text-anchor="middle" fill="#1f2328">No data stored</text>
+<path d="M1052 299 V342" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1052 464 V507" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1052 596 V639" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<text x="40" y="720" font-size="13" fill="#57606a">Each arrow is one window.api call: preload invokes the channel, the handler unpacks the arguments and calls a service.</text>
+<text x="40" y="740" font-size="13" fill="#57606a">Errors travel back as codes (e.g. PDF_EXPORT_FAILED) and the renderer shows them as error.* text.</text>
+<text x="40" y="760" font-size="13" fill="#57606a">Zoom (window.api.zoom) uses webFrame inside the preload, with no IPC.</text>
+</svg>

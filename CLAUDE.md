@@ -26,7 +26,7 @@ Theme, UI kit and UX rules are inherited from the Matchday project (`../chess-bo
 - No re-reads: if a file was already read or edited this session, use the known content from context.
 
 **Quick Reference** *(answers common questions without reading docs)*
-- IPC naming: `'domain:action'` (e.g. `'transaction:create'`, `'account:list'`); handler files in `src/main/ipc/` — one per domain: `settings`, `window` (more added per feature)
+- IPC naming: `'domain:action'` (e.g. `'transaction:create'`, `'account:list'`); handler files in `src/main/ipc/` — one per domain: `settings`, `pdf`, `window` (more added per feature); after changing channels run `/redraw-diagram`
 - Business logic in `src/main/services/`; IPC handlers stay thin
 - Error codes: thrown as strings in main process, mapped to `error.*` i18n keys in the renderer (`src/renderer/src/lib/ipc-errors.ts`)
 - Component split threshold: 800 lines
@@ -37,10 +37,13 @@ Theme, UI kit and UX rules are inherited from the Matchday project (`../chess-bo
 
 ### Product
 - **[docs/roadmap.md](docs/roadmap.md)** — Feature roadmap: Done, Future (queued), Needs a decision
+- **[docs/features/](docs/features/README.md)** — One doc per shipped feature; template, 150-line rule, where docs go
 - **[docs/domain-model.md](docs/domain-model.md)** — Draft entities (members, accounts, cards, transactions, budgets, recurring, debts) and money rules
 
 ### System Architecture
 - **[docs/architecture.md](docs/architecture.md)** — Process design, IPC pattern, project structure, theme, i18n, build & dev
+- **[docs/diagrams/](docs/diagrams/README.md)** — Architecture + IPC diagram (JSON source → SVG/PNG)
+- **docs/archived/** — Overflow detail moved out of feature docs, each linking back to its summary
 - **[docs/testing-strategy.md](docs/testing-strategy.md)** — Coverage tiers, test conventions, commands
 
 ### Code Quality & Standards
@@ -56,6 +59,7 @@ Theme, UI kit and UX rules are inherited from the Matchday project (`../chess-bo
 ### Skills (`.claude/skills/`)
 - **/git-commit** — Grouped Conventional Commit + push with confirmation
 - **/release** — CHANGELOG notes, version bump, tag & push
+- **/redraw-diagram** — Validate `docs/diagrams/architecture.json` against IPC/preload code and redraw the SVG/PNG
 
 ---
 

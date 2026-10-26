@@ -1,0 +1,23 @@
+appId: com.akondylis.homebudget
+productName: Home Budget
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**/*
+extraResources:
+  # SQL migrations are applied at startup by src/main/db/migrate.ts; dev.db must never ship
+  - from: prisma/migrations
+    to: prisma/migrations
+  # Embedded in exported PDFs (Greek glyphs)
+  - from: resources/fonts
+    to: fonts
+    filter: ['*.ttf']
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  # No spaces: GitHub renames uploaded assets with spaces, which would break latest.yml
+  artifactName: HomeBudget-Setup-${version}.${ext}

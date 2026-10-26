@@ -99,6 +99,9 @@ Every feature plan includes, per feature:
 - **States** — empty, error, disabled (with reason) and success (where the user lands).
 - **Hierarchy** — what is most prominent, what is secondary.
 
+**Roadmap entry (`docs/roadmap.md`)**: needed when the plan adds, ships or changes a roadmap item. Give the exact
+table row as it will appear (Done or Future) and the change to the Overview counts.
+
 **Verification** adds a **UX walkthrough**: light + dark, ΕΛ + EN, keyboard Enter/Esc, tooltips on icon buttons,
 no truncated key text, one primary button per dialog, amounts right-aligned and signed.
 

@@ -1,0 +1,265 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /*
+   * Design system primitives. React wrappers live in components/ui/; pages use
+   * those (or these classes) and never hand-roll colours, padding or radii.
+   *
+   * Stacking scale: sticky headers z-10 · dropdowns/popovers/tooltips z-50
+   * (portaled to <body>) · modals z-50 (mounted later, so they stack on top) ·
+   * toast z-[60].
+   */
+
+  /* App tour: ring around the highlighted area; its shadow dims the rest of the window */
+  .tour-spotlight {
+    @apply rounded-lg outline outline-2 outline-accent;
+    box-shadow: 0 0 0 9999px theme('colors.black / 40%');
+  }
+
+  /* Keyboard key chip (shortcut cheat-sheet, sort help) */
+  .kbd {
+    @apply inline-flex min-w-[1.5rem] items-center justify-center rounded border border-b-2 border-line bg-surface px-1.5 font-mono text-xs text-fg-muted;
+  }
+
+  /* Inputs & Selects */
+  .input-field {
+    @apply h-10 rounded-md border border-line bg-surface-input px-3 text-sm text-fg
+           outline-none transition-shadow duration-150
+           placeholder:text-fg-subtle
+           focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Multi-line variant: no fixed height */
+  .textarea-field {
+    @apply rounded-md border border-line bg-surface-input px-3 py-2 text-sm text-fg
+           outline-none transition-shadow duration-150
+           placeholder:text-fg-subtle
+           focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .field-readonly {
+    @apply flex h-10 items-center rounded-md bg-neutral px-3 text-sm text-fg-muted cursor-default select-none;
+  }
+
+  .select-field {
+    @apply h-10 rounded-md border border-line bg-surface-input px-3 text-sm text-fg
+           cursor-pointer outline-none transition-shadow duration-150
+           hover:border-gray-400
+           focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Buttons: one base, colour variants, two sizes */
+  .btn {
+    @apply inline-flex h-9 shrink-0 select-none items-center justify-center gap-1.5 whitespace-nowrap
+           rounded-md px-4 text-sm font-medium
+           transition-all duration-150 active:scale-[0.98]
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50
+           disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-blue-600 text-white shadow-sm hover:bg-blue-700;
+  }
+
+  .btn-secondary {
+    @apply btn border border-line bg-surface text-gray-700 shadow-sm hover:bg-surface-hover;
+  }
+
+  .btn-ghost {
+    @apply btn text-gray-700 hover:bg-surface-hover;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white shadow-sm hover:bg-red-700;
+  }
+
+  .btn-success {
+    @apply btn bg-green-700 text-white shadow-sm hover:bg-green-800;
+  }
+
+  .btn-warning {
+    @apply btn bg-amber-600 text-white shadow-sm hover:bg-amber-700;
+  }
+
+  .btn-finalize {
+    @apply btn bg-purple-600 text-white shadow-sm hover:bg-purple-700;
+  }
+
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+
+  .btn-lg {
+    @apply h-11 px-5 text-base;
+  }
+
+  /* Icon-only buttons: ghost square, never a filled block */
+  .btn-icon {
+    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-fg-muted
+           transition-colors duration-150
+           hover:bg-surface-hover hover:text-fg
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50
+           disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-icon-sm {
+    @apply h-7 w-7;
+  }
+
+  .btn-icon-danger {
+    @apply hover:bg-danger hover:text-danger-fg;
+  }
+
+  .btn-icon-pressed {
+    @apply bg-accent/10 text-accent hover:bg-accent/15 hover:text-accent;
+  }
+
+  /* Card Surfaces */
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-sm;
+  }
+
+  .card-lg {
+    @apply rounded-2xl border border-line bg-surface shadow-md;
+  }
+
+  .card-inner {
+    @apply rounded-lg bg-gray-50;
+  }
+
+  /* Status Badges */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset;
+  }
+
+  .badge-success,
+  .badge-green {
+    @apply bg-success text-success-fg ring-success-fg/20;
+  }
+
+  .badge-warning,
+  .badge-yellow,
+  .badge-amber {
+    @apply bg-warning text-warning-fg ring-warning-fg/20;
+  }
+
+  .badge-orange {
+    @apply bg-orange-50 text-orange-700 ring-orange-600/20;
+  }
+
+  .badge-purple {
+    @apply bg-purple-50 text-purple-700 ring-purple-600/20;
+  }
+
+  .badge-danger,
+  .badge-red {
+    @apply bg-danger text-danger-fg ring-danger-fg/20;
+  }
+
+  .badge-info,
+  .badge-blue {
+    @apply bg-info text-info-fg ring-info-fg/20;
+  }
+
+  .badge-neutral,
+  .badge-gray {
+    @apply bg-neutral text-neutral-fg ring-neutral-fg/20;
+  }
+
+  /* Money pills: income / expense / zero-or-transfer, and planned (not yet booked) amounts */
+  .amount-badge {
+    @apply inline-flex min-w-[4.5rem] items-center justify-end rounded-md px-2 py-0.5 text-sm tabular-nums ring-1 ring-inset;
+  }
+
+  .amount-income {
+    @apply bg-success font-semibold text-success-fg ring-success-fg/20;
+  }
+
+  .amount-expense {
+    @apply bg-danger font-semibold text-danger-fg ring-danger-fg/20;
+  }
+
+  .amount-neutral {
+    @apply bg-neutral font-medium text-neutral-fg ring-neutral-fg/20;
+  }
+
+  /* Same tone as the draft badge (DRAFT_TONE): planned or pending amounts */
+  .amount-planned {
+    @apply bg-warning font-medium text-warning-fg ring-warning-fg/20;
+  }
+
+  /* Plain money text in tables: right-aligned by the cell, digits line up */
+  .money {
+    @apply whitespace-nowrap tabular-nums;
+  }
+
+  /* Typography Hierarchy */
+  .page-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  .section-label {
+    @apply text-sm font-medium text-gray-700;
+  }
+
+  .table-header {
+    @apply text-xs font-semibold uppercase tracking-wide text-gray-500;
+  }
+
+  .text-muted {
+    @apply text-xs text-gray-500;
+  }
+
+  /* Lists & Rows */
+  .list-row {
+    @apply transition-colors duration-150 hover:bg-surface-hover;
+  }
+
+  .list-row-active {
+    @apply bg-blue-50;
+  }
+
+  /* Help article body (HTML from i18n help.topics.*.body) */
+  .help-prose h3 {
+    @apply mb-2 mt-6 text-sm font-semibold text-fg first:mt-0;
+  }
+
+  .help-prose p {
+    @apply mb-3 leading-relaxed text-fg-muted;
+  }
+
+  .help-prose ul,
+  .help-prose ol {
+    @apply mb-3 space-y-1.5 pl-5 leading-relaxed text-fg-muted;
+  }
+
+  .help-prose ul {
+    @apply list-disc;
+  }
+
+  .help-prose ol {
+    @apply list-decimal marker:font-semibold marker:text-fg;
+  }
+
+  .help-prose strong {
+    @apply font-semibold text-fg;
+  }
+
+  .help-prose code {
+    @apply rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-fg;
+  }
+
+  .help-prose kbd {
+    @apply inline-block min-w-[1.5em] rounded border border-line bg-surface-2 px-1.5 py-px text-center font-mono text-xs font-medium text-fg shadow-sm;
+  }
+
+  /* Warning before an irreversible step */
+  .help-prose .help-note {
+    @apply mt-4 rounded-lg bg-warning px-4 py-3 text-sm text-warning-fg;
+  }
+}

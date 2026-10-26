@@ -1,0 +1,23 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/client"
+}
+
+// Money rule: every amount is an Int of minor units (cents), never Float.
+// Domain models (Member, Account, Card, Category, Transaction, Budget,
+// Recurring, Debt) are drafted in docs/domain-model.md and added per feature.
+
+// ── Models ───────────────────────────────────────────────────────────────────
+
+model AppSettings {
+  id         Int      @id
+  language   String   @default("el")
+  dateFormat String   @default("dd/MM/yyyy")
+  currency   String   @default("EUR")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

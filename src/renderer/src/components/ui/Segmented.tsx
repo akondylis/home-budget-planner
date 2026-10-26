@@ -1,0 +1,37 @@
+import { Icon, type IconName } from '../shell/icons'
+
+export interface SegmentedProps<T extends string> {
+  label: string
+  value: T
+  /** A disabled option shows its `title` (the reason) on hover */
+  options: { value: T; label: string; icon?: IconName; disabled?: boolean; title?: string }[]
+  onChange: (value: T) => void
+}
+
+/** Pill toggle for 2–4 mutually exclusive options */
+export function Segmented<T extends string>({ label, value, options, onChange }: SegmentedProps<T>) {
+  return (
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-line bg-surface-2 p-0.5">
+      {options.map(opt => {
+        const selected = opt.value === value
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            disabled={opt.disabled}
+            title={opt.title}
+            onClick={() => onChange(opt.value)}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+              selected ? 'bg-surface font-medium text-fg shadow-sm' : 'text-fg-muted hover:text-fg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-fg-muted'
+            }`}
+          >
+            {opt.icon && <Icon name={opt.icon} size={16} />}
+            {opt.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}

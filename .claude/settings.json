@@ -1,0 +1,54 @@
+{
+  "plansDirectory": ".claude/plans",
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/scripts/session-status.sh",
+    "refreshInterval": 5
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/track-session.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "npx commitlint --from HEAD~1 --to HEAD 2>&1 || true",
+            "statusMessage": "Validating commit with commitlint..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'COMPACTION GUIDANCE: Preserve: current task name and progress, file paths being edited, architectural decisions and constraints discovered this session, any open bugs or errors. Discard: intermediate search results already acted on, full file contents already processed, tool output from completed steps, verbose git/diff output. Keep the summary under 2000 tokens.'"
+          }
+        ]
+      },
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'COMPACTION GUIDANCE: Preserve: current task name and progress, file paths being edited, architectural decisions and constraints discovered this session, any open bugs or errors. Discard: intermediate search results already acted on, full file contents already processed, tool output from completed steps, verbose git/diff output. Keep the summary under 2000 tokens.'"
+          }
+        ]
+      }
+    ]
+  }
+}

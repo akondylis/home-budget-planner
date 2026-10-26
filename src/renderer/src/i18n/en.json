@@ -1,0 +1,248 @@
+{
+  "app": {
+    "title": "Home Budget",
+    "copy": "Copy",
+    "copied": "Copied",
+    "search": "Search…"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "ui": {
+    "filters": "Filters",
+    "filter_clear_all": "Clear all",
+    "filter_remove": "Remove filter: {{label}}",
+    "page_prev": "Previous page",
+    "page_next": "Next page",
+    "page_range": "{{from}}–{{to}} of {{total}}",
+    "page_size": "Rows per page",
+    "sort_asc": "Sorted ascending",
+    "sort_desc": "Sorted descending",
+    "no_results": "No results",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "zoom_in_tooltip": "Zoom in (Ctrl +)",
+    "zoom_out_tooltip": "Zoom out (Ctrl −)",
+    "zoom_reset_tooltip": "Reset zoom (Ctrl 0)"
+  },
+  "shell": {
+    "nav_label": "Main navigation",
+    "resize_sidebar": "Resize sidebar",
+    "swap_sidebar": "Move sidebar to the other side",
+    "collapse_sidebar": "Collapse sidebar",
+    "expand_sidebar": "Expand sidebar"
+  },
+  "appearance": {
+    "theme": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
+    "sidebar_side": "Sidebar side",
+    "left": "Left",
+    "right": "Right"
+  },
+  "nav": {
+    "overview": "Overview",
+    "transactions": "Transactions",
+    "budget": "Budget",
+    "accounts": "Accounts & cards",
+    "recurring": "Subscriptions & bills",
+    "debts": "Debts & loans",
+    "projections": "Projections",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "status": {
+    "upcoming": "Upcoming",
+    "due": "Due",
+    "overdue": "Overdue",
+    "paid": "Paid",
+    "skipped": "Skipped"
+  },
+  "overview": {
+    "title": "Overview",
+    "income": "Income this month",
+    "expenses": "Expenses this month",
+    "left_to_spend": "Left to spend",
+    "upcoming": "Upcoming bills",
+    "upcoming_hint": "Next 30 days",
+    "setup_title": "Set up your family budget",
+    "setup_intro": "Four steps and the overview fills in by itself.",
+    "setup": {
+      "members": "Add family members",
+      "members_hint": "Who pays and who spends: each member can own accounts and cards.",
+      "accounts": "Add bank accounts and cards",
+      "accounts_hint": "Current, savings and credit accounts with their opening balances.",
+      "categories": "Review expense categories",
+      "categories_hint": "Start from the suggested list (groceries, housing, kids…) and adjust it.",
+      "budget": "Plan the monthly budget",
+      "budget_hint": "An amount per category; the overview compares it with what was spent."
+    }
+  },
+  "planned": {
+    "title": "Coming soon",
+    "transactions": "Every income and expense, from all accounts and cards, with categories, members and notes.",
+    "budget": "Monthly and yearly plan per category, compared with what was actually spent.",
+    "accounts": "Bank accounts, cards and cash with their balances.",
+    "recurring": "Subscriptions, bills and yearly charges (insurance, taxes) with reminders before they are due.",
+    "debts": "Loans, instalments and money owed, with what is left to pay and the payoff date.",
+    "projections": "Where the balance is heading: planned income, bills and instalments over the coming months.",
+    "reports": "Spending by category, member and month, and how this year compares with last year."
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "language": "Language",
+    "date_format": "Date format",
+    "date_format_hint": "Used on every screen and in exports.",
+    "about": "About",
+    "version": "version {{version}}",
+    "data_folder": "Data folder",
+    "open_data_folder": "Open data folder",
+    "help": "Help",
+    "tour_hint": "A short walk through the main places of the app."
+  },
+  "palette": {
+    "title": "Search and commands",
+    "button": "Search",
+    "placeholder": "Search pages and commands…",
+    "groups": {
+      "go_to": "Go to",
+      "actions": "Commands"
+    },
+    "go_to": "Go to {{name}}",
+    "tour": "Take the app tour",
+    "worksheet": "Print a monthly budget worksheet",
+    "theme": "Theme: {{mode}}",
+    "language_en": "Switch to English",
+    "language_el": "Αλλαγή σε Ελληνικά",
+    "empty": "No results for “{{query}}”",
+    "empty_hint": "Try a page name (Budget, Settings) or a command (theme, tour, print).",
+    "hint_move": "move",
+    "hint_open": "open",
+    "hint_close": "close"
+  },
+  "shortcuts": {
+    "or": "or",
+    "with_key": "{{action}} ({{key}})",
+    "actions": {
+      "commandPalette": "Search and commands",
+      "toggleSidebar": "Collapse or expand sidebar",
+      "swapSidebar": "Move sidebar to the other side",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomReset": "Reset zoom"
+    }
+  },
+  "tour": {
+    "counter": "Step {{current}} of {{total}}",
+    "skip": "Skip tour",
+    "back": "Back",
+    "next": "Next",
+    "start": "Show me around",
+    "finish": "Done",
+    "take": "Take the app tour",
+    "steps": {
+      "welcome": {
+        "title": "Welcome to Home Budget",
+        "body": "Your household money in one place: what came in, what went out, what is left this month and what is coming. Here is where everything lives."
+      },
+      "overview": {
+        "title": "$t(nav.overview)",
+        "body": "Start here every time: this month's income, expenses, what is left to spend and the bills coming up."
+      },
+      "transactions": {
+        "title": "$t(nav.transactions)",
+        "body": "Coming soon: every income and expense from all accounts and cards, quick to add and easy to filter."
+      },
+      "budget": {
+        "title": "$t(nav.budget)",
+        "body": "Coming soon: an amount per category for the month and the year, compared with what was actually spent."
+      },
+      "accounts": {
+        "title": "$t(nav.accounts)",
+        "body": "Coming soon: bank accounts, cards and cash with their balances."
+      },
+      "recurring": {
+        "title": "$t(nav.recurring)",
+        "body": "Coming soon: subscriptions, bills and yearly charges, with a reminder before each one is due."
+      },
+      "debts": {
+        "title": "$t(nav.debts)",
+        "body": "Coming soon: loans and instalments, with what is left to pay and when it ends."
+      },
+      "insight": {
+        "title": "$t(nav.projections) · $t(nav.reports)",
+        "body": "Coming soon: where the balance is heading, and where the money went by category, member and month."
+      },
+      "settings": {
+        "title": "$t(nav.settings)",
+        "body": "Theme, language, date format and the data folder. You can replay this tour from here."
+      },
+      "search": {
+        "title": "Find anything",
+        "body": "Press Ctrl+K to jump to any page or run a command, such as switching theme or printing a budget worksheet."
+      }
+    }
+  },
+  "portable": {
+    "badge": "Portable",
+    "badge_hint": "Portable edition: data is kept next to the app, on this drive",
+    "data_hint": "Everything is saved next to the app, so it travels with the drive. A copy is kept in backups/ each time the app starts."
+  },
+  "worksheet": {
+    "button": "Print worksheet",
+    "button_hint": "A blank monthly budget sheet to plan on paper (PDF)",
+    "preview_title": "Monthly budget worksheet",
+    "month": "Month",
+    "title": "Budget · {{month}}",
+    "subtitle": "Monthly budget worksheet · printed {{date}}",
+    "income": "Income",
+    "expenses": "Expenses",
+    "summary": "Summary",
+    "col_category": "Category",
+    "col_planned": "Planned",
+    "col_actual": "Actual",
+    "col_difference": "Difference",
+    "total_income": "Total income",
+    "total_expenses": "Total expenses",
+    "left_over": "Left over (income − expenses)",
+    "footnote": "Write the planned amount at the start of the month and the actual amount at the end. Difference = planned − actual: a negative number means you spent more than planned. Use the empty rows for your own categories.",
+    "categories": {
+      "salary": "Salaries",
+      "other_income": "Other income (rent, benefits…)",
+      "housing": "Rent / mortgage",
+      "utilities": "Electricity, water, gas",
+      "groceries": "Supermarket",
+      "transport": "Fuel & transport",
+      "kids": "Kids (school, activities)",
+      "health": "Health & pharmacy",
+      "insurance": "Insurance",
+      "subscriptions": "Phone, internet, subscriptions",
+      "eating_out": "Eating out",
+      "leisure": "Leisure & holidays",
+      "clothing": "Clothing",
+      "gifts": "Gifts",
+      "savings": "Savings",
+      "other": "Other"
+    }
+  },
+  "pdf": {
+    "preview_hint": "This is what the PDF will look like.",
+    "sheet_language": "Sheet language",
+    "export": "Export PDF",
+    "exporting": "Exporting…",
+    "save_dialog_title": "Save PDF",
+    "saved": "Saved: {{path}}",
+    "open": "Open"
+  },
+  "error": {
+    "UNKNOWN": "Something went wrong. Please try again.",
+    "INVALID_REPORT": "The report could not be created.",
+    "PDF_EXPORT_FAILED": "The PDF could not be saved there. Choose another folder or close the file if it is open in another program.",
+    "OPEN_FILE_FAILED": "The file could not be opened. Open it from its folder instead.",
+    "OPEN_DATA_DIR_FAILED": "The data folder could not be opened."
+  }
+}

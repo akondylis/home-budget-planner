@@ -1,0 +1,73 @@
+import { useEffect, useRef } from 'react'
+import { isModalOpen } from '../components/ui/Modal'
+
+export type ShortcutAction =
+  | 'commandPalette'
+  | 'toggleSidebar'
+  | 'swapSidebar'
+  | 'zoomIn'
+  | 'zoomOut'
+  | 'zoomReset'
+
+export type ShortcutGroup = 'general' | 'view'
+
+export interface ShortcutDef {
+  action: ShortcutAction
+  group: ShortcutGroup
+  /** Key combinations shown in the palette and tooltips; each inner array is one combination */
+  keys: string[][]
+}
+
+/** Every app shortcut. Labels: `shortcuts.actions.<action>` */
+export const SHORTCUTS: readonly ShortcutDef[] = [
+  { action: 'commandPalette', group: 'general', keys: [['Ctrl', 'K']] },
+  { action: 'toggleSidebar', group: 'view', keys: [['Ctrl', '\\']] },
+  { action: 'swapSidebar', group: 'view', keys: [['Ctrl', 'Shift', '\\']] },
+  { action: 'zoomIn', group: 'view', keys: [['Ctrl', '+']] },
+  { action: 'zoomOut', group: 'view', keys: [['Ctrl', '−']] },
+  { action: 'zoomReset', group: 'view', keys: [['Ctrl', '0']] },
+]
+
+// Still work while a dialog is open; the rest belong to the page behind it
+const MODAL_SAFE = new Set<ShortcutAction>(['toggleSidebar', 'swapSidebar', 'zoomIn', 'zoomOut', 'zoomReset'])
+
+type KeyLike = Pick<KeyboardEvent, 'key' | 'code' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'>
+
+/**
+ * Maps a keydown to an app shortcut. Letter shortcuts match on `code` (physical
+ * key) so they work on the Greek layout too.
+ */
+export function matchShortcut(e: KeyLike): ShortcutAction | null {
+  const mod = e.ctrlKey || e.metaKey
+  if (!mod || e.altKey) return null
+  if (e.code === 'Backslash' || e.code === 'IntlBackslash') {
+    return e.shiftKey ? 'swapSidebar' : 'toggleSidebar'
+  }
+  if (e.key === '=' || e.key === '+') return 'zoomIn'
+  if (e.key === '-') return 'zoomOut'
+  if (e.key === '0') return 'zoomReset'
+  if (e.shiftKey) return null
+  if (e.code === 'KeyK') return 'commandPalette'
+  return null
+}
+
+/** Registers one window-level keydown listener that dispatches app shortcuts. */
+export function useShortcuts(handlers: Record<ShortcutAction, (e: KeyboardEvent) => void>): void {
+  // Keep the latest handlers without re-registering the listener every render
+  const ref = useRef(handlers)
+  ref.current = handlers
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.defaultPrevented) return
+      const action = matchShortcut(e)
+      if (!action) return
+      if (e.target instanceof HTMLElement && e.target.isContentEditable) return
+      e.preventDefault()
+      if (isModalOpen() && !MODAL_SAFE.has(action)) return
+      ref.current[action](e)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+}
