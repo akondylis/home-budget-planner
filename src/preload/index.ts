@@ -10,6 +10,30 @@ contextBridge.exposeInMainWorld('api', {
   getAppInfo:    ()              => ipcRenderer.invoke('settings:appInfo'),
   openDataDir:   ()              => ipcRenderer.invoke('settings:openDataDir'),
 
+  // ── Accounts ────────────────────────────────────────────────────────────────
+  listAccounts:      (opts?: unknown)                 => ipcRenderer.invoke('account:list', opts),
+  createAccount:     (input: unknown)                 => ipcRenderer.invoke('account:create', input),
+  createAccounts:    (inputs: unknown)                => ipcRenderer.invoke('account:createMany', inputs),
+  updateAccount:     (id: string, input: unknown)     => ipcRenderer.invoke('account:update', id, input),
+  archiveAccount:    (id: string, archived?: boolean) => ipcRenderer.invoke('account:archive', id, archived),
+
+  // ── Categories ──────────────────────────────────────────────────────────────
+  listCategories:    ()                               => ipcRenderer.invoke('category:list'),
+  createCategory:    (input: unknown)                 => ipcRenderer.invoke('category:create', input),
+  updateCategory:    (id: string, input: unknown)     => ipcRenderer.invoke('category:update', id, input),
+  archiveCategory:   (id: string)                     => ipcRenderer.invoke('category:archive', id),
+
+  // ── Transactions ────────────────────────────────────────────────────────────
+  listTransactions:  (filter: unknown)                => ipcRenderer.invoke('transaction:list', filter),
+  listPayees:        ()                               => ipcRenderer.invoke('transaction:payees'),
+  createTransaction: (input: unknown)                 => ipcRenderer.invoke('transaction:create', input),
+  updateTransaction: (id: string, input: unknown)     => ipcRenderer.invoke('transaction:update', id, input),
+  setCategory:       (ids: string[], categoryId: string | null) => ipcRenderer.invoke('transaction:setCategory', ids, categoryId),
+  createTransfer:    (input: unknown)                 => ipcRenderer.invoke('transaction:createTransfer', input),
+  updateTransfer:    (transferId: string, input: unknown) => ipcRenderer.invoke('transaction:updateTransfer', transferId, input),
+  linkTransfer:      (idA: string, idB: string)       => ipcRenderer.invoke('transaction:linkTransfer', idA, idB),
+  deleteTransaction: (id: string)                     => ipcRenderer.invoke('transaction:delete', id),
+
   // ── PDF ─────────────────────────────────────────────────────────────────────
   exportPdf:     (report: unknown, fileName: string, dialogTitle: string) => ipcRenderer.invoke('pdf:export', report, fileName, dialogTitle),
   openFile:      (filePath: string) => ipcRenderer.invoke('shell:openFile', filePath),

@@ -133,7 +133,8 @@
       "swapSidebar": "Move sidebar to the other side",
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
-      "zoomReset": "Reset zoom"
+      "zoomReset": "Reset zoom",
+      "addTransaction": "Add transaction"
     }
   },
   "tour": {
@@ -155,7 +156,7 @@
       },
       "transactions": {
         "title": "$t(nav.transactions)",
-        "body": "Coming soon: every income and expense from all accounts and cards, quick to add and easy to filter."
+        "body": "Every income, expense and transfer from all accounts. Add one with Ctrl+N, filter by month, account or category, and sort out what still needs a category."
       },
       "budget": {
         "title": "$t(nav.budget)",
@@ -163,7 +164,7 @@
       },
       "accounts": {
         "title": "$t(nav.accounts)",
-        "body": "Coming soon: bank accounts, cards and cash with their balances."
+        "body": "Bank accounts, cards and cash with their balances. Quick setup creates the usual ones in a minute."
       },
       "recurring": {
         "title": "$t(nav.recurring)",
@@ -243,6 +244,196 @@
     "INVALID_REPORT": "The report could not be created.",
     "PDF_EXPORT_FAILED": "The PDF could not be saved there. Choose another folder or close the file if it is open in another program.",
     "OPEN_FILE_FAILED": "The file could not be opened. Open it from its folder instead.",
-    "OPEN_DATA_DIR_FAILED": "The data folder could not be opened."
+    "OPEN_DATA_DIR_FAILED": "The data folder could not be opened.",
+    "INVALID_INPUT": "Some details are missing or not valid. Check the form and try again.",
+    "INVALID_AMOUNT": "Enter an amount above zero.",
+    "INVALID_DATE": "That date is not valid.",
+    "ACCOUNT_NOT_FOUND": "That account no longer exists or is archived.",
+    "CATEGORY_REQUIRED": "Choose a category.",
+    "CATEGORY_NOT_FOUND": "That category no longer exists.",
+    "CATEGORY_EXISTS": "A category with this name already exists here.",
+    "TRANSACTION_NOT_FOUND": "That transaction no longer exists.",
+    "TRANSACTION_IS_TRANSFER": "This is a transfer; edit it as a transfer.",
+    "SAME_ACCOUNT": "A transfer needs two different accounts.",
+    "TRANSFER_IMPORTED": "A side that came from a bank statement stays in its account.",
+    "TRANSFER_MISMATCH": "These two rows can't form a transfer: they need opposite amounts in different accounts."
+  },
+  "categories": {
+    "choose": "Choose a category…",
+    "all_in_group": "All of {{group}}",
+    "type": {
+      "INCOME": "Income",
+      "EXPENSE": "Spending",
+      "BILL": "Bills",
+      "SUBSCRIPTION": "Subscriptions",
+      "DEBT": "Debt",
+      "SAVINGS": "Savings"
+    }
+  },
+  "entry": {
+    "title": "Add transaction",
+    "edit_title": "Edit transaction",
+    "kind_label": "Type",
+    "kind": {
+      "EXPENSE": "Expense",
+      "INCOME": "Income",
+      "TRANSFER": "Transfer"
+    },
+    "kind_locked": "A transfer stays a transfer. Delete it and add a new entry to change this.",
+    "add": {
+      "EXPENSE": "Add expense",
+      "INCOME": "Add income",
+      "TRANSFER": "Add transfer"
+    },
+    "save": "Save changes",
+    "add_and_new": "Add & new",
+    "add_and_new_hint": "Saves and keeps the form open with the same date and account (Ctrl+Enter)",
+    "delete": "Delete",
+    "delete_title": "Delete this transaction?",
+    "delete_message": "It is removed from the log and the account balance changes. This cannot be undone.",
+    "delete_transfer_message": "Both sides of the transfer are removed, unless a side came from a bank statement. This cannot be undone.",
+    "saved_one": "Saved:",
+    "amount": "Amount",
+    "amount_hint": {
+      "EXPENSE": "Type it without a minus: it is recorded as money going out.",
+      "INCOME": "Recorded as money coming in.",
+      "TRANSFER": "Moves between your own accounts; never counted as income or expense."
+    },
+    "from": "From account",
+    "to": "To account",
+    "choose_account": "Choose an account…",
+    "category": "Category",
+    "payee": "Payee",
+    "payee_hint": "Shop or person. A payee you used before brings back its category.",
+    "date": "Date",
+    "account": "Account",
+    "note": "Note",
+    "differs_from_statement": "This row came from a bank statement. A different amount or date will no longer match the statement.",
+    "errors": {
+      "amount_required": "Enter the amount.",
+      "amount_invalid": "Enter an amount above zero, e.g. 12,50.",
+      "account_required": "Choose an account.",
+      "date_required": "Choose a date.",
+      "same_account": "Choose a different account from the one the money leaves.",
+      "category_required": "Choose a category, so totals stay right."
+    }
+  },
+  "log": {
+    "title": "Transactions",
+    "count_one": "{{count}} transaction",
+    "count_other": "{{count}} transactions",
+    "add": "Add transaction",
+    "month": "Month",
+    "prev_month": "Previous month",
+    "next_month": "Next month",
+    "all_months": "All months",
+    "this_month": "Go to this month",
+    "account": "Account",
+    "all_accounts": "All accounts",
+    "type": "Category type",
+    "all_types": "All types",
+    "category": "Category",
+    "all_categories": "All categories",
+    "to_categorise": "To categorise",
+    "income": "Income",
+    "expenses": "Expenses",
+    "net": "Net",
+    "net_hint": "Income − expenses; transfers not included",
+    "show_them": "Show them",
+    "uncategorised_banner_one": "{{count}} transaction has no category, so totals are incomplete.",
+    "uncategorised_banner_other": "{{count}} transactions have no category, so totals are incomplete.",
+    "retry": "Try again",
+    "all_sorted_title": "Everything has a category",
+    "all_sorted_body": "No transaction is waiting to be categorised.",
+    "show_all": "Show all transactions",
+    "no_match_title": "Nothing matches these filters",
+    "no_match_body": "Try another account, type or category, or clear the filters.",
+    "empty_month_title": "No transactions in {{month}}",
+    "empty_title": "No transactions yet",
+    "empty_body": "Add an expense, income or transfer with Add transaction ({{keys}}).",
+    "no_accounts_title": "Add an account first",
+    "no_accounts_body": "Every transaction belongs to an account: a bank account, a card or cash. Quick setup creates the usual ones in a minute.",
+    "go_to_accounts": "Go to accounts",
+    "transfer": "Transfer",
+    "transfer_hint": "Between your own accounts; not counted as income or expense",
+    "transfer_to": "Transfer to {{account}}",
+    "transfer_from": "Transfer from {{account}}",
+    "no_description": "No description",
+    "bulk_label": "Selected transactions",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "set_category": "Set category…",
+    "clear_selection": "Clear selection",
+    "select_all": "Select all on this page",
+    "select_row": "Select {{name}}",
+    "col_date": "Date",
+    "col_description": "Description",
+    "col_category": "Category",
+    "col_amount": "Amount",
+    "imported": "From a bank statement",
+    "category_of": "Category of {{name}}",
+    "edit": "Edit"
+  },
+  "accounts": {
+    "add": "Add account",
+    "add_title": "Add account",
+    "edit_title": "Edit account",
+    "edit_named": "Edit {{name}}",
+    "save": "Save changes",
+    "total": "Total of all accounts",
+    "balance": "Balance",
+    "balance_card": "Balance (negative = owed)",
+    "source_cash": "Entered by hand",
+    "imported_until": "Imported up to {{date}}",
+    "not_imported": "No statement imported yet",
+    "view_transactions": "View transactions",
+    "name": "Name",
+    "kind_label": "Kind",
+    "kind": {
+      "CURRENT": "Current account",
+      "SAVINGS": "Savings account",
+      "CASH": "Cash",
+      "CREDIT_CARD": "Credit card"
+    },
+    "institution_label": "Bank",
+    "institution": {
+      "ALPHA": "Alpha Bank",
+      "EUROBANK": "Eurobank",
+      "OTHER": "Other / none"
+    },
+    "opening_balance": "Opening balance",
+    "opening_balance_hint": "What the account held on the opening date.",
+    "opening_balance_card_hint": "What you owed on the card, as a negative amount (e.g. -350,00).",
+    "opening_date": "Opening date",
+    "opening_date_hint": "Transactions are counted from this day.",
+    "archive": "Archive",
+    "archive_title": "Archive {{name}}?",
+    "archive_message": "It disappears from lists and pickers. Its transactions stay and still count in past totals. You can restore it later.",
+    "archived_toggle": "Archived accounts ({{count}})",
+    "restore": "Restore",
+    "errors": {
+      "name_required": "Give the account a name.",
+      "amount_invalid": "Enter an amount, e.g. 1.250,00 or -350,00.",
+      "date_required": "Choose a date."
+    },
+    "quick_title": "Quick setup",
+    "quick_intro": "The household's usual accounts, ready to go. Untick what you don't have, rename if you like, and type today's balance.",
+    "quick": {
+      "alpha_account": "Alpha Bank account",
+      "alpha_card": "Alpha Bank card",
+      "eurobank_account": "Eurobank account",
+      "eurobank_card": "Eurobank card",
+      "cash": "Cash"
+    },
+    "quick_include": "Include {{name}}",
+    "balance_today": "Balance today",
+    "balance_today_of": "Balance today of {{name}}",
+    "quick_cash_question": "How much cash do you have now?",
+    "quick_hint": "Cards: type what you owe as a negative amount. Leave a balance empty for zero.",
+    "quick_fix": "Check the highlighted rows: each needs a name and a valid amount.",
+    "balances_as_of": "Balances as of",
+    "quick_create_one": "Create {{count}} account",
+    "quick_create_other": "Create {{count}} accounts",
+    "quick_none": "Tick at least one account"
   }
 }

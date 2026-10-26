@@ -14,7 +14,9 @@ queries. Renderer code needs tests for shared UI primitives and critical flows.
 
 ### 2. Services (`src/main/services/*.ts`)
 - **What**: validation, error codes, transfers staying balanced, archive rules
-- **How**: integration tests against a real throw-away SQLite file (migrations applied), not a mocked Prisma
+- **How**: integration tests against a real throw-away SQLite file (migrations applied), not a mocked Prisma:
+  `vi.mock('../db/prisma', async () => (await import('./test-db')).createTestDb())` and `resetTestDb()` in
+  `beforeEach` (`src/main/__tests__/test-db.ts`; example: `ledger-services.test.ts`)
   ```ts
   describe('transactions', () => {
     it('should create two linked rows when the transaction is a transfer', async () => { })
@@ -51,9 +53,12 @@ Tier 1 must include happy path, error cases and edge cases (zero, negative, roun
 
 ## Commands
 
+`npm test` runs Vitest on Electron's own Node (`scripts/vitest-electron.mjs`): better-sqlite3 is built for
+Electron's ABI, so plain `npx vitest` can't open a database.
+
 ```bash
 npm test                      # Run all tests
 npm run test:coverage         # Coverage report
 npm test -- money             # Single file
-npx vitest                    # Watch mode
+npm run test:ui               # Watch mode with the Vitest UI
 ```

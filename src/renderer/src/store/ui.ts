@@ -45,7 +45,7 @@ export const UI_PREFS_KEY = 'ui-prefs'
 
 // localStorage can throw (blocked storage, private contexts); preferences are a
 // convenience, so failures fall back to defaults instead of breaking the app.
-const safeStorage: StateStorage = {
+export const safeStorage: StateStorage = {
   getItem: name => {
     try { return localStorage.getItem(name) } catch { return null }
   },

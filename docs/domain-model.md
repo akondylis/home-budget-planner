@@ -1,7 +1,7 @@
 # Domain Model (draft)
 
-As of 2026-10-26. A starting point for discussion: entities are added to `prisma/schema.prisma` one feature at a
-time, and this doc is updated in the same change. Open questions are marked **?**.
+As of 2026-10-26. Entities are added to `prisma/schema.prisma` one feature at a time, and this doc is updated in the
+same change. **In schema** marks what exists; the rest is a draft. Open questions are marked **?**.
 
 ## Money rules
 
@@ -15,15 +15,29 @@ time, and this doc is updated in the same change. Open questions are marked **?*
 | Entity | Purpose | Key fields |
 | --- | --- | --- |
 | **Member** | A family member who owns accounts or spends (parents; maybe children for pocket money) | name, colour, role (`PARENT`/`CHILD`) |
-| **Account** | Where money sits: current, savings, cash, credit card, loan, meal voucher | name, kind, institution, ownerMemberId, currency, openingBalanceCents, archivedAt |
-| **Card** | A debit/credit card linked to an account | accountId, holderMemberId, last4, kind, statementDay, dueDay, limitCents |
-| **Category** | Two levels: group → category (Housing → Rent, Electricity) | name, parentId, kind (`EXPENSE`/`INCOME`), icon, archivedAt |
-| **Transaction** | A booked movement | accountId, cardId?, bookedAt, amountCents, payee, categoryId, memberId, note, transferId?, recurringRuleId?, debtId? |
+| **Account** *(in schema)* | Where money sits. One statement source = one account, so a credit card is an account of kind `CREDIT_CARD` | name, kind (`CURRENT`/`SAVINGS`/`CASH`/`CREDIT_CARD`), institution (`ALPHA`/`EUROBANK`/`OTHER`), currency, openingBalanceCents, openingDate, importProfile?, importMapping?, sortOrder, archivedAt |
+| **Card** | A debit card on an account (later; credit cards are accounts) | accountId, holderMemberId, last4, kind, statementDay, dueDay, limitCents |
+| **Category** *(in schema)* | Two levels: group → category (Bills → Electricity). The **type** is set on the group and its categories follow it | name, parentId, type (`INCOME`/`EXPENSE`/`BILL`/`SUBSCRIPTION`/`DEBT`/`SAVINGS`), icon, sortOrder, archivedAt |
+| **Transaction** *(in schema)* | A booked movement. `categoryId = null` means "to categorise" (transfers never need one) | accountId, bookedAt (date only, 12:00 UTC), amountCents, description (bank text), payee, categoryId?, note, transferId?, importBatchId?, fingerprint?, bankReference?, balanceAfterCents? |
+| **ImportBatch** *(in schema)* | One imported statement file; undo removes its rows | accountId, fileName, fileHash, dateFrom, dateTo, rowCount, importedCount, skippedCount, undoneAt |
+| **CategoryRule** *(in schema)* | Merchant rule: the first match by priority sets an imported row's category and payee | pattern (normalised), match (`CONTAINS`/`STARTS_WITH`/`EXACT`), accountId?, categoryId, payee?, priority, hitCount |
 | **Budget** | Plan for a month (yearly = 12 months) | month (`YYYY-MM`), lines: categoryId + plannedCents |
 | **RecurringRule** | Subscriptions, bills, salary, and **non-monthly** charges (yearly insurance, quarterly tax, every-2-months utilities) | name, amountCents (or estimate), interval (`MONTH`/`YEAR`/…, every N), nextDue, accountId, categoryId, remindDaysBefore, endsAt |
 | **Debt** | Loans, instalment purchases (άτοκες δόσεις), money owed to/by relatives | kind, principalCents, rate?, instalmentCents, startDate, termMonths, accountId, counterparty |
 | **Goal** *(later)* | Saving target (holidays, car) | targetCents, targetDate, accountId |
 | **Notification** | Reminders: bill due, over budget, debt instalment, low balance | kind, key, dueAt, readAt, dismissedAt |
+
+### Rules that live in the services
+
+- **Entering by hand**: the user types a positive amount and picks Expense or Income; the sign is stored from that.
+  Income and expense rows need a category; a transfer never has one.
+- **Transfers** are written as two rows in one database transaction. Deleting one side deletes a hand-entered other
+  side; an imported other side stays (it is on a statement) and goes back to "to categorise".
+- **Imported rows** keep their bank text and fingerprint when edited, so a later import still recognises them.
+  The duplicate rule (fingerprint with an occurrence index, bank reference, fuzzy twin, transfer pairing) is in
+  `.claude/plans/in-the-app-i-quizzical-stroustrup.md` until the statement import ships.
+- **Starting data**: an empty database gets the category groups (one per type) and common Greek merchant rules, in
+  the app language of that moment (`src/main/services/seed.ts`). After that they are the household's own data.
 
 ## Derived views (no tables)
 
@@ -38,7 +52,9 @@ time, and this doc is updated in the same change. Open questions are marked **?*
 ## Open questions
 
 1. Who enters data: both parents on one PC, or each on their own PC/phone? (drives the multi-PC decision)
-2. Bank data: manual entry only, CSV/Excel statement import per bank, or later open-banking sync?
+2. ~~Bank data: manual entry only, CSV/Excel statement import per bank, or later open-banking sync?~~ Manual entry
+   plus CSV import for Alpha Bank and Eurobank (2026-10-26).
 3. Children: members with pocket money, or only as a spending tag?
-4. Cash: tracked as an account, or only as "cash withdrawal" expenses?
+4. ~~Cash: tracked as an account, or only as "cash withdrawal" expenses?~~ An account of kind `CASH`; ATM withdrawals
+   are transfers to it (2026-10-26).
 5. Shared vs personal money: do the parents want private accounts hidden from each other?

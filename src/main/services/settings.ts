@@ -13,12 +13,13 @@ export async function ensureSettings() {
   return prisma.appSettings.upsert({ where: { id: 1 }, create: { id: 1 }, update: {} })
 }
 
-/** Applies the stored language and date format to main-process formatting (exports, reports). */
-export async function applyStoredFormatting(): Promise<void> {
+/** Applies the stored language and date format to main-process formatting (exports, reports); returns the settings. */
+export async function applyStoredFormatting() {
   const settings = await ensureSettings()
   setDateFormat(settings.dateFormat)
   setDateLanguage(settings.language)
   setMoneyLanguage(settings.language)
+  return settings
 }
 
 export function getSettings() {

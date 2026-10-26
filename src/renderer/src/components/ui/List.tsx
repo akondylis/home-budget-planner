@@ -83,6 +83,8 @@ export function SortHeader({ direction, onSort, align = 'left', as: Cell = 'div'
 export interface ListRowProps {
   cols: string
   striped?: boolean
+  /** Marks the row just created or edited, so the eye finds it */
+  highlighted?: boolean
   /** Makes the whole row clickable; keep a keyboard-reachable action in the row too.
       A middle-click passes `{ background: true }` */
   onOpen?: (opts?: OpenOpts) => void
@@ -92,9 +94,12 @@ export interface ListRowProps {
   expansion?: ReactNode
 }
 
-export function ListRow({ cols, striped = false, onOpen, children, expansion }: ListRowProps) {
+export function ListRow({ cols, striped = false, highlighted = false, onOpen, children, expansion }: ListRowProps) {
   return (
-    <div className={cx('group border-b border-gray-100 last:rounded-b-xl last:border-b-0', striped && 'bg-gray-50')}>
+    <div
+      data-highlighted={highlighted || undefined}
+      className={cx('group border-b border-gray-100 last:rounded-b-xl last:border-b-0', striped && 'bg-gray-50', highlighted && 'bg-accent/10')}
+    >
       <div
         onClick={onOpen && (() => onOpen())}
         {...middleClickProps(onOpen)}

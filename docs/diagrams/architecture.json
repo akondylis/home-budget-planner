@@ -3,51 +3,229 @@
   "subtitle": "The renderer only calls window.api; each call crosses the preload bridge as a 'domain:action' channel to a thin handler and its service.",
   "output": "docs/diagrams/architecture",
   "lanes": [
-    { "id": "renderer", "name": "Renderer", "tagline": "React UI · window.api only", "color": "#1f6feb" },
-    { "id": "preload", "name": "Preload", "tagline": "contextBridge bridge", "color": "#8250df" },
-    { "id": "main", "name": "Main", "tagline": "ipc/<domain>.ts → services/", "color": "#bc4c00" }
+    {
+      "id": "renderer",
+      "name": "Renderer",
+      "tagline": "React UI · window.api only",
+      "color": "#1f6feb"
+    },
+    {
+      "id": "preload",
+      "name": "Preload",
+      "tagline": "contextBridge bridge",
+      "color": "#8250df"
+    },
+    {
+      "id": "main",
+      "name": "Main",
+      "tagline": "ipc/<domain>.ts → services/",
+      "color": "#bc4c00"
+    }
   ],
   "domains": [
     {
+      "id": "account",
+      "title": "Accounts",
+      "screen": [
+        "Accounts page",
+        "(Quick setup, cards)"
+      ],
+      "handler": "ipc/account.ts",
+      "service": [
+        "services/accounts.ts"
+      ],
+      "store": "SQLite · Account",
+      "calls": [
+        {
+          "api": "listAccounts",
+          "channel": "account:list"
+        },
+        {
+          "api": "createAccount",
+          "channel": "account:create"
+        },
+        {
+          "api": "createAccounts",
+          "channel": "account:createMany"
+        },
+        {
+          "api": "updateAccount",
+          "channel": "account:update"
+        },
+        {
+          "api": "archiveAccount",
+          "channel": "account:archive"
+        }
+      ]
+    },
+    {
+      "id": "transaction",
+      "title": "Transactions",
+      "screen": [
+        "Transactions page",
+        "Entry form (Ctrl+N)"
+      ],
+      "handler": "ipc/transaction.ts",
+      "service": [
+        "services/transactions.ts"
+      ],
+      "store": "SQLite · Transaction",
+      "calls": [
+        {
+          "api": "listTransactions",
+          "channel": "transaction:list"
+        },
+        {
+          "api": "listPayees",
+          "channel": "transaction:payees"
+        },
+        {
+          "api": "createTransaction",
+          "channel": "transaction:create"
+        },
+        {
+          "api": "updateTransaction",
+          "channel": "transaction:update"
+        },
+        {
+          "api": "setCategory",
+          "channel": "transaction:setCategory"
+        },
+        {
+          "api": "createTransfer",
+          "channel": "transaction:createTransfer"
+        },
+        {
+          "api": "updateTransfer",
+          "channel": "transaction:updateTransfer"
+        },
+        {
+          "api": "linkTransfer",
+          "channel": "transaction:linkTransfer"
+        },
+        {
+          "api": "deleteTransaction",
+          "channel": "transaction:delete"
+        }
+      ]
+    },
+    {
+      "id": "category",
+      "title": "Categories",
+      "screen": [
+        "Category pickers",
+        "(entry form, log)"
+      ],
+      "handler": "ipc/category.ts",
+      "service": [
+        "services/categories.ts",
+        "services/seed.ts (first run)"
+      ],
+      "store": "SQLite · Category",
+      "calls": [
+        {
+          "api": "listCategories",
+          "channel": "category:list"
+        },
+        {
+          "api": "createCategory",
+          "channel": "category:create"
+        },
+        {
+          "api": "updateCategory",
+          "channel": "category:update"
+        },
+        {
+          "api": "archiveCategory",
+          "channel": "category:archive"
+        }
+      ]
+    },
+    {
       "id": "settings",
       "title": "Settings",
-      "screen": ["Settings page", "Title bar badge"],
+      "screen": [
+        "Settings page",
+        "Title bar badge"
+      ],
       "handler": "ipc/settings.ts",
-      "service": ["services/settings.ts", "user-data.ts (portable)"],
+      "service": [
+        "services/settings.ts",
+        "user-data.ts (portable)"
+      ],
       "store": "SQLite · AppSettings (Prisma)",
       "calls": [
-        { "api": "getSettings", "channel": "settings:get" },
-        { "api": "setLanguage", "channel": "settings:setLanguage" },
-        { "api": "setDateFormat", "channel": "settings:setDateFormat" },
-        { "api": "getAppInfo", "channel": "settings:appInfo" },
-        { "api": "openDataDir", "channel": "settings:openDataDir" }
+        {
+          "api": "getSettings",
+          "channel": "settings:get"
+        },
+        {
+          "api": "setLanguage",
+          "channel": "settings:setLanguage"
+        },
+        {
+          "api": "setDateFormat",
+          "channel": "settings:setDateFormat"
+        },
+        {
+          "api": "getAppInfo",
+          "channel": "settings:appInfo"
+        },
+        {
+          "api": "openDataDir",
+          "channel": "settings:openDataDir"
+        }
       ]
     },
     {
       "id": "pdf",
       "title": "PDF export",
-      "screen": ["Report preview modal", "(Overview, Ctrl+K)"],
+      "screen": [
+        "Report preview modal",
+        "(Overview, Ctrl+K)"
+      ],
       "handler": "ipc/pdf.ts",
-      "service": ["services/pdf/pdf-export.ts", "services/pdf/report-pdf.ts"],
+      "service": [
+        "services/pdf/pdf-export.ts",
+        "services/pdf/report-pdf.ts"
+      ],
       "store": "File on disk (save dialog)",
       "calls": [
-        { "api": "exportPdf", "channel": "pdf:export" },
-        { "api": "openFile", "channel": "shell:openFile" }
+        {
+          "api": "exportPdf",
+          "channel": "pdf:export"
+        },
+        {
+          "api": "openFile",
+          "channel": "shell:openFile"
+        }
       ]
     },
     {
       "id": "window",
       "title": "Window",
-      "screen": ["Theme switch", "(title bar, Settings)"],
+      "screen": [
+        "Theme switch",
+        "(title bar, Settings)"
+      ],
       "handler": "ipc/window.ts",
-      "service": ["nativeTheme", "title bar colours"],
+      "service": [
+        "nativeTheme",
+        "title bar colours"
+      ],
       "store": "No data stored",
       "calls": [
-        { "api": "setTheme", "channel": "window:setTheme" }
+        {
+          "api": "setTheme",
+          "channel": "window:setTheme"
+        }
       ]
     }
   ],
   "local": [
-    { "api": "zoom", "note": "Zoom (window.api.zoom) uses webFrame inside the preload, with no IPC." }
+    {
+      "api": "zoom",
+      "note": "Zoom (window.api.zoom) uses webFrame inside the preload, with no IPC."
+    }
   ]
 }

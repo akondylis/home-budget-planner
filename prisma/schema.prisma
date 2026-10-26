@@ -8,8 +8,8 @@ generator client {
 }
 
 // Money rule: every amount is an Int of minor units (cents), never Float.
-// Domain models (Member, Account, Card, Category, Transaction, Budget,
-// Recurring, Debt) are drafted in docs/domain-model.md and added per feature.
+// Domain models not built yet (Member, Card, Budget, Recurring, Debt) are
+// drafted in docs/domain-model.md and added per feature.
 
 // ── Models ───────────────────────────────────────────────────────────────────
 
@@ -20,4 +20,150 @@ model AppSettings {
   currency   String   @default("EUR")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+// ── Ledger: accounts, categories, transactions, statement import ─────────────
+
+enum AccountKind {
+  CURRENT
+  SAVINGS
+  CASH
+  CREDIT_CARD
+}
+
+enum Institution {
+  ALPHA
+  EUROBANK
+  OTHER
+}
+
+/// What a category is: drives budgets and stats. Set on the group, inherited by its categories.
+enum CategoryType {
+  INCOME
+  EXPENSE
+  BILL
+  SUBSCRIPTION
+  DEBT
+  SAVINGS
+}
+
+enum RuleMatch {
+  CONTAINS
+  STARTS_WITH
+  EXACT
+}
+
+/// One statement source = one account (a credit card is an account of kind CREDIT_CARD)
+model Account {
+  id                  String        @id @default(cuid())
+  name                String
+  kind                AccountKind
+  institution         Institution   @default(OTHER)
+  currency            String        @default("EUR")
+  openingBalanceCents Int           @default(0)
+  openingDate         DateTime
+  /// Statement preset key, e.g. "alpha-account"
+  importProfile       String?
+  /// Custom column map for statements no preset knows; shape validated with zod in the import service
+  importMapping       Json?
+  sortOrder           Int           @default(0)
+  archivedAt          DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  transactions        Transaction[]
+  importBatches       ImportBatch[]
+  rules               CategoryRule[]
+}
+
+/// Two levels: a group (parentId null) holds categories; `type` lives on both and follows the group
+model Category {
+  id           String         @id @default(cuid())
+  name         String
+  parentId     String?
+  parent       Category?      @relation("CategoryTree", fields: [parentId], references: [id])
+  children     Category[]     @relation("CategoryTree")
+  type         CategoryType
+  icon         String?
+  sortOrder    Int            @default(0)
+  archivedAt   DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  transactions Transaction[]
+  rules        CategoryRule[]
+
+  @@unique([parentId, name])
+}
+
+/// A booked movement: income > 0, expense < 0. A transfer is two rows sharing transferId.
+model Transaction {
+  id                String       @id @default(cuid())
+  accountId         String
+  account           Account      @relation(fields: [accountId], references: [id])
+  /// Date only, stored at 12:00 UTC so it reads as the same day in every time zone
+  bookedAt          DateTime
+  valueDate         DateTime?
+  amountCents       Int
+  /// Bank text as exported (trimmed, spaces collapsed); for hand-entered rows the payee or note
+  description       String       @default("")
+  /// Cleaned name, from a rule or typed by hand
+  payee             String?
+  categoryId        String?
+  category          Category?    @relation(fields: [categoryId], references: [id])
+  note              String?
+  transferId        String?
+  /// null = entered by hand
+  importBatchId     String?
+  importBatch       ImportBatch? @relation(fields: [importBatchId], references: [id])
+  /// sha256 of account, date, amount, description and occurrence (see docs/domain-model.md)
+  fingerprint       String?
+  bankReference     String?
+  balanceAfterCents Int?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([accountId, fingerprint])
+  @@unique([accountId, bankReference])
+  @@index([accountId, bookedAt])
+  @@index([bookedAt])
+  @@index([categoryId])
+  @@index([transferId])
+  @@index([importBatchId])
+}
+
+model ImportBatch {
+  id            String        @id @default(cuid())
+  accountId     String
+  account       Account       @relation(fields: [accountId], references: [id])
+  fileName      String
+  fileHash      String
+  dateFrom      DateTime
+  dateTo        DateTime
+  rowCount      Int
+  importedCount Int
+  skippedCount  Int
+  importedAt    DateTime      @default(now())
+  undoneAt      DateTime?
+  transactions  Transaction[]
+
+  @@index([accountId, fileHash])
+}
+
+/// Merchant rule: the first match by priority sets the category (and payee) of an imported row
+model CategoryRule {
+  id         String    @id @default(cuid())
+  /// Normalised payee key (see normalise() in src/shared/search-normalise.ts)
+  pattern    String
+  match      RuleMatch @default(CONTAINS)
+  /// null = all accounts
+  accountId  String?
+  account    Account?  @relation(fields: [accountId], references: [id])
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  payee      String?
+  priority   Int       @default(0)
+  hitCount   Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([priority])
 }

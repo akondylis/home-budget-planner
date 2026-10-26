@@ -3,6 +3,7 @@ import { isModalOpen } from '../components/ui/Modal'
 
 export type ShortcutAction =
   | 'commandPalette'
+  | 'addTransaction'
   | 'toggleSidebar'
   | 'swapSidebar'
   | 'zoomIn'
@@ -21,6 +22,7 @@ export interface ShortcutDef {
 /** Every app shortcut. Labels: `shortcuts.actions.<action>` */
 export const SHORTCUTS: readonly ShortcutDef[] = [
   { action: 'commandPalette', group: 'general', keys: [['Ctrl', 'K']] },
+  { action: 'addTransaction', group: 'general', keys: [['Ctrl', 'N']] },
   { action: 'toggleSidebar', group: 'view', keys: [['Ctrl', '\\']] },
   { action: 'swapSidebar', group: 'view', keys: [['Ctrl', 'Shift', '\\']] },
   { action: 'zoomIn', group: 'view', keys: [['Ctrl', '+']] },
@@ -48,6 +50,7 @@ export function matchShortcut(e: KeyLike): ShortcutAction | null {
   if (e.key === '0') return 'zoomReset'
   if (e.shiftKey) return null
   if (e.code === 'KeyK') return 'commandPalette'
+  if (e.code === 'KeyN') return 'addTransaction'
   return null
 }
 

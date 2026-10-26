@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Icon } from '../shell/icons'
 import { Popover } from './Popover'
 import { cx } from './cx'
+import { normalise } from '../../../../shared/search-normalise'
 
 export interface SelectMenuOption<T extends string | number> {
   value: T
@@ -55,10 +56,10 @@ export function SelectMenu<T extends string | number>({
   const [highlighted, setHighlighted] = useState(-1)
 
   const selected = options.find(o => o.value === value)
-  const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-  const q = fold(query.trim())
+  // Accent-, case- and script-insensitive: "souper" finds "Σούπερ μάρκετ"
+  const q = normalise(query)
   const shown = q
-    ? options.filter(o => fold(o.searchText ?? (typeof o.label === 'string' ? o.label : String(o.value))).includes(q))
+    ? options.filter(o => normalise(o.searchText ?? (typeof o.label === 'string' ? o.label : String(o.value))).includes(q))
     : options
 
   const open = () => {
