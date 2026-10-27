@@ -11,6 +11,11 @@ interface Window {
     getAppInfo:    () => Promise<{ portable: boolean; dataDir: string }>
     openDataDir:   () => Promise<void>
 
+    listMembers:       (opts?: { includeArchived?: boolean }) => Promise<import('../../shared/members').MemberSummary[]>
+    createMember:      (input: import('../../shared/members').MemberInput) => Promise<string>
+    updateMember:      (id: string, input: import('../../shared/members').MemberInput) => Promise<void>
+    archiveMember:     (id: string, archived?: boolean) => Promise<void>
+
     listAccounts:      (opts?: { includeArchived?: boolean }) => Promise<import('../../shared/ledger').AccountSummary[]>
     createAccount:     (input: import('../../shared/ledger').AccountInput) => Promise<string>
     createAccounts:    (inputs: import('../../shared/ledger').AccountInput[]) => Promise<string[]>
@@ -27,6 +32,7 @@ interface Window {
     createTransaction: (input: import('../../shared/ledger').TransactionInput) => Promise<string>
     updateTransaction: (id: string, input: import('../../shared/ledger').TransactionInput) => Promise<void>
     setCategory:       (ids: string[], categoryId: string | null) => Promise<number>
+    setMember:         (ids: string[], memberId: string | null) => Promise<number>
     createTransfer:    (input: import('../../shared/ledger').TransferInput) => Promise<string>
     updateTransfer:    (transferId: string, input: import('../../shared/ledger').TransferInput) => Promise<void>
     linkTransfer:      (idA: string, idB: string) => Promise<string>
@@ -35,7 +41,7 @@ interface Window {
     pickStatement:     (labels: { title: string; filterName: string }) => Promise<import('../../shared/statement-import').PickedFile | null>
     previewImport:     (accountId: string, fileId: string, mapping?: import('../../shared/statement-import').ColumnMapping) =>
                          Promise<import('../../shared/statement-import').PreviewResult>
-    commitImport:      (input: { previewId: string; decisions: import('../../shared/statement-import').ImportDecision[] }) =>
+    commitImport:      (input: { previewId: string; decisions: import('../../shared/statement-import').ImportDecision[]; createdByMemberId?: string | null }) =>
                          Promise<import('../../shared/statement-import').CommitResult>
     listImports:       (accountId?: string) => Promise<import('../../shared/statement-import').ImportHistoryItem[]>
     undoImport:        (batchId: string) => Promise<{ removedCount: number }>

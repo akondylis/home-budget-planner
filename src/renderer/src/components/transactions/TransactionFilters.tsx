@@ -5,6 +5,9 @@ import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { currentMonth, useTransactionsStore } from '../../store/transactions'
 import { addMonths } from '../../../../shared/date-only'
 import { CATEGORY_TYPES, type CategoryType } from '../../../../shared/ledger'
+import { HOUSEHOLD } from '../../../../shared/members'
+import { MemberDot } from '../members/MemberDot'
+import { activeMembers } from '../../lib/members'
 
 /** "October 2026" in the app language */
 export function monthLabel(month: string, lang: string): string {
@@ -12,13 +15,14 @@ export function monthLabel(month: string, lang: string): string {
   return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'el-GR', { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1))
 }
 
-/** Month stepper, account, type and category pickers, and the "To categorise" switch; changes apply live */
+/** Month stepper, account, type, category and member pickers, and the "To categorise" switch; changes apply live */
 export function TransactionFilters() {
   const { t, i18n } = useTranslation()
   const filter = useTransactionsStore(s => s.filter)
   const setFilter = useTransactionsStore(s => s.setFilter)
   const accounts = useLedgerStore(s => s.accounts)
   const categories = useLedgerStore(s => s.categories)
+  const members = useLedgerStore(s => s.members)
   const uncategorisedCount = useTransactionsStore(s => s.data?.uncategorisedCount ?? 0)
 
   return (
@@ -77,6 +81,19 @@ export function TransactionFilters() {
           leading={[{ value: '', label: t('log.all_categories') }]}
         />
       </div>
+      {activeMembers(members).length > 0 && (
+        <SelectMenu<string>
+          value={filter.memberId ?? ''}
+          ariaLabel={t('log.for')}
+          onChange={v => setFilter({ memberId: v || null })}
+          options={[
+            { value: '', label: t('log.for_anyone') },
+            { value: HOUSEHOLD, label: t('members.household') },
+            ...activeMembers(members).map(m => ({ value: m.id, label: <MemberDot colour={m.colour} name={m.name} />, searchText: m.name })),
+          ]}
+          triggerClassName="min-w-36"
+        />
+      )}
       <FilterChip active={filter.uncategorised} onClick={() => setFilter({ uncategorised: !filter.uncategorised })}>
         {t('log.to_categorise')}
         {uncategorisedCount > 0 && <span className="tabular-nums">({uncategorisedCount})</span>}

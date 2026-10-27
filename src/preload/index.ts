@@ -10,6 +10,12 @@ contextBridge.exposeInMainWorld('api', {
   getAppInfo:    ()              => ipcRenderer.invoke('settings:appInfo'),
   openDataDir:   ()              => ipcRenderer.invoke('settings:openDataDir'),
 
+  // ── Members ─────────────────────────────────────────────────────────────────
+  listMembers:       (opts?: unknown)                 => ipcRenderer.invoke('member:list', opts),
+  createMember:      (input: unknown)                 => ipcRenderer.invoke('member:create', input),
+  updateMember:      (id: string, input: unknown)     => ipcRenderer.invoke('member:update', id, input),
+  archiveMember:     (id: string, archived?: boolean) => ipcRenderer.invoke('member:archive', id, archived),
+
   // ── Accounts ────────────────────────────────────────────────────────────────
   listAccounts:      (opts?: unknown)                 => ipcRenderer.invoke('account:list', opts),
   createAccount:     (input: unknown)                 => ipcRenderer.invoke('account:create', input),
@@ -29,6 +35,7 @@ contextBridge.exposeInMainWorld('api', {
   createTransaction: (input: unknown)                 => ipcRenderer.invoke('transaction:create', input),
   updateTransaction: (id: string, input: unknown)     => ipcRenderer.invoke('transaction:update', id, input),
   setCategory:       (ids: string[], categoryId: string | null) => ipcRenderer.invoke('transaction:setCategory', ids, categoryId),
+  setMember:         (ids: string[], memberId: string | null)   => ipcRenderer.invoke('transaction:setMember', ids, memberId),
   createTransfer:    (input: unknown)                 => ipcRenderer.invoke('transaction:createTransfer', input),
   updateTransfer:    (transferId: string, input: unknown) => ipcRenderer.invoke('transaction:updateTransfer', transferId, input),
   linkTransfer:      (idA: string, idB: string)       => ipcRenderer.invoke('transaction:linkTransfer', idA, idB),

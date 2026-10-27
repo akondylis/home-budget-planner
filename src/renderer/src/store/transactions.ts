@@ -13,6 +13,8 @@ export interface LogFilter {
   uncategorised: boolean
   /** One import's rows, after the wizard */
   importBatchId: string | null
+  /** A member id, or HOUSEHOLD for rows that are for no one parent */
+  memberId: string | null
 }
 
 export const currentMonth = () => todayDateOnly().slice(0, 7)
@@ -24,6 +26,7 @@ export const EMPTY_FILTER = (): LogFilter => ({
   categoryId: null,
   uncategorised: false,
   importBatchId: null,
+  memberId: null,
 })
 
 type TransactionsStore = {
@@ -84,6 +87,7 @@ export const useTransactionsStore = create<TransactionsStore>()((set, get) => ({
         categoryId: filter.categoryId ?? undefined,
         uncategorised: filter.uncategorised || undefined,
         importBatchId: filter.importBatchId ?? undefined,
+        memberId: filter.memberId ?? undefined,
         page: page + 1,
         pageSize,
       })

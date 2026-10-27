@@ -25,6 +25,8 @@ type UiStore = {
   tourSeen: boolean
   // Step of the running app tour, null when it isn't showing; per session
   tourStep: number | null
+  // The member using the app on this PC (stamped on what they enter); per PC, not in the database
+  currentMemberId: string | null
   setTheme: (theme: ThemeMode) => void
   setSidebarPosition: (position: SidebarPosition) => void
   setSidebarCollapsed: (collapsed: boolean) => void
@@ -39,6 +41,7 @@ type UiStore = {
   setTourStep: (step: number) => void
   /** Finished or skipped: closes the tour and marks it seen */
   endTour: () => void
+  setCurrentMember: (id: string | null) => void
 }
 
 export const UI_PREFS_KEY = 'ui-prefs'
@@ -77,6 +80,7 @@ export const useUiStore = create<UiStore>()(
       paletteOpen: false,
       tourSeen: false,
       tourStep: null,
+      currentMemberId: null,
       setTheme: theme => set({ theme }),
       setSidebarPosition: sidebarPosition => set({ sidebarPosition }),
       setSidebarCollapsed: sidebarCollapsed => set({ sidebarCollapsed }),
@@ -100,6 +104,7 @@ export const useUiStore = create<UiStore>()(
       startTour: () => set({ tourStep: 0, paletteOpen: false }),
       setTourStep: tourStep => set({ tourStep }),
       endTour: () => set({ tourStep: null, tourSeen: true }),
+      setCurrentMember: currentMemberId => set({ currentMemberId }),
     }),
     {
       name: UI_PREFS_KEY,
@@ -111,6 +116,7 @@ export const useUiStore = create<UiStore>()(
         sidebarWidth: s.sidebarWidth,
         collapsedSections: s.collapsedSections,
         tourSeen: s.tourSeen,
+        currentMemberId: s.currentMemberId,
       }),
     },
   ),

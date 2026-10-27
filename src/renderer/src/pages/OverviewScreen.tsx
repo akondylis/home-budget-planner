@@ -1,12 +1,16 @@
 import { useTranslation } from 'react-i18next'
 import { Icon, type IconName } from '../components/shell/icons'
 import { Button, ListCard, Money, PageHeader, StatTile } from '../components/ui'
+import { useLedgerStore } from '../store/ledger'
+import { activeMembers } from '../lib/members'
+import type { View } from '../types'
 
 // Placeholder figures until transactions exist; the tiles set the page's hierarchy
 const EMPTY_MONTH = { income: 0, expenses: 0, left: 0, upcoming: 0 }
 
-const SETUP_STEPS: { key: string; icon: IconName }[] = [
-  { key: 'members', icon: 'users' },
+// `view` makes the step a link to where it is done
+const SETUP_STEPS: { key: string; icon: IconName; view?: View }[] = [
+  { key: 'members', icon: 'users', view: 'settings' },
   { key: 'accounts', icon: 'bank' },
   { key: 'categories', icon: 'tag' },
   { key: 'budget', icon: 'target' },
@@ -14,10 +18,13 @@ const SETUP_STEPS: { key: string; icon: IconName }[] = [
 
 export interface OverviewScreenProps {
   onPrintWorksheet: () => void
+  onGoTo: (view: View) => void
 }
 
-export function OverviewScreen({ onPrintWorksheet }: OverviewScreenProps) {
+export function OverviewScreen({ onPrintWorksheet, onGoTo }: OverviewScreenProps) {
   const { t, i18n } = useTranslation()
+  const hasMembers = useLedgerStore(s => activeMembers(s.members).length > 0)
+  const done: Record<string, boolean> = { members: hasMembers }
   const month = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'el-GR', {
     month: 'long',
     year: 'numeric',
@@ -44,15 +51,23 @@ export function OverviewScreen({ onPrintWorksheet }: OverviewScreenProps) {
         <ol className="mt-4 space-y-3">
           {SETUP_STEPS.map((step, index) => (
             <li key={step.key} className="flex items-start gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                <Icon name={step.icon} size={16} />
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${done[step.key] ? 'bg-success text-success-fg' : 'bg-accent/10 text-accent'}`}
+              >
+                <Icon name={done[step.key] ? 'check' : step.icon} size={16} />
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-fg">
                   {index + 1}. {t(`overview.setup.${step.key}`)}
+                  {done[step.key] && <span className="sr-only"> ({t('overview.setup_done')})</span>}
                 </div>
-                <div className="text-xs text-gray-500">{t(`overview.setup.${step.key}_hint`)}</div>
+                <div className="text-xs text-gray-500">{t(`overview.setup.${step.key}_${done[step.key] ? 'done' : 'hint'}`)}</div>
               </div>
+              {step.view && (
+                <Button size="sm" variant="ghost" icon="arrow-right" onClick={() => onGoTo(step.view!)}>
+                  {t(`overview.setup.${step.key}_go`)}
+                </Button>
+              )}
             </li>
           ))}
         </ol>

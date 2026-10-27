@@ -1,10 +1,12 @@
+import type { ReactNode } from 'react'
 import { Icon, type IconName } from '../shell/icons'
 
 export interface SegmentedProps<T extends string> {
   label: string
   value: T
   /** A disabled option shows its `title` (the reason) on hover */
-  options: { value: T; label: string; icon?: IconName; disabled?: boolean; title?: string }[]
+  /** `leading` is drawn before the label instead of an icon (e.g. a member's colour dot) */
+  options: { value: T; label: string; icon?: IconName; leading?: ReactNode; disabled?: boolean; title?: string }[]
   onChange: (value: T) => void
 }
 
@@ -27,7 +29,7 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
               selected ? 'bg-surface font-medium text-fg shadow-sm' : 'text-fg-muted hover:text-fg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-fg-muted'
             }`}
           >
-            {opt.icon && <Icon name={opt.icon} size={16} />}
+            {opt.leading ?? (opt.icon && <Icon name={opt.icon} size={16} />)}
             {opt.label}
           </button>
         )

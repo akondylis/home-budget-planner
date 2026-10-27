@@ -80,6 +80,7 @@ Copy the HomeBudget folder to a writable drive.`,
   const { applyStoredFormatting } = await import('./services/settings')
   const { registerSettingsHandlers } = await import('./ipc/settings')
   const { registerPdfHandlers } = await import('./ipc/pdf')
+  const { registerMemberHandlers } = await import('./ipc/member')
   const { registerAccountHandlers } = await import('./ipc/account')
   const { registerCategoryHandlers } = await import('./ipc/category')
   const { registerTransactionHandlers } = await import('./ipc/transaction')
@@ -97,6 +98,7 @@ Copy the HomeBudget folder to a writable drive.`,
 
   registerSettingsHandlers()
   registerPdfHandlers()
+  registerMemberHandlers()
   registerAccountHandlers()
   registerCategoryHandlers()
   registerTransactionHandlers()

@@ -7,6 +7,7 @@ import { resetTestDb } from './test-db'
 import { createAccounts, listAccounts } from '../services/accounts'
 import { createTransaction, listTransactions } from '../services/transactions'
 import { seedDefaults } from '../services/seed'
+import { createMember } from '../services/members'
 import { listSubscriptionHints } from '../services/subscriptions'
 import { clearPreviews, commitImport, listImports, previewImport, undoImport, type PreviewResult } from '../services/import/import-service'
 
@@ -198,6 +199,15 @@ describe('statement import', () => {
     await createTransaction({ kind: 'EXPENSE', accountId: bankId, amountCents: 1240, bookedAt: '2026-10-02', categoryId: groceries!.id })
     expect((await listImports(bankId))[0].reconciliation).toMatchObject({ statementBalanceCents: 249750, appBalanceCents: 248510 })
     expect((await commitImport({ previewId: (await preview(bankId, OCT_NOV)).previewId })).reconciliation).toBeNull()
+  })
+
+  it('should stamp the batch and its rows with who imported it, leaving them for the household', async () => {
+    const { bankId } = await setup()
+    const andreasId = await createMember({ name: 'Andreas', colour: 'blue' })
+    const { batchId } = await commitImport({ previewId: (await preview(bankId, OCTOBER)).previewId, createdByMemberId: andreasId })
+    expect((await prisma.importBatch.findUnique({ where: { id: batchId } }))?.createdByMemberId).toBe(andreasId)
+    expect(await prisma.transaction.count({ where: { importBatchId: batchId, createdByMemberId: andreasId, memberId: null } })).toBe(4)
+    await expect(commitImport({ previewId: (await preview(bankId, OCT_NOV)).previewId, createdByMemberId: 'nope' })).rejects.toThrow('MEMBER_NOT_FOUND')
   })
 
   it('should say when the format is unknown or the preview has expired', async () => {

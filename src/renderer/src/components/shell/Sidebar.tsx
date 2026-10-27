@@ -5,6 +5,7 @@ import { useSidebarResize } from '../../hooks/useSidebarResize'
 import type { View } from '../../types'
 import { Icon } from './icons'
 import { Badge, HoverCard } from '../ui'
+import { MemberSwitcher } from '../members/MemberSwitcher'
 import { FOOTER_NAV_ITEMS, MAIN_NAV_ITEMS, type NavItem } from '../../lib/nav-items'
 
 function isActive(item: NavItem, view: View): boolean {
@@ -73,6 +74,7 @@ export function Sidebar({ view, onNavigate }: SidebarProps) {
       {MAIN_NAV_ITEMS.map(renderItem)}
 
       <div className="mt-auto flex flex-col gap-1 border-t border-line pt-2">
+        <MemberSwitcher collapsed={collapsed} onManage={() => onNavigate('settings')} />
         {FOOTER_NAV_ITEMS.map(renderItem)}
         <button
           onClick={toggleSidebar}

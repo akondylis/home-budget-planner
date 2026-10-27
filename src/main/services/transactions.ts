@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { prisma } from '../db/prisma'
 import type { Prisma } from '../../../prisma/generated/client/client'
+import { assertMember } from './members'
 import { dateOnlyToDate, dateToDateOnly, isDateOnly, isMonth, monthRange } from '../../shared/date-only'
 import {
   CATEGORY_TYPES,
@@ -11,6 +12,7 @@ import {
   type TransactionPage,
   type TransactionRow,
 } from '../../shared/ledger'
+import { HOUSEHOLD, type MemberColour } from '../../shared/members'
 
 export const DEFAULT_PAGE_SIZE = 50
 const MAX_PAGE_SIZE = 200
@@ -27,6 +29,10 @@ const transactionInput = z.object({
   categoryId: z.string().nullable(),
   payee: text(120),
   note: text(500),
+  /** Who it was for; null = the household */
+  memberId: z.string().nullable().default(null),
+  /** Who is entering it (create only) */
+  createdByMemberId: z.string().nullish(),
 })
 
 const transferInput = z.object({
@@ -35,6 +41,7 @@ const transferInput = z.object({
   amountCents: amount,
   bookedAt,
   note: text(500),
+  createdByMemberId: z.string().nullish(),
 })
 
 const filterInput = z.object({
@@ -44,6 +51,8 @@ const filterInput = z.object({
   categoryId: z.string().optional(),
   uncategorised: z.boolean().optional(),
   importBatchId: z.string().optional(),
+  /** A member id, or HOUSEHOLD for rows that are for no one parent */
+  memberId: z.string().optional(),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
 })
@@ -72,6 +81,12 @@ async function assertCategory(id: string | null): Promise<void> {
   if (!category) throw new Error('CATEGORY_NOT_FOUND')
 }
 
+/** Checks the member a row is for and the one entering it. Throws: 'MEMBER_NOT_FOUND' */
+async function assertMembers(memberId: string | null | undefined, createdByMemberId?: string | null): Promise<void> {
+  if (memberId) await assertMember(memberId)
+  if (createdByMemberId) await assertMember(createdByMemberId, { allowArchived: true })
+}
+
 // ── Reading ──────────────────────────────────────────────────────────────────
 
 function filterWhere(f: z.infer<typeof filterInput>): Prisma.TransactionWhereInput {
@@ -79,6 +94,7 @@ function filterWhere(f: z.infer<typeof filterInput>): Prisma.TransactionWhereInp
   if (f.month) and.push({ bookedAt: monthRange(f.month) })
   if (f.accountId) and.push({ accountId: f.accountId })
   if (f.importBatchId) and.push({ importBatchId: f.importBatchId })
+  if (f.memberId) and.push({ memberId: f.memberId === HOUSEHOLD ? null : f.memberId })
   if (f.categoryType) and.push({ category: { type: f.categoryType } })
   // A group stands for all of its categories
   if (f.categoryId) and.push({ OR: [{ categoryId: f.categoryId }, { category: { parentId: f.categoryId } }] })
@@ -103,6 +119,8 @@ export async function listTransactions(input: unknown = {}): Promise<Transaction
       include: {
         account: { select: { name: true } },
         category: { select: { name: true, type: true, parent: { select: { name: true } } } },
+        member: { select: { name: true, colour: true } },
+        createdBy: { select: { name: true } },
       },
     }),
     prisma.transaction.count({ where }),
@@ -142,6 +160,10 @@ export async function listTransactions(input: unknown = {}): Promise<Transaction
         transferAccountId: other?.accountId ?? null,
         transferAccountName: other?.account.name ?? null,
         importBatchId: r.importBatchId,
+        memberId: r.memberId,
+        memberName: r.member?.name ?? null,
+        memberColour: (r.member?.colour as MemberColour | undefined) ?? null,
+        createdByName: r.createdBy?.name ?? null,
       }
     }),
     total,
@@ -153,18 +175,18 @@ export async function listTransactions(input: unknown = {}): Promise<Transaction
   }
 }
 
-/** Past payees, latest first, with the category and account used last time (form defaults) */
+/** Past payees, latest first, with the category, account and member used last time (form defaults) */
 export async function listPayeeSuggestions(): Promise<PayeeSuggestion[]> {
   const rows = await prisma.transaction.findMany({
     where: { payee: { not: null }, transferId: null },
     orderBy: [{ bookedAt: 'desc' }, { createdAt: 'desc' }],
-    select: { payee: true, categoryId: true, accountId: true },
+    select: { payee: true, categoryId: true, accountId: true, memberId: true },
     take: 2000,
   })
   const seen = new Map<string, PayeeSuggestion>()
   for (const r of rows) {
     const key = r.payee!.toLocaleLowerCase()
-    if (!seen.has(key)) seen.set(key, { payee: r.payee!, categoryId: r.categoryId, accountId: r.accountId })
+    if (!seen.has(key)) seen.set(key, { payee: r.payee!, categoryId: r.categoryId, accountId: r.accountId, memberId: r.memberId })
   }
   return [...seen.values()]
 }
@@ -173,13 +195,15 @@ export async function listPayeeSuggestions(): Promise<PayeeSuggestion[]> {
 
 /**
  * An expense or income entered by hand.
- * Throws: 'INVALID_INPUT', 'INVALID_AMOUNT', 'ACCOUNT_NOT_FOUND', 'CATEGORY_REQUIRED', 'CATEGORY_NOT_FOUND'
+ * Throws: 'INVALID_INPUT', 'INVALID_AMOUNT', 'ACCOUNT_NOT_FOUND', 'CATEGORY_REQUIRED', 'CATEGORY_NOT_FOUND',
+ * 'MEMBER_NOT_FOUND'
  */
 export async function createTransaction(input: unknown): Promise<string> {
   const data = parse(transactionInput, input)
   assertAmount(data.amountCents)
   await assertAccount(data.accountId)
   await assertCategory(data.categoryId)
+  await assertMembers(data.memberId, data.createdByMemberId)
   const created = await prisma.transaction.create({
     data: {
       accountId: data.accountId,
@@ -189,6 +213,8 @@ export async function createTransaction(input: unknown): Promise<string> {
       payee: data.payee,
       categoryId: data.categoryId,
       note: data.note,
+      memberId: data.memberId,
+      createdByMemberId: data.createdByMemberId ?? null,
     },
   })
   return created.id
@@ -196,7 +222,7 @@ export async function createTransaction(input: unknown): Promise<string> {
 
 /**
  * Saves an edited expense or income. An imported row keeps its bank text and
- * fingerprint, so a later import still recognises it.
+ * fingerprint, so a later import still recognises it; who entered a row never changes.
  * Throws: as createTransaction, plus 'TRANSACTION_NOT_FOUND', 'TRANSACTION_IS_TRANSFER'
  */
 export async function updateTransaction(id: unknown, input: unknown): Promise<void> {
@@ -208,6 +234,7 @@ export async function updateTransaction(id: unknown, input: unknown): Promise<vo
   assertAmount(data.amountCents)
   if (data.accountId !== current.accountId) await assertAccount(data.accountId)
   await assertCategory(data.categoryId)
+  if (data.memberId !== current.memberId) await assertMembers(data.memberId)
   await prisma.transaction.update({
     where: { id },
     data: {
@@ -217,6 +244,7 @@ export async function updateTransaction(id: unknown, input: unknown): Promise<vo
       payee: data.payee,
       categoryId: data.categoryId,
       note: data.note,
+      memberId: data.memberId,
       ...(current.importBatchId ? {} : { description: data.payee ?? '' }),
     },
   })
@@ -234,15 +262,28 @@ export async function setCategory(ids: unknown, categoryId: unknown): Promise<nu
   return result.count
 }
 
+/** Marks many rows as for one member (null = the household); transfers are skipped. Returns how many changed. */
+export async function setMember(ids: unknown, memberId: unknown): Promise<number> {
+  if (!Array.isArray(ids) || !ids.every(i => typeof i === 'string')) throw new Error('INVALID_INPUT')
+  if (memberId !== null && typeof memberId !== 'string') throw new Error('INVALID_INPUT')
+  if (memberId) await assertMember(memberId)
+  const result = await prisma.transaction.updateMany({
+    where: { id: { in: ids as string[] }, transferId: null },
+    data: { memberId: memberId as string | null },
+  })
+  return result.count
+}
+
 // ── Transfers ────────────────────────────────────────────────────────────────
 
-/** Throws: 'INVALID_INPUT', 'INVALID_AMOUNT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND' */
+/** Throws: 'INVALID_INPUT', 'INVALID_AMOUNT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND' */
 async function parseTransfer(input: unknown) {
   const data = parse(transferInput, input)
   assertAmount(data.amountCents)
   if (data.fromAccountId === data.toAccountId) throw new Error('SAME_ACCOUNT')
   await assertAccount(data.fromAccountId)
   await assertAccount(data.toAccountId)
+  await assertMembers(null, data.createdByMemberId)
   return data
 }
 
@@ -254,7 +295,7 @@ async function parseTransfer(input: unknown) {
 export async function createTransfer(input: unknown): Promise<string> {
   const data = await parseTransfer(input)
   const transferId = randomUUID()
-  const shared = { bookedAt: dateOnlyToDate(data.bookedAt), note: data.note, transferId }
+  const shared = { bookedAt: dateOnlyToDate(data.bookedAt), note: data.note, transferId, createdByMemberId: data.createdByMemberId ?? null }
   await prisma.$transaction([
     prisma.transaction.create({ data: { ...shared, accountId: data.fromAccountId, amountCents: -data.amountCents } }),
     prisma.transaction.create({ data: { ...shared, accountId: data.toAccountId, amountCents: data.amountCents } }),

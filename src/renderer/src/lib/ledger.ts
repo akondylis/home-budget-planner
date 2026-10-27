@@ -64,6 +64,8 @@ export interface EntryDraft {
   payee: string
   note: string
   bookedAt: string
+  /** Who it is for; null = the household */
+  memberId: string | null
 }
 
 export type EntryField = 'amount' | 'accountId' | 'toAccountId' | 'categoryId' | 'bookedAt'
@@ -107,6 +109,7 @@ export function draftFromRow(row: TransactionRow): EntryDraft {
     payee: row.payee ?? '',
     note: row.note ?? '',
     bookedAt: row.bookedAt,
+    memberId: row.memberId,
   }
 }
 

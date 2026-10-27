@@ -1,3 +1,5 @@
+import type { MemberColour } from './members'
+
 // Shapes for accounts, categories and transactions, shared by main (services)
 // and the renderer (window.api types). Dates are 'yyyy-MM-dd' strings
 // (src/shared/date-only.ts); amounts are integer cents.
@@ -75,6 +77,10 @@ export interface TransactionInput {
   categoryId: string | null
   payee?: string | null
   note?: string | null
+  /** Who it was for; null = the household */
+  memberId?: string | null
+  /** The member using the app (create only; ignored on update) */
+  createdByMemberId?: string | null
 }
 
 export interface TransferInput {
@@ -84,6 +90,7 @@ export interface TransferInput {
   amountCents: number
   bookedAt: string
   note?: string | null
+  createdByMemberId?: string | null
 }
 
 export interface TransactionRow {
@@ -106,6 +113,12 @@ export interface TransactionRow {
   transferAccountId: string | null
   transferAccountName: string | null
   importBatchId: string | null
+  /** Who it was for; null = the household */
+  memberId: string | null
+  memberName: string | null
+  memberColour: MemberColour | null
+  /** Who entered or imported it; null before members existed */
+  createdByName: string | null
 }
 
 export interface TransactionFilter {
@@ -117,6 +130,8 @@ export interface TransactionFilter {
   /** Rows that still need a category (transfers never do) */
   uncategorised?: boolean
   importBatchId?: string
+  /** A member id, or HOUSEHOLD ('household') for rows that are for no one parent */
+  memberId?: string
   /** 1-based */
   page?: number
   pageSize?: number
@@ -139,6 +154,8 @@ export interface PayeeSuggestion {
   /** Category of the latest row with this payee */
   categoryId: string | null
   accountId: string
+  /** Member of the latest row with this payee (null = the household) */
+  memberId: string | null
 }
 
 /** Stored sign of an entered amount */

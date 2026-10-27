@@ -189,7 +189,7 @@ describe('transactions', () => {
     const { bankId, cashId, groceriesId, salaryId } = await setup()
     await createTransaction({ kind: 'EXPENSE', accountId: bankId, amountCents: 100, bookedAt: '2026-10-01', categoryId: salaryId, payee: 'Lidl' })
     await createTransaction({ kind: 'EXPENSE', accountId: cashId, amountCents: 100, bookedAt: '2026-10-02', categoryId: groceriesId, payee: 'lidl' })
-    expect(await listPayeeSuggestions()).toEqual([{ payee: 'lidl', categoryId: groceriesId, accountId: cashId }])
+    expect(await listPayeeSuggestions()).toEqual([{ payee: 'lidl', categoryId: groceriesId, accountId: cashId, memberId: null }])
   })
 })
 

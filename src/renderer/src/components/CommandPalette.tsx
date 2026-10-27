@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Modal } from './ui'
 import { Icon } from './shell/icons'
 import { useUiStore } from '../store/ui'
+import { useLedgerStore } from '../store/ledger'
 import { cx } from './ui/cx'
 import { buildActions, buildSections, type PaletteItem, type PaletteTarget } from '../lib/command-palette'
 
@@ -15,13 +16,15 @@ export interface CommandPaletteProps {
 export function CommandPalette({ onClose, onRun }: CommandPaletteProps) {
   const { t, i18n } = useTranslation()
   const theme = useUiStore(s => s.theme)
+  const currentMemberId = useUiStore(s => s.currentMemberId)
+  const members = useLedgerStore(s => s.members)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const listRef = useRef<HTMLDivElement>(null)
 
   const items = useMemo<PaletteItem[]>(
-    () => buildActions({ t, theme, lang: i18n.language }),
-    [t, theme, i18n.language],
+    () => buildActions({ t, theme, lang: i18n.language, members, currentMemberId }),
+    [t, theme, i18n.language, members, currentMemberId],
   )
   const sections = useMemo(() => buildSections(query, items), [query, items])
   const flat = useMemo(() => sections.flatMap(s => s.items), [sections])

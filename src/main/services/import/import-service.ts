@@ -24,6 +24,7 @@ import { TRANSFER_WINDOW_DAYS } from './transfer-match'
 import { parseSavedMapping } from './profiles'
 import { closingBalance, type StatementBalance } from './reconcile'
 import { balanceOn } from '../accounts'
+import { assertMember } from '../members'
 
 export type { CommitResult, ImportDecision, ImportHistoryItem, PreviewResult }
 
@@ -151,7 +152,12 @@ const decisionSchema = z.object({
   toAccountId: z.string().nullish(),
 }) satisfies z.ZodType<ImportDecision>
 
-const commitSchema = z.object({ previewId: z.string(), decisions: z.array(decisionSchema).default([]) })
+const commitSchema = z.object({
+  previewId: z.string(),
+  decisions: z.array(decisionSchema).default([]),
+  /** The member using the app; stamped on the batch and every row it writes */
+  createdByMemberId: z.string().nullish(),
+})
 
 function defaultAction(row: PreviewRow): ImportDecision['action'] {
   if (row.status === 'NEW') return 'IMPORT'
@@ -162,11 +168,14 @@ function defaultAction(row: PreviewRow): ImportDecision['action'] {
 /**
  * Writes the chosen rows in one database transaction. Fingerprints and bank
  * references are checked again inside it, so a second click never inserts twice.
- * Throws: 'INVALID_INPUT', 'IMPORT_PREVIEW_EXPIRED', 'IMPORT_NOTHING_TO_IMPORT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND'
+ * Throws: 'INVALID_INPUT', 'IMPORT_PREVIEW_EXPIRED', 'IMPORT_NOTHING_TO_IMPORT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND',
+ * 'MEMBER_NOT_FOUND'
  */
 export async function commitImport(input: unknown): Promise<CommitResult> {
   const parsed = commitSchema.safeParse(input)
   if (!parsed.success) throw new Error('INVALID_INPUT')
+  const createdByMemberId = parsed.data.createdByMemberId ?? null
+  if (createdByMemberId) await assertMember(createdByMemberId, { allowArchived: true })
   const preview = previews.get(parsed.data.previewId)
   if (!preview || Date.now() - preview.createdAt > PREVIEW_TTL_MS) throw new Error('IMPORT_PREVIEW_EXPIRED')
   // Taken out first: a double click finds it gone instead of importing twice
@@ -206,6 +215,7 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
         skippedCount: 0,
         statementBalanceCents: preview.closing?.cents ?? null,
         statementBalanceDate: preview.closing ? dateOnlyToDate(preview.closing.date) : null,
+        createdByMemberId,
       },
     })
     let imported = 0
@@ -242,7 +252,7 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
           const transferId = randomUUID()
           await tx.transaction.update({ where: { id: other.id }, data: { transferId, categoryId: null } })
           await tx.transaction.create({
-            data: { ...bankData, accountId, importBatchId: batch.id, bookedAt: dateOnlyToDate(row.bookedAt!), amountCents: row.amountCents!, transferId },
+            data: { ...bankData, accountId, importBatchId: batch.id, createdByMemberId, bookedAt: dateOnlyToDate(row.bookedAt!), amountCents: row.amountCents!, transferId },
           })
           imported++
           continue
@@ -252,10 +262,10 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
           const transferId = randomUUID()
           const bookedAt = dateOnlyToDate(row.bookedAt!)
           await tx.transaction.create({
-            data: { ...bankData, accountId, importBatchId: batch.id, bookedAt, amountCents: row.amountCents!, transferId },
+            data: { ...bankData, accountId, importBatchId: batch.id, createdByMemberId, bookedAt, amountCents: row.amountCents!, transferId },
           })
           await tx.transaction.create({
-            data: { accountId: toAccountId, importBatchId: batch.id, bookedAt, amountCents: -row.amountCents!, transferId, description: row.description },
+            data: { accountId: toAccountId, importBatchId: batch.id, createdByMemberId, bookedAt, amountCents: -row.amountCents!, transferId, description: row.description },
           })
           imported++
           continue
@@ -271,6 +281,7 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
           ...bankData,
           accountId,
           importBatchId: batch.id,
+          createdByMemberId,
           bookedAt: dateOnlyToDate(row.bookedAt!),
           amountCents: row.amountCents!,
           categoryId: chosen,

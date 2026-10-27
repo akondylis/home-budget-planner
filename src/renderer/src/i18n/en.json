@@ -76,15 +76,18 @@
     "setup_title": "Set up your family budget",
     "setup_intro": "Four steps and the overview fills in by itself.",
     "setup": {
-      "members": "Add family members",
-      "members_hint": "Who pays and who spends: each member can own accounts and cards.",
+      "members": "Add the parents",
+      "members_hint": "Who enters each transaction and who it was for.",
       "accounts": "Add bank accounts and cards",
       "accounts_hint": "Current, savings and credit accounts with their opening balances.",
       "categories": "Review expense categories",
       "categories_hint": "Start from the suggested list (groceries, housing, kids…) and adjust it.",
       "budget": "Plan the monthly budget",
-      "budget_hint": "An amount per category; the overview compares it with what was spent."
-    }
+      "budget_hint": "An amount per category; the overview compares it with what was spent.",
+      "members_done": "Done; change it in Settings → Household.",
+      "members_go": "Household"
+    },
+    "setup_done": "done"
   },
   "planned": {
     "title": "Coming soon",
@@ -107,7 +110,9 @@
     "data_folder": "Data folder",
     "open_data_folder": "Open data folder",
     "help": "Help",
-    "tour_hint": "A short walk through the main places of the app."
+    "tour_hint": "A short walk through the main places of the app.",
+    "household": "Household",
+    "household_intro": "The parents of the house. Every transaction records who entered it and who it was for."
   },
   "palette": {
     "title": "Search and commands",
@@ -127,7 +132,8 @@
     "empty_hint": "Try a page name (Budget, Settings) or a command (theme, tour, print).",
     "hint_move": "move",
     "hint_open": "open",
-    "hint_close": "close"
+    "hint_close": "close",
+    "use_as": "Use the app as {{name}}"
   },
   "shortcuts": {
     "or": "or",
@@ -182,6 +188,10 @@
       "insight": {
         "title": "$t(nav.projections) · $t(nav.reports)",
         "body": "Coming soon: where the balance is heading, and where the money went by category, member and month."
+      },
+      "member": {
+        "title": "Who is using the app",
+        "body": "Shows which parent is at the computer. What you enter is recorded under their name; click to switch."
       },
       "settings": {
         "title": "$t(nav.settings)",
@@ -268,7 +278,9 @@
     "IMPORT_NOTHING_TO_IMPORT": "Nothing is ticked to import.",
     "IMPORT_NOT_FOUND": "That import no longer exists.",
     "IMPORT_ALREADY_UNDONE": "This import was already undone.",
-    "RULE_NOT_FOUND": "That rule no longer exists."
+    "RULE_NOT_FOUND": "That rule no longer exists.",
+    "MEMBER_NOT_FOUND": "That parent no longer exists or is archived.",
+    "MEMBER_NAME_TAKEN": "There is already a parent with this name."
   },
   "categories": {
     "choose": "Choose a category…",
@@ -328,7 +340,10 @@
       "date_required": "Enter a real date, e.g. 05/03/2026.",
       "same_account": "Choose a different account from the one the money leaves.",
       "category_required": "Choose a category, so totals stay right."
-    }
+    },
+    "for": "For",
+    "for_hint": "Who it was for; “Household” when it is for the whole home.",
+    "entered_by": "Entered by {{name}}"
   },
   "log": {
     "title": "Transactions",
@@ -384,7 +399,48 @@
     "col_amount": "Amount",
     "imported": "From a bank statement",
     "category_of": "Category of {{name}}",
-    "edit": "Edit"
+    "edit": "Edit",
+    "for": "For",
+    "for_anyone": "For anyone",
+    "for_member": "for {{name}}",
+    "set_for": "Set “For”…"
+  },
+  "members": {
+    "household": "Household",
+    "add": "Add parent",
+    "add_title": "New parent",
+    "edit_title": "Edit parent",
+    "save": "Save",
+    "name": "Name",
+    "name_hint": "As it should appear on transactions, e.g. “Andreas”.",
+    "name_required": "Type a name.",
+    "colour": "Colour",
+    "colour_hint": "Tells parents apart in lists, always next to the name.",
+    "colours": {
+      "blue": "Blue",
+      "purple": "Purple",
+      "orange": "Orange",
+      "green": "Green",
+      "amber": "Amber"
+    },
+    "empty": "Add both parents: every transaction then records who entered it and who it was for.",
+    "this_pc": "This PC",
+    "this_pc_hint": "Whatever is entered on this PC is recorded under this name.",
+    "row_count_one": "{{count}} transaction for them",
+    "row_count_other": "{{count}} transactions for them",
+    "use_here": "Use on this PC",
+    "edit": "Edit {{name}}",
+    "archive": "Archive {{name}}",
+    "archived_toggle": "Archived parents ({{count}})",
+    "restore": "Restore",
+    "archive_title": "Archive {{name}}?",
+    "archive_message": "They no longer appear in pickers. Their transactions keep the name, and you can restore them.",
+    "archive_confirm": "Archive",
+    "add_parents": "Add parents",
+    "who_is_using": "Who is using the app?",
+    "who_is_using_hint": "Pick who you are; what you enter is recorded under your name.",
+    "using_hint": "New entries are recorded as entered by {{name}}. Click to switch.",
+    "manage": "Manage household"
   },
   "accounts": {
     "add": "Add account",

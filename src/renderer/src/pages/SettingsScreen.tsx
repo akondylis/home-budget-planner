@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Field, ListCard, PageHeader, Segmented, Select } from '../components/ui'
+import { HouseholdSection } from '../components/members/HouseholdSection'
 import { useUiStore, type SidebarPosition, type ThemeMode } from '../store/ui'
 import { changeLanguage, changeSidebarPosition, changeTheme } from '../lib/ui-actions'
 import { DATE_FORMATS, formatDate, type DateFormat } from '../lib/date-format'
@@ -40,6 +41,8 @@ export function SettingsScreen() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <PageHeader title={t('settings.title')} />
+
+      <HouseholdSection />
 
       <Section title={t('settings.appearance')}>
         <Field label={t('appearance.theme')}>

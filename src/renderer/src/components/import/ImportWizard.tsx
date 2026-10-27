@@ -6,6 +6,7 @@ import { ImportReview } from './ImportReview'
 import { ColumnMappingStep } from './ColumnMappingStep'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { useImportStore } from '../../store/import'
+import { useUiStore } from '../../store/ui'
 import { formatDate, formatDateTime } from '../../lib/date-format'
 import { ipcErrorCode, ipcErrorMessage } from '../../lib/ipc-errors'
 import {
@@ -124,7 +125,11 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
     setBusy(true)
     setError(null)
     try {
-      const result = await window.api.commitImport({ previewId: preview.previewId, decisions: toDecisions(preview.rows, rowChoices) })
+      const result = await window.api.commitImport({
+        previewId: preview.previewId,
+        decisions: toDecisions(preview.rows, rowChoices),
+        createdByMemberId: useUiStore.getState().currentMemberId,
+      })
       await useLedgerStore.getState().changed()
       useImportStore.getState().imported({ ...result, accountId: preview.accountId })
       onImported(result.batchId)

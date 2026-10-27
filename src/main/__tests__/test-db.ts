@@ -29,7 +29,7 @@ export function createTestDb(): { prisma: PrismaClient; sqlite: Database.Databas
 /** Empties every domain table (children first) so each test starts clean */
 export function resetTestDb(): void {
   if (!current) throw new Error('createTestDb() first')
-  for (const table of ['Transaction', 'ImportBatch', 'CategoryRule', 'Category', 'Account']) {
+  for (const table of ['Transaction', 'ImportBatch', 'CategoryRule', 'Category', 'Account', 'Member']) {
     if (table === 'Category') current.sqlite.exec('UPDATE "Category" SET "parentId" = NULL')
     current.sqlite.exec(`DELETE FROM "${table}"`)
   }

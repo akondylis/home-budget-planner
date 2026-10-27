@@ -2,8 +2,10 @@ import { useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'rea
 import { useTranslation } from 'react-i18next'
 import { Banner, Button, ConfirmDialog, DateInput, Field, Input, Modal, Money, Segmented, Select } from '../ui'
 import { CategoryPicker } from './CategoryPicker'
+import { MemberDot } from '../members/MemberDot'
 import { activeAccounts, useLedgerStore, type EntryRequest } from '../../store/ledger'
 import { useTransactionsStore } from '../../store/transactions'
+import { useUiStore } from '../../store/ui'
 import {
   defaultAccountId,
   defaultToAccountId,
@@ -15,9 +17,11 @@ import {
   type FormKind,
 } from '../../lib/ledger'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
+import { activeMembers } from '../../lib/members'
 import { parseMoney } from '../../../../shared/money'
 import { todayDateOnly } from '../../../../shared/date-only'
 import { signedAmount } from '../../../../shared/ledger'
+import { HOUSEHOLD } from '../../../../shared/members'
 
 export interface TransactionFormProps {
   request: EntryRequest
@@ -30,6 +34,7 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
   const accounts = useLedgerStore(s => s.accounts)
   const categories = useLedgerStore(s => s.categories)
   const payees = useLedgerStore(s => s.payees)
+  const members = useLedgerStore(s => s.members)
   const editing = request.mode === 'edit' ? request.row : null
   const imported = editing?.importBatchId != null
   const ids = { amount: useId(), payee: useId(), date: useId(), account: useId(), to: useId(), note: useId(), payees: useId() }
@@ -47,6 +52,7 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
       payee: '',
       note: '',
       bookedAt: todayDateOnly(),
+      memberId: null,
     }
   })
   const [original] = useState(draft)
@@ -57,12 +63,20 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   // A category picked by hand is never replaced by the payee's usual one
   const [categoryTouched, setCategoryTouched] = useState(editing !== null)
+  // Likewise for who it is for
+  const [memberTouched, setMemberTouched] = useState(editing !== null)
 
   const errors = submitted ? validateEntry(draft) : {}
   const err = (key?: string) => (key ? t(`entry.errors.${key}`) : undefined)
   const transfer = draft.kind === 'TRANSFER'
   const open = activeAccounts(accounts)
   const changedBankValues = imported && (draft.amount !== original.amount || draft.bookedAt !== original.bookedAt)
+  // Household, then each parent; an archived parent stays listed on a row that is already theirs
+  const forMembers = members.filter(m => !m.archived || m.id === original.memberId)
+  const forOptions = activeMembers(members).length === 0 ? [] : [
+    { value: HOUSEHOLD, label: t('members.household'), icon: 'home' as const },
+    ...forMembers.map(m => ({ value: m.id, label: m.name, leading: <MemberDot colour={m.colour} size="md" /> })),
+  ]
 
   function update(patch: Partial<EntryDraft>) {
     setDraft(d => ({ ...d, ...patch }))
@@ -88,7 +102,11 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
     const known = payees.find(p => p.payee.toLocaleLowerCase() === payee.trim().toLocaleLowerCase())
     const fits = known?.categoryId && draft.kind !== 'TRANSFER'
       && groupsFor(categories, draft.kind).some(g => g.children.some(c => c.id === known.categoryId))
-    update(fits && !categoryTouched ? { payee, categoryId: known!.categoryId } : { payee })
+    const patch: Partial<EntryDraft> = fits && !categoryTouched ? { payee, categoryId: known!.categoryId } : { payee }
+    if (known && !memberTouched && (known.memberId === null || forOptions.some(o => o.value === known.memberId))) {
+      patch.memberId = known.memberId
+    }
+    update(patch)
   }
 
   async function save(andNew: boolean) {
@@ -100,6 +118,8 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
       return
     }
     const amountCents = parseMoney(draft.amount)!
+    // Stamped on new rows only; the server never changes who entered a row
+    const createdByMemberId = useUiStore.getState().currentMemberId
     setSaving(true)
     try {
       let key: string
@@ -109,7 +129,7 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
           await window.api.updateTransfer(editing.transferId, input)
           key = editing.transferId
         } else {
-          key = await window.api.createTransfer(input)
+          key = await window.api.createTransfer({ ...input, createdByMemberId })
         }
       } else {
         const input = {
@@ -120,12 +140,13 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
           categoryId: draft.categoryId,
           payee: draft.payee,
           note: draft.note,
+          memberId: draft.memberId,
         }
         if (editing) {
           await window.api.updateTransaction(editing.id, input)
           key = editing.id
         } else {
-          key = await window.api.createTransaction(input)
+          key = await window.api.createTransaction({ ...input, createdByMemberId })
         }
       }
       const ledger = useLedgerStore.getState()
@@ -139,6 +160,7 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
         setLastSaved({ cents, label: draft.payee || findCategory(categories, draft.categoryId)?.name || t('entry.kind.TRANSFER') })
         setDraft(d => ({ ...d, amount: '', payee: '', note: '', categoryId: null }))
         setCategoryTouched(false)
+        setMemberTouched(false)
         setSubmitted(false)
         amountRef.current?.focus()
       } else {
@@ -283,6 +305,19 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
                   {payees.map(p => <option key={p.payee} value={p.payee} />)}
                 </datalist>
               </Field>
+              {forOptions.length > 0 && (
+                <Field label={t('entry.for')} hint={t('entry.for_hint')}>
+                  <Segmented<string>
+                    label={t('entry.for')}
+                    value={draft.memberId ?? HOUSEHOLD}
+                    onChange={value => {
+                      setMemberTouched(true)
+                      update({ memberId: value === HOUSEHOLD ? null : value })
+                    }}
+                    options={forOptions}
+                  />
+                </Field>
+              )}
             </>
           )}
 
@@ -303,6 +338,9 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
             <Input id={ids.note} value={draft.note} onChange={e => update({ note: e.target.value })} className="w-full" />
           </Field>
 
+          {editing?.createdByName && (
+            <p className="text-xs text-gray-500">{t('entry.entered_by', { name: editing.createdByName })}</p>
+          )}
           {changedBankValues && <Banner tone="warning">{t('entry.differs_from_statement')}</Banner>}
           {serverError && <p role="alert" className="text-sm text-red-700">{serverError}</p>}
         </form>

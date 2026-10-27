@@ -11,6 +11,7 @@ import type { ThemeMode } from '../store/ui'
 import type { AppLanguage } from '../types'
 import { SHORTCUTS, type ShortcutAction } from '../hooks/useShortcuts'
 import { normalise } from '../../../shared/search-normalise'
+import type { MemberSummary } from '../../../shared/members'
 import { FOOTER_NAV_ITEMS, MAIN_NAV_ITEMS, type NavItem } from './nav-items'
 
 export type PaletteTarget =
@@ -23,6 +24,8 @@ export type PaletteTarget =
   | { kind: 'dataFolder' }
   | { kind: 'theme'; theme: ThemeMode }
   | { kind: 'language'; lang: AppLanguage }
+  | { kind: 'member'; memberId: string }
+  | { kind: 'household' }
 
 export type PaletteGroup = 'actions'
 
@@ -68,6 +71,9 @@ export interface ActionContext {
   t: TFunction
   theme: ThemeMode
   lang: string
+  /** Active members, to switch who is using the app */
+  members?: MemberSummary[]
+  currentMemberId?: string | null
 }
 
 export function keysOf(action: ShortcutAction): string[][] | undefined {
@@ -85,7 +91,7 @@ export function navItems(t: TFunction): PaletteItem[] {
 }
 
 /** Every command: navigation, shortcut actions, app actions, preferences */
-export function buildActions({ t, theme, lang }: ActionContext): PaletteItem[] {
+export function buildActions({ t, theme, lang, members = [], currentMemberId = null }: ActionContext): PaletteItem[] {
   const shortcuts: PaletteItem[] = PALETTE_SHORTCUTS.map(action => ({
     id: `shortcut:${action}`,
     group: 'actions',
@@ -100,6 +106,7 @@ export function buildActions({ t, theme, lang }: ActionContext): PaletteItem[] {
     { id: 'importHistory', group: 'actions', title: t('import.history_title'), keywords: 'import history undo statement ιστορικο εισαγωγες αναιρεση', icon: 'undo', target: { kind: 'importHistory' } },
     { id: 'worksheet', group: 'actions', title: t('palette.worksheet'), keywords: 'pdf print export budget worksheet εκτυπωση', icon: 'printer', target: { kind: 'worksheet' } },
     { id: 'tour', group: 'actions', title: t('palette.tour'), keywords: 'tour guide help ξεναγηση βοηθεια', icon: 'flag', target: { kind: 'tour' } },
+    { id: 'household', group: 'actions', title: t('settings.household'), keywords: 'household members family parents νοικοκυριο μελη οικογενεια γονεις', icon: 'users', target: { kind: 'household' } },
     { id: 'dataFolder', group: 'actions', title: t('settings.open_data_folder'), keywords: 'data folder backup database φακελος', icon: 'folder', target: { kind: 'dataFolder' } },
   ]
 
@@ -124,7 +131,18 @@ export function buildActions({ t, theme, lang }: ActionContext): PaletteItem[] {
     target: { kind: 'language', lang: other },
   }
 
-  return [...navItems(t), ...app, ...shortcuts, ...themes, language]
+  const switchMember: PaletteItem[] = members
+    .filter(m => !m.archived && m.id !== currentMemberId)
+    .map(m => ({
+      id: `member:${m.id}`,
+      group: 'actions',
+      title: t('palette.use_as', { name: m.name }),
+      keywords: 'member user switch who μελος χρηστης αλλαγη ποιος',
+      icon: 'user',
+      target: { kind: 'member', memberId: m.id },
+    }))
+
+  return [...navItems(t), ...app, ...switchMember, ...shortcuts, ...themes, language]
 }
 
 /**

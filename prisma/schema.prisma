@@ -8,7 +8,7 @@ generator client {
 }
 
 // Money rule: every amount is an Int of minor units (cents), never Float.
-// Domain models not built yet (Member, Card, Budget, Recurring, Debt) are
+// Domain models not built yet (Card, Budget, Recurring, Debt) are
 // drafted in docs/domain-model.md and added per feature.
 
 // ── Models ───────────────────────────────────────────────────────────────────
@@ -51,6 +51,21 @@ enum RuleMatch {
   CONTAINS
   STARTS_WITH
   EXACT
+}
+
+/// A parent of the household (children are not tracked). Archived, never deleted.
+model Member {
+  id                  String        @id @default(cuid())
+  name                String
+  /// Palette key from MEMBER_COLOURS (src/shared/members.ts), never a hex value
+  colour              String
+  sortOrder           Int           @default(0)
+  archivedAt          DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  transactionsFor     Transaction[] @relation("TransactionMember")
+  transactionsEntered Transaction[] @relation("TransactionCreatedBy")
+  importBatches       ImportBatch[]
 }
 
 /// One statement source = one account (a credit card is an account of kind CREDIT_CARD)
@@ -110,6 +125,12 @@ model Transaction {
   categoryId        String?
   category          Category?    @relation(fields: [categoryId], references: [id])
   note              String?
+  /// Who the row was for; null = the household (shared)
+  memberId          String?
+  member            Member?      @relation("TransactionMember", fields: [memberId], references: [id])
+  /// Who entered or imported it; set once at creation
+  createdByMemberId String?
+  createdBy         Member?      @relation("TransactionCreatedBy", fields: [createdByMemberId], references: [id])
   transferId        String?
   /// null = entered by hand
   importBatchId     String?
@@ -128,6 +149,7 @@ model Transaction {
   @@index([categoryId])
   @@index([transferId])
   @@index([importBatchId])
+  @@index([memberId])
 }
 
 model ImportBatch {
@@ -145,6 +167,8 @@ model ImportBatch {
   statementBalanceCents Int?
   /// The day that balance belongs to
   statementBalanceDate  DateTime?
+  createdByMemberId String?
+  createdBy     Member?       @relation(fields: [createdByMemberId], references: [id])
   importedAt    DateTime      @default(now())
   undoneAt      DateTime?
   transactions  Transaction[]

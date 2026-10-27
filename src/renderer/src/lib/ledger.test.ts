@@ -28,7 +28,7 @@ const tree = [
 ]
 
 const draft = (patch: Partial<EntryDraft> = {}): EntryDraft => ({
-  kind: 'EXPENSE', amount: '12,50', accountId: 'a', toAccountId: '', categoryId: 'power', payee: '', note: '', bookedAt: '2026-10-26', ...patch,
+  kind: 'EXPENSE', amount: '12,50', accountId: 'a', toAccountId: '', categoryId: 'power', payee: '', note: '', bookedAt: '2026-10-26', memberId: null, ...patch,
 })
 
 describe('categories for a picker', () => {
@@ -89,10 +89,11 @@ describe('draftFromRow', () => {
     id: 'r', accountId: 'bank', accountName: 'Bank', bookedAt: '2026-10-05', amountCents: -123405, description: '', payee: 'Lidl',
     note: null, categoryId: 'power', categoryName: 'power', categoryGroupName: 'bills', categoryType: 'BILL',
     transferId: null, transferAccountId: null, transferAccountName: null, importBatchId: null,
+    memberId: 'm1', memberName: 'Maria', memberColour: 'purple', createdByName: 'Andreas',
   }
 
   it('should turn a negative row into an expense with a plain amount', () => {
-    expect(draftFromRow(row)).toMatchObject({ kind: 'EXPENSE', amount: '1234,05', accountId: 'bank', payee: 'Lidl' })
+    expect(draftFromRow(row)).toMatchObject({ kind: 'EXPENSE', amount: '1234,05', accountId: 'bank', payee: 'Lidl', memberId: 'm1' })
     expect(centsToInput(5)).toBe('0,05')
   })
 

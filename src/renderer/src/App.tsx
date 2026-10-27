@@ -119,6 +119,8 @@ export default function App() {
       case 'dataFolder': void window.api.openDataDir(); break
       case 'theme': changeTheme(target.theme); break
       case 'language': void changeLanguage(target.lang); break
+      case 'member': useUiStore.getState().setCurrentMember(target.memberId); break
+      case 'household': setView('settings'); break
     }
   }
 
@@ -132,7 +134,7 @@ export default function App() {
 
   function renderView() {
     switch (view) {
-      case 'overview': return <OverviewScreen onPrintWorksheet={() => setWorksheetOpen(true)} />
+      case 'overview': return <OverviewScreen onPrintWorksheet={() => setWorksheetOpen(true)} onGoTo={setView} />
       case 'accounts': return <AccountsScreen onOpenTransactions={openAccountTransactions} onImport={importStatement} />
       case 'transactions': return <TransactionsScreen onGoToAccounts={() => setView('accounts')} onImport={() => importStatement()} />
       case 'settings': return <SettingsScreen />
