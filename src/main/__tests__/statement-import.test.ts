@@ -147,6 +147,42 @@ describe('statement import', () => {
     expect(rows.find(r => r.description.startsWith('POS'))).toMatchObject({ categoryId: kids!.id, payee: 'Σχολικά' })
   })
 
+  it('should turn an ATM withdrawal into a transfer to Cash, written by the import', async () => {
+    const { bankId, cashId } = await setup()
+    const p = await preview(bankId, csv(['05/10/2026;ΑΝΑΛΗΨΗ ATM ΚΗΦΙΣΙΑ;-100,00']))
+    expect(p.rows[0]).toMatchObject({ status: 'NEW', transferHint: 'ATM' })
+    const { batchId } = await commitImport({ previewId: p.previewId, decisions: [{ line: 2, action: 'TRANSFER', toAccountId: cashId }] })
+    expect(await balanceOf(cashId)).toBe(10000)
+    expect((await listTransactions({ month: '2026-10' })).expenseCents).toBe(0)
+    await undoImport(batchId)
+    expect(await balanceOf(cashId)).toBe(0)
+  })
+
+  it('should refuse a transfer into the same account', async () => {
+    const { bankId } = await setup()
+    const p = await preview(bankId, csv(['05/10/2026;ΑΝΑΛΗΨΗ ATM;-100,00']))
+    await expect(commitImport({ previewId: p.previewId, decisions: [{ line: 2, action: 'TRANSFER', toAccountId: bankId }] })).rejects.toThrow('SAME_ACCOUNT')
+  })
+
+  it('should read an unknown file with the mapping the user set, and keep it for the next file', async () => {
+    const { bankId } = await setup()
+    const odd = new TextEncoder().encode(['When;What;Out;In', '03/10/2026;Bakery;4,50;', '04/10/2026;Refund;;10,00'].join('\r\n'))
+    expect(await previewImport(bankId, 'odd.csv', odd)).toMatchObject({ ok: false, reason: 'UNKNOWN_FORMAT' })
+    const mapping = {
+      columns: { date: 'When', description: 'What', debit: 'Out', credit: 'In' },
+      dateOrder: 'DMY', decimalSeparator: ',', amountMode: 'DEBIT_CREDIT_COLUMNS', invertSign: false, debitFlags: [],
+    }
+    const mapped = await previewImport(bankId, 'odd.csv', odd, mapping)
+    expect(mapped).toMatchObject({ ok: true, profile: 'saved' })
+    if (!mapped.ok) return
+    expect(mapped.rows.map(r => r.amountCents)).toEqual([-450, 1000])
+    await commitImport({ previewId: mapped.previewId })
+    // Saved on the account: the next file reads without asking
+    const next = new TextEncoder().encode(['When;What;Out;In', '05/10/2026;Bakery;3,00;'].join('\r\n'))
+    expect(await previewImport(bankId, 'next.csv', next)).toMatchObject({ ok: true, profile: 'saved' })
+    await expect(previewImport(bankId, 'odd.csv', odd, { columns: {} })).rejects.toThrow('INVALID_INPUT')
+  })
+
   it('should say when the format is unknown or the preview has expired', async () => {
     const { bankId } = await setup()
     expect(await previewImport(bankId, 'x.csv', new TextEncoder().encode('foo;bar\n1;2'))).toMatchObject({ ok: false, reason: 'UNKNOWN_FORMAT' })

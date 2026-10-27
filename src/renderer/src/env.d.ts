@@ -32,6 +32,19 @@ interface Window {
     linkTransfer:      (idA: string, idB: string) => Promise<string>
     deleteTransaction: (id: string) => Promise<void>
 
+    pickStatement:     (labels: { title: string; filterName: string }) => Promise<import('../../shared/statement-import').PickedFile | null>
+    previewImport:     (accountId: string, fileId: string, mapping?: import('../../shared/statement-import').ColumnMapping) =>
+                         Promise<import('../../shared/statement-import').PreviewResult>
+    commitImport:      (input: { previewId: string; decisions: import('../../shared/statement-import').ImportDecision[] }) =>
+                         Promise<import('../../shared/statement-import').CommitResult>
+    listImports:       (accountId?: string) => Promise<import('../../shared/statement-import').ImportHistoryItem[]>
+    undoImport:        (batchId: string) => Promise<{ removedCount: number }>
+
+    listRules:         () => Promise<import('../../shared/statement-import').RuleSummary[]>
+    createRule:        (input: import('../../shared/statement-import').RuleInput) => Promise<{ id: string; appliedCount: number }>
+    updateRule:        (id: string, input: Partial<Omit<import('../../shared/statement-import').RuleInput, 'applyToUncategorised' | 'accountId'>> & { priority?: number }) => Promise<void>
+    deleteRule:        (id: string) => Promise<void>
+
     exportPdf:    (report: import('../../shared/report-document').ReportDocument, fileName: string, dialogTitle: string) =>
                      Promise<{ success: false } | { success: true; filePath: string }>
     openFile:      (filePath: string) => Promise<void>

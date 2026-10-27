@@ -1,5 +1,5 @@
 // Statement import shapes shared by main (import engine) and the renderer
-// (wizard, Phase 3). Amounts are integer cents; dates 'yyyy-MM-dd'.
+// (import wizard). Amounts are integer cents; dates 'yyyy-MM-dd'.
 
 import type { DateOrder } from './date-format'
 export type { DateOrder }
@@ -54,6 +54,8 @@ export interface PreviewRow {
   amountCents: number | null
   description: string
   bankReference: string | null
+  /** Merchant part of the description (payeeKey()), for rules and "same payee" */
+  payeeKey: string
   balanceAfterCents: number | null
   fingerprint: string | null
   suggestion: CategorySuggestion | null
@@ -71,4 +73,95 @@ export interface PreviewSummary {
   toCategorise: number
   dateFrom: string | null
   dateTo: string | null
+}
+
+/** Bank presets the engine knows (src/main/services/import/profiles.ts) */
+export type ProfileKey = 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'generic'
+
+/** A statement chosen in the native dialog; main keeps the path, the renderer only sees this */
+export interface PickedFile {
+  fileId: string
+  fileName: string
+}
+
+export type PreviewResult =
+  | {
+      ok: true
+      previewId: string
+      accountId: string
+      fileName: string
+      /** 'saved' = the column mapping stored on the account (or the one just set) */
+      profile: ProfileKey | 'saved'
+      /** The same file was imported into this account before (and not undone) */
+      sameFile: { importedAt: string; importedCount: number } | null
+      summary: PreviewSummary
+      rows: PreviewRow[]
+    }
+  /** The first rows of the file, so the column mapping step can show them */
+  | { ok: false; reason: 'NO_ROWS' | 'UNKNOWN_FORMAT'; sample: string[][] }
+
+export type ImportAction = 'IMPORT' | 'SKIP' | 'LINK' | 'TRANSFER'
+
+/**
+ * What to do with one row; rows without a decision get the default for their status.
+ * TRANSFER pairs with `transferWith`, or with `toAccountId` (e.g. an ATM withdrawal → Cash),
+ * where the other side is written too.
+ */
+export interface ImportDecision {
+  line: number
+  action: ImportAction
+  /** undefined = the suggestion; null = no category */
+  categoryId?: string | null
+  payee?: string | null
+  toAccountId?: string | null
+}
+
+export interface CommitResult {
+  batchId: string
+  importedCount: number
+  linkedCount: number
+  skippedCount: number
+  /** Imported rows still without a category */
+  toCategorise: number
+}
+
+export interface ImportHistoryItem {
+  id: string
+  accountId: string
+  accountName: string
+  fileName: string
+  dateFrom: string
+  dateTo: string
+  importedAt: string
+  importedCount: number
+  skippedCount: number
+  undone: boolean
+}
+
+// ── Category rules ───────────────────────────────────────────────────────────
+
+export type RuleMatch = 'CONTAINS' | 'STARTS_WITH' | 'EXACT'
+
+export interface RuleSummary {
+  id: string
+  /** Normalised payee key, e.g. "vasilopoulos" */
+  pattern: string
+  match: RuleMatch
+  accountId: string | null
+  categoryId: string
+  categoryName: string
+  payee: string | null
+  priority: number
+  hitCount: number
+}
+
+export interface RuleInput {
+  /** Free text; stored normalised like payeeKey() */
+  pattern: string
+  categoryId: string
+  payee?: string | null
+  accountId?: string | null
+  match?: RuleMatch
+  /** Also sort the rows still waiting for a category that the rule matches */
+  applyToUncategorised?: boolean
 }

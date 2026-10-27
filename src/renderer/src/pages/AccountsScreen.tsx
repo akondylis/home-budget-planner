@@ -11,9 +11,10 @@ import type { AccountSummary } from '../../../shared/ledger'
 
 export interface AccountsScreenProps {
   onOpenTransactions: (accountId: string) => void
+  onImport: (accountId: string) => void
 }
 
-export function AccountsScreen({ onOpenTransactions }: AccountsScreenProps) {
+export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenProps) {
   const { t } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
   const loaded = useLedgerStore(s => s.loaded)
@@ -60,6 +61,7 @@ export function AccountsScreen({ onOpenTransactions }: AccountsScreenProps) {
               key={account.id}
               account={account}
               onAddTransaction={() => openEntry({ mode: 'create', accountId: account.id })}
+              onImport={() => onImport(account.id)}
               onOpenTransactions={() => onOpenTransactions(account.id)}
               onEdit={() => setEditing(account)}
             />

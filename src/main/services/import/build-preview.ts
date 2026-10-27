@@ -32,6 +32,7 @@ export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: Previe
     const status: RowStatus = other ? 'TRANSFER_MATCH' : dedupe[i].status
     const twin = dedupe[i].duplicateOf
     const needsCategory = status === 'NEW' || status === 'POSSIBLE_DUPLICATE'
+    const key = payeeKey(row.description)
     return {
       line: row.line,
       status,
@@ -41,9 +42,10 @@ export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: Previe
       amountCents: row.amountCents,
       description: row.description,
       bankReference: row.bankReference,
+      payeeKey: key,
       balanceAfterCents: row.balanceAfterCents,
       fingerprint: row.fingerprint,
-      suggestion: needsCategory ? suggestCategory(payeeKey(row.description), accountId, ctx.rules, ctx.history) : null,
+      suggestion: needsCategory ? suggestCategory(key, accountId, ctx.rules, ctx.history) : null,
       duplicateOf: twin ? { id: twin.id, bookedAt: twin.bookedAt, amountCents: twin.amountCents, payee: twin.payee } : null,
       transferWith: other ? { id: other.id, accountId: other.accountId, accountName: other.accountName, bookedAt: other.bookedAt } : null,
       transferHint: status === 'NEW' ? transferHint(row.description) : null,

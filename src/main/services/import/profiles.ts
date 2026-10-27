@@ -8,9 +8,9 @@
 import { z } from 'zod'
 import { normalise } from '../../../shared/search-normalise'
 import type { AccountKind, Institution } from '../../../shared/ledger'
-import { MAPPING_FIELDS, type ColumnMapping, type MappingField } from '../../../shared/statement-import'
+import { MAPPING_FIELDS, type ColumnMapping, type MappingField, type ProfileKey } from '../../../shared/statement-import'
 
-export type ProfileKey = 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'generic'
+export type { ProfileKey }
 
 export interface StatementProfile {
   key: ProfileKey

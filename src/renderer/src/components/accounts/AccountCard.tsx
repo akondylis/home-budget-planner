@@ -8,12 +8,14 @@ import type { AccountSummary } from '../../../../shared/ledger'
 export interface AccountCardProps {
   account: AccountSummary
   onAddTransaction: () => void
+  /** Bank accounts and cards: statement import is their main way in */
+  onImport: () => void
   onOpenTransactions: () => void
   onEdit: () => void
 }
 
 /** One account: what it holds now, where its data comes from, and what to do next */
-export function AccountCard({ account, onAddTransaction, onOpenTransactions, onEdit }: AccountCardProps) {
+export function AccountCard({ account, onAddTransaction, onImport, onOpenTransactions, onEdit }: AccountCardProps) {
   const { t } = useTranslation()
   const cash = account.kind === 'CASH'
   const source = cash
@@ -32,7 +34,10 @@ export function AccountCard({ account, onAddTransaction, onOpenTransactions, onE
           <h2 className="truncate text-sm font-semibold text-fg" title={account.name}>{account.name}</h2>
           <MetaLine parts={[t(`accounts.kind.${account.kind}`), account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`)]} />
         </div>
-        <IconButton icon="pencil" size="sm" label={t('accounts.edit_named', { name: account.name })} onClick={onEdit} />
+        <div className="-mr-2 -mt-1 flex shrink-0">
+          <IconButton icon="receipt" size="sm" label={t('accounts.view_transactions')} onClick={onOpenTransactions} />
+          <IconButton icon="pencil" size="sm" label={t('accounts.edit_named', { name: account.name })} onClick={onEdit} />
+        </div>
       </div>
 
       <div className="mt-3">
@@ -42,8 +47,8 @@ export function AccountCard({ account, onAddTransaction, onOpenTransactions, onE
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" icon="plus" onClick={onAddTransaction}>{t('log.add')}</Button>
-        <Button size="sm" variant="ghost" icon="receipt" onClick={onOpenTransactions}>{t('accounts.view_transactions')}</Button>
+        {!cash && <Button size="sm" icon="download" onClick={onImport}>{t('import.command')}</Button>}
+        <Button size="sm" variant={cash ? 'secondary' : 'ghost'} icon="plus" onClick={onAddTransaction}>{t('log.add')}</Button>
       </div>
     </ListCard>
   )

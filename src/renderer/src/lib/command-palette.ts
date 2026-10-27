@@ -17,6 +17,7 @@ export type PaletteTarget =
   | { kind: 'view'; view: NavItem['id'] }
   | { kind: 'shortcut'; action: PaletteShortcut }
   | { kind: 'tour' }
+  | { kind: 'import' }
   | { kind: 'worksheet' }
   | { kind: 'dataFolder' }
   | { kind: 'theme'; theme: ThemeMode }
@@ -94,6 +95,7 @@ export function buildActions({ t, theme, lang }: ActionContext): PaletteItem[] {
   }))
 
   const app: PaletteItem[] = [
+    { id: 'import', group: 'actions', title: t('import.command'), keywords: 'import statement csv bank card εισαγωγη κινησεις τραπεζα καρτα', icon: 'download', target: { kind: 'import' } },
     { id: 'worksheet', group: 'actions', title: t('palette.worksheet'), keywords: 'pdf print export budget worksheet εκτυπωση', icon: 'printer', target: { kind: 'worksheet' } },
     { id: 'tour', group: 'actions', title: t('palette.tour'), keywords: 'tour guide help ξεναγηση βοηθεια', icon: 'flag', target: { kind: 'tour' } },
     { id: 'dataFolder', group: 'actions', title: t('settings.open_data_folder'), keywords: 'data folder backup database φακελος', icon: 'folder', target: { kind: 'dataFolder' } },

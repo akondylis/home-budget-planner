@@ -4,10 +4,13 @@ import type { TFunction } from 'i18next'
 import { Badge, Button, IconButton, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, cx } from '../ui'
 import { Icon } from '../shell/icons'
 import { CategoryPicker } from './CategoryPicker'
+import { RulePrompt } from '../import/RulePrompt'
 import { useLedgerStore } from '../../store/ledger'
 import { useTransactionsStore } from '../../store/transactions'
 import { formatDate } from '../../lib/date-format'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
+import { findCategory } from '../../lib/ledger'
+import { merchantText } from '../../../../shared/payee-key'
 import type { TransactionRow } from '../../../../shared/ledger'
 
 const COLS = cx(LIST_GRID, 'grid-cols-[1.5rem_6.5rem_minmax(0,1fr)_13rem_8.5rem_2.25rem]')
@@ -36,6 +39,8 @@ export function TransactionList({ rows }: TransactionListProps) {
   const setSelected = useTransactionsStore(s => s.setSelected)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // "Always put X in Y?" after sorting one imported row by hand
+  const [prompt, setPrompt] = useState<{ merchant: string; categoryId: string; busy: boolean; done: string | null; error: string | null } | null>(null)
 
   const selectable = rows.filter(r => !r.transferId)
   const allTicked = selectable.length > 0 && selectable.every(r => selected.includes(r.id))
@@ -46,6 +51,9 @@ export function TransactionList({ rows }: TransactionListProps) {
     try {
       await window.api.setCategory(ids, categoryId)
       setSelected([])
+      const row = ids.length === 1 ? rows.find(r => r.id === ids[0]) : undefined
+      const merchant = row?.importBatchId ? merchantText(row.description) : ''
+      setPrompt(merchant ? { merchant, categoryId, busy: false, done: null, error: null } : null)
       await useLedgerStore.getState().changed()
     } catch (err) {
       setError(ipcErrorMessage(err, t))
@@ -54,8 +62,31 @@ export function TransactionList({ rows }: TransactionListProps) {
     }
   }
 
+  async function acceptRule() {
+    if (!prompt) return
+    setPrompt({ ...prompt, busy: true, error: null })
+    try {
+      const { appliedCount } = await window.api.createRule({ pattern: prompt.merchant, categoryId: prompt.categoryId, applyToUncategorised: true })
+      setPrompt({ ...prompt, busy: false, done: appliedCount > 0 ? t('rules.saved_more', { count: appliedCount }) : t('rules.saved') })
+      if (appliedCount > 0) await useLedgerStore.getState().changed()
+    } catch (err) {
+      setPrompt({ ...prompt, busy: false, error: ipcErrorMessage(err, t) })
+    }
+  }
+
   return (
     <>
+      {prompt && (
+        <RulePrompt
+          merchant={prompt.merchant}
+          categoryName={findCategory(categories, prompt.categoryId)?.name ?? ''}
+          busy={prompt.busy}
+          done={prompt.done}
+          error={prompt.error}
+          onAccept={() => void acceptRule()}
+          onDismiss={() => setPrompt(null)}
+        />
+      )}
       {selected.length > 0 && (
         <div className="card mb-3 flex flex-wrap items-center gap-3 px-3 py-2" role="toolbar" aria-label={t('log.bulk_label')}>
           <span className="text-sm font-medium text-fg">{t('log.selected', { count: selected.length })}</span>

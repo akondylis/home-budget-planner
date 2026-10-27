@@ -34,6 +34,19 @@ contextBridge.exposeInMainWorld('api', {
   linkTransfer:      (idA: string, idB: string)       => ipcRenderer.invoke('transaction:linkTransfer', idA, idB),
   deleteTransaction: (id: string)                     => ipcRenderer.invoke('transaction:delete', id),
 
+  // ── Statement import ────────────────────────────────────────────────────────
+  pickStatement:     (labels: unknown)                => ipcRenderer.invoke('import:pickFile', labels),
+  previewImport:     (accountId: string, fileId: string, mapping?: unknown) => ipcRenderer.invoke('import:preview', accountId, fileId, mapping),
+  commitImport:      (input: unknown)                 => ipcRenderer.invoke('import:commit', input),
+  listImports:       (accountId?: string)             => ipcRenderer.invoke('import:history', accountId),
+  undoImport:        (batchId: string)                => ipcRenderer.invoke('import:undo', batchId),
+
+  // ── Category rules ──────────────────────────────────────────────────────────
+  listRules:         ()                               => ipcRenderer.invoke('rule:list'),
+  createRule:        (input: unknown)                 => ipcRenderer.invoke('rule:create', input),
+  updateRule:        (id: string, input: unknown)     => ipcRenderer.invoke('rule:update', id, input),
+  deleteRule:        (id: string)                     => ipcRenderer.invoke('rule:delete', id),
+
   // ── PDF ─────────────────────────────────────────────────────────────────────
   exportPdf:     (report: unknown, fileName: string, dialogTitle: string) => ipcRenderer.invoke('pdf:export', report, fileName, dialogTitle),
   openFile:      (filePath: string) => ipcRenderer.invoke('shell:openFile', filePath),

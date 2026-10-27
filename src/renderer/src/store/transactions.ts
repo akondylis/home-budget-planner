@@ -11,6 +11,8 @@ export interface LogFilter {
   categoryType: CategoryType | null
   categoryId: string | null
   uncategorised: boolean
+  /** One import's rows, after the wizard */
+  importBatchId: string | null
 }
 
 export const currentMonth = () => todayDateOnly().slice(0, 7)
@@ -21,6 +23,7 @@ export const EMPTY_FILTER = (): LogFilter => ({
   categoryType: null,
   categoryId: null,
   uncategorised: false,
+  importBatchId: null,
 })
 
 type TransactionsStore = {
@@ -80,6 +83,7 @@ export const useTransactionsStore = create<TransactionsStore>()((set, get) => ({
         categoryType: filter.categoryType ?? undefined,
         categoryId: filter.categoryId ?? undefined,
         uncategorised: filter.uncategorised || undefined,
+        importBatchId: filter.importBatchId ?? undefined,
         page: page + 1,
         pageSize,
       })

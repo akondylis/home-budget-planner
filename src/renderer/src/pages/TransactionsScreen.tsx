@@ -1,24 +1,30 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Banner, Button, ListCard, Money, PageHeader, Pagination, Spinner, StatTile, joinMeta } from '../components/ui'
+import { Banner, Button, ConfirmDialog, ListCard, Money, PageHeader, Pagination, Spinner, StatTile, joinMeta } from '../components/ui'
 import { Icon } from '../components/shell/icons'
 import { TransactionFilters, monthLabel } from '../components/transactions/TransactionFilters'
 import { TransactionList } from '../components/transactions/TransactionList'
 import { activeAccounts, useLedgerStore } from '../store/ledger'
 import { EMPTY_FILTER, PAGE_SIZES, currentMonth, useTransactionsStore } from '../store/transactions'
+import { useImportStore } from '../store/import'
 import { keysOf } from '../lib/command-palette'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 
 export interface TransactionsScreenProps {
   onGoToAccounts: () => void
+  onImport: () => void
 }
 
-export function TransactionsScreen({ onGoToAccounts }: TransactionsScreenProps) {
+export function TransactionsScreen({ onGoToAccounts, onImport }: TransactionsScreenProps) {
   const { t, i18n } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
   const revision = useLedgerStore(s => s.revision)
   const openEntry = useLedgerStore(s => s.openEntry)
   const { filter, data, loading, error, page, pageSize, setFilter, setPage, setPageSize } = useTransactionsStore()
+  const lastImport = useImportStore(s => s.last)
+  const [confirmUndo, setConfirmUndo] = useState(false)
+  const [undoing, setUndoing] = useState(false)
+  const [undoMessage, setUndoMessage] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null)
 
   // Reload on open and after every write anywhere in the app
   useEffect(() => {
@@ -31,9 +37,32 @@ export function TransactionsScreen({ onGoToAccounts }: TransactionsScreenProps) 
   }, [])
 
   const open = activeAccounts(accounts)
-  const filtered = filter.accountId !== null || filter.categoryType !== null || filter.categoryId !== null || filter.uncategorised
+  const filtered = filter.accountId !== null || filter.categoryType !== null || filter.categoryId !== null || filter.uncategorised || filter.importBatchId !== null
   const account = open.find(a => a.id === filter.accountId)
   const addKeys = keysOf('addTransaction')?.[0]?.join('+')
+  const justImported = lastImport !== null && lastImport.batchId === filter.importBatchId
+
+  function showAll() {
+    setFilter({ importBatchId: null, month: currentMonth() })
+  }
+
+  async function undoImport() {
+    if (!lastImport) return
+    setUndoing(true)
+    try {
+      const { removedCount } = await window.api.undoImport(lastImport.batchId)
+      useImportStore.getState().clearLast()
+      setConfirmUndo(false)
+      setUndoMessage({ tone: 'success', text: t('import.undone', { count: removedCount }) })
+      showAll()
+      await useLedgerStore.getState().changed()
+    } catch (err) {
+      setConfirmUndo(false)
+      setUndoMessage({ tone: 'warning', text: ipcErrorMessage(err, t) })
+    } finally {
+      setUndoing(false)
+    }
+  }
 
   const header = (
     <PageHeader
@@ -44,9 +73,12 @@ export function TransactionsScreen({ onGoToAccounts }: TransactionsScreenProps) 
         data && t('log.count', { count: data.total }),
       ])}
       actions={
+        <>
+        <Button icon="download" onClick={onImport} disabled={open.length === 0}>{t('import.command')}</Button>
         <Button variant="primary" icon="plus" onClick={() => openEntry()} disabled={open.length === 0} title={addKeys ? t('shortcuts.with_key', { action: t('log.add'), key: addKeys }) : undefined}>
           {t('log.add')}
         </Button>
+        </>
       }
     />
   )
@@ -78,6 +110,37 @@ export function TransactionsScreen({ onGoToAccounts }: TransactionsScreenProps) 
       </div>
 
       <TransactionFilters />
+
+      {undoMessage && (
+        <Banner
+          tone={undoMessage.tone}
+          className="mb-3"
+          action={<Button size="sm" variant="ghost" icon="close" onClick={() => setUndoMessage(null)}>{t('common.close')}</Button>}
+        >
+          {undoMessage.text}
+        </Banner>
+      )}
+
+      {filter.importBatchId && (
+        <Banner
+          tone={justImported ? 'success' : 'info'}
+          icon={justImported ? 'check' : 'download'}
+          className="mb-3"
+          action={
+            <div className="flex gap-2">
+              {justImported && <Button size="sm" icon="undo" onClick={() => setConfirmUndo(true)}>{t('import.undo')}</Button>}
+              <Button size="sm" variant="ghost" icon="close" onClick={showAll}>{t('import.show_all')}</Button>
+            </div>
+          }
+        >
+          {justImported
+            ? joinMeta([
+                t('import.done', { count: lastImport.importedCount + lastImport.linkedCount }),
+                lastImport.toCategorise > 0 && t('import.done_to_categorise', { count: lastImport.toCategorise }),
+              ])
+            : t('import.showing_one')}
+        </Banner>
+      )}
 
       {data && data.uncategorisedCount > 0 && !filter.uncategorised && (
         <Banner
@@ -130,6 +193,19 @@ export function TransactionsScreen({ onGoToAccounts }: TransactionsScreenProps) 
             />
           </div>
         </div>
+      )}
+
+      {confirmUndo && lastImport && (
+        <ConfirmDialog
+          title={t('import.undo_title')}
+          message={t('import.undo_message', { count: lastImport.importedCount })}
+          confirmLabel={t('import.undo')}
+          confirmIcon="undo"
+          tone="danger"
+          loading={undoing}
+          onConfirm={() => void undoImport()}
+          onCancel={() => setConfirmUndo(false)}
+        />
       )}
     </div>
   )

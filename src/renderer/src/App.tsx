@@ -7,6 +7,7 @@ import { PlannedScreen } from './pages/PlannedScreen'
 import { AccountsScreen } from './pages/AccountsScreen'
 import { TransactionsScreen } from './pages/TransactionsScreen'
 import { TransactionForm } from './components/transactions/TransactionForm'
+import { ImportWizard } from './components/import/ImportWizard'
 import { SettingsScreen } from './pages/SettingsScreen'
 import { CommandPalette } from './components/CommandPalette'
 import { AppTour } from './components/tour/AppTour'
@@ -15,7 +16,8 @@ import { useThemeSync } from './hooks/useThemeSync'
 import { useShortcuts, type ShortcutAction } from './hooks/useShortcuts'
 import { useUiStore } from './store/ui'
 import { activeAccounts, useLedgerStore } from './store/ledger'
-import { useTransactionsStore } from './store/transactions'
+import { EMPTY_FILTER, useTransactionsStore } from './store/transactions'
+import { useImportStore } from './store/import'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
 import type { PaletteTarget } from './lib/command-palette'
 import type { View } from './types'
@@ -44,6 +46,7 @@ export default function App() {
   const sidebarPosition = useUiStore(s => s.sidebarPosition)
   const paletteOpen = useUiStore(s => s.paletteOpen)
   const entry = useLedgerStore(s => s.entry)
+  const importWizard = useImportStore(s => s.wizard)
   // Subscribing re-renders the tree when the date format changes in Settings
   useUiStore(s => s.dateFormat)
 
@@ -84,6 +87,18 @@ export default function App() {
     else ledger.openEntry()
   }
 
+  // Statements need an account to go into: Accounts (Quick setup) comes first
+  function importStatement(accountId?: string) {
+    if (activeAccounts(useLedgerStore.getState().accounts).every(a => a.kind === 'CASH')) setView('accounts')
+    else useImportStore.getState().openWizard(accountId)
+  }
+
+  /** After an import: the log shows just its rows */
+  function showImport(batchId: string) {
+    useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month: null, importBatchId: batchId })
+    setView('transactions')
+  }
+
   function openAccountTransactions(accountId: string) {
     useTransactionsStore.getState().setFilter({ accountId, month: null })
     setView('transactions')
@@ -95,6 +110,7 @@ export default function App() {
       case 'view': setView(target.view); break
       case 'shortcut': commands[target.action](); break
       case 'tour': useUiStore.getState().startTour(); break
+      case 'import': importStatement(); break
       case 'worksheet': setWorksheetOpen(true); break
       case 'dataFolder': void window.api.openDataDir(); break
       case 'theme': changeTheme(target.theme); break
@@ -113,8 +129,8 @@ export default function App() {
   function renderView() {
     switch (view) {
       case 'overview': return <OverviewScreen onPrintWorksheet={() => setWorksheetOpen(true)} />
-      case 'accounts': return <AccountsScreen onOpenTransactions={openAccountTransactions} />
-      case 'transactions': return <TransactionsScreen onGoToAccounts={() => setView('accounts')} />
+      case 'accounts': return <AccountsScreen onOpenTransactions={openAccountTransactions} onImport={importStatement} />
+      case 'transactions': return <TransactionsScreen onGoToAccounts={() => setView('accounts')} onImport={() => importStatement()} />
       case 'settings': return <SettingsScreen />
       default: return <PlannedScreen view={view} />
     }
@@ -143,6 +159,13 @@ export default function App() {
       </div>
       {paletteOpen && <CommandPalette onClose={() => useUiStore.getState().setPaletteOpen(false)} onRun={runPaletteTarget} />}
       {worksheetOpen && <WorksheetPreviewModal onClose={() => setWorksheetOpen(false)} />}
+      {importWizard && (
+        <ImportWizard
+          accountId={importWizard.accountId}
+          onClose={() => useImportStore.getState().closeWizard()}
+          onImported={showImport}
+        />
+      )}
       {entry && <TransactionForm request={entry} onClose={() => useLedgerStore.getState().closeEntry()} />}
       <AppTour />
     </div>

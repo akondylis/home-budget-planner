@@ -85,6 +85,8 @@ export interface ListRowProps {
   striped?: boolean
   /** Marks the row just created or edited, so the eye finds it */
   highlighted?: boolean
+  /** Left out of an action (e.g. an unticked import row): dimmed text, controls still usable */
+  muted?: boolean
   /** Makes the whole row clickable; keep a keyboard-reachable action in the row too.
       A middle-click passes `{ background: true }` */
   onOpen?: (opts?: OpenOpts) => void
@@ -94,11 +96,11 @@ export interface ListRowProps {
   expansion?: ReactNode
 }
 
-export function ListRow({ cols, striped = false, highlighted = false, onOpen, children, expansion }: ListRowProps) {
+export function ListRow({ cols, striped = false, highlighted = false, muted = false, onOpen, children, expansion }: ListRowProps) {
   return (
     <div
       data-highlighted={highlighted || undefined}
-      className={cx('group border-b border-gray-100 last:rounded-b-xl last:border-b-0', striped && 'bg-gray-50', highlighted && 'bg-accent/10')}
+      className={cx('group border-b border-gray-100 last:rounded-b-xl last:border-b-0', striped && 'bg-gray-50', highlighted && 'bg-accent/10', muted && 'text-fg-muted')}
     >
       <div
         onClick={onOpen && (() => onOpen())}

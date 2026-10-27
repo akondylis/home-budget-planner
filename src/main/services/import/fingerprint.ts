@@ -8,25 +8,11 @@
 import { createHash } from 'crypto'
 import { normalise } from '../../../shared/search-normalise'
 
-// Words banks put before the merchant ("POS ΣΚΛΑΒΕΝΙΤΗΣ", "ΑΓΟΡΑ LIDL")
-const LEADING_NOISE = new Set(['pos', 'agora', 'agores', 'e', 'commerce', 'ecommerce', 'contactless', 'anepafi', 'pliromi'])
+export { payeeKey } from '../../../shared/payee-key'
 
 /** Description as matched by the fingerprint: accents and case folded, digits kept */
 export function descriptionKey(description: string): string {
   return normalise(description)
-}
-
-/**
- * Description reduced to the merchant, for rules and "last category for this payee":
- * no digits (card masks, dates, terminal ids) and no leading words like POS or ΑΓΟΡΑ.
- */
-export function payeeKey(description: string): string {
-  const words = normalise(description.replace(/[x*]{2,}\d*/gi, ' ').replace(/\d+/g, ' '))
-    .split(' ')
-    .filter(w => w.length > 0)
-  let start = 0
-  while (start < words.length - 1 && LEADING_NOISE.has(words[start])) start++
-  return words.slice(start).join(' ')
 }
 
 export interface FingerprintInput {

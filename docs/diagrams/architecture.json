@@ -110,6 +110,73 @@
       ]
     },
     {
+      "id": "import",
+      "title": "Statement import",
+      "screen": [
+        "Import wizard (account",
+        "cards, log, Ctrl+K)"
+      ],
+      "handler": "ipc/import.ts",
+      "service": [
+        "services/import/*",
+        "(read, dedupe, commit)"
+      ],
+      "store": "SQLite · ImportBatch",
+      "calls": [
+        {
+          "api": "pickStatement",
+          "channel": "import:pickFile"
+        },
+        {
+          "api": "previewImport",
+          "channel": "import:preview"
+        },
+        {
+          "api": "commitImport",
+          "channel": "import:commit"
+        },
+        {
+          "api": "listImports",
+          "channel": "import:history"
+        },
+        {
+          "api": "undoImport",
+          "channel": "import:undo"
+        }
+      ]
+    },
+    {
+      "id": "rule",
+      "title": "Category rules",
+      "screen": [
+        "“Always put X in Y?”",
+        "(import review, log)"
+      ],
+      "handler": "ipc/rule.ts",
+      "service": [
+        "services/rules.ts"
+      ],
+      "store": "SQLite · CategoryRule",
+      "calls": [
+        {
+          "api": "listRules",
+          "channel": "rule:list"
+        },
+        {
+          "api": "createRule",
+          "channel": "rule:create"
+        },
+        {
+          "api": "updateRule",
+          "channel": "rule:update"
+        },
+        {
+          "api": "deleteRule",
+          "channel": "rule:delete"
+        }
+      ]
+    },
+    {
       "id": "category",
       "title": "Categories",
       "screen": [

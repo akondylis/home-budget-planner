@@ -5,14 +5,24 @@ import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { dateOnlyToDate, dateToDateOnly } from '../../../shared/date-only'
-import type { PreviewRow, PreviewSummary } from '../../../shared/statement-import'
+import type {
+  ColumnMapping,
+  CommitResult,
+  ImportDecision,
+  ImportHistoryItem,
+  PreviewResult,
+  PreviewRow,
+  PreviewSummary,
+} from '../../../shared/statement-import'
 import { readStatement } from './read-statement'
 import { buildPreview } from './build-preview'
 import { fileHash, payeeKey } from './fingerprint'
 import { sortRules } from './apply-rules'
 import { TWIN_WINDOW_DAYS } from './dedupe'
 import { TRANSFER_WINDOW_DAYS } from './transfer-match'
-import type { ProfileKey } from './profiles'
+import { parseSavedMapping } from './profiles'
+
+export type { CommitResult, ImportDecision, ImportHistoryItem, PreviewResult }
 
 /** Parsed previews wait here until committed; the renderer never holds the file */
 const PREVIEW_TTL_MS = 30 * 60_000
@@ -24,6 +34,8 @@ interface CachedPreview {
   fileHash: string
   rows: PreviewRow[]
   summary: PreviewSummary
+  /** Set in the column mapping step: saved on the account when the import is committed */
+  mapping: ColumnMapping | null
   createdAt: number
 }
 
@@ -38,28 +50,21 @@ function cachePreview(preview: CachedPreview): string {
   return id
 }
 
-export type PreviewResult =
-  | {
-      ok: true
-      previewId: string
-      accountId: string
-      fileName: string
-      profile: ProfileKey | 'saved'
-      /** The same file was imported into this account before (and not undone) */
-      sameFile: { importedAt: string; importedCount: number } | null
-      summary: PreviewSummary
-      rows: PreviewRow[]
-    }
-  | { ok: false; reason: 'NO_ROWS' | 'UNKNOWN_FORMAT'; sample: string[][] }
-
 const shift = (date: string, days: number) => new Date(dateOnlyToDate(date).getTime() + days * 86_400_000)
 
-/** Reads a statement for an account and says what would happen to each row. Throws: 'ACCOUNT_NOT_FOUND' */
-export async function previewImport(accountId: string, fileName: string, bytes: Uint8Array): Promise<PreviewResult> {
+/**
+ * Reads a statement for an account and says what would happen to each row.
+ * `mapping` comes from the column mapping step, when no preset knew the file.
+ * Throws: 'INVALID_INPUT', 'ACCOUNT_NOT_FOUND'
+ */
+export async function previewImport(accountId: unknown, fileName: string, bytes: Uint8Array, mapping?: unknown): Promise<PreviewResult> {
+  if (typeof accountId !== 'string') throw new Error('INVALID_INPUT')
+  const userMapping = mapping === undefined || mapping === null ? null : parseSavedMapping(mapping)
+  if (mapping && !userMapping) throw new Error('INVALID_INPUT')
   const account = await prisma.account.findUnique({ where: { id: accountId } })
   if (!account || account.archivedAt) throw new Error('ACCOUNT_NOT_FOUND')
 
-  const read = readStatement(bytes, account)
+  const read = readStatement(bytes, account, userMapping ?? undefined)
   if (!read.ok) return read
 
   const dates = read.rows.map(r => r.bookedAt).filter((d): d is string => d !== null).sort()
@@ -113,7 +118,7 @@ export async function previewImport(accountId: string, fileName: string, bytes: 
     history,
   })
 
-  const previewId = cachePreview({ accountId, fileName, fileHash: hash, rows, summary, createdAt: Date.now() })
+  const previewId = cachePreview({ accountId, fileName, fileHash: hash, rows, summary, mapping: userMapping, createdAt: Date.now() })
   return {
     ok: true,
     previewId,
@@ -128,29 +133,17 @@ export async function previewImport(accountId: string, fileName: string, bytes: 
 
 // ── Commit ───────────────────────────────────────────────────────────────────
 
-/**
- * What to do with one row. Rows without a decision get the default for their status:
- * NEW → import with the suggestion, TRANSFER_MATCH → pair as a transfer, others → skip.
- * LINK (for a possible duplicate) gives the hand-entered row the statement's data, so there is still one row.
- */
+// Defaults per status are in defaultAction(); LINK (for a possible duplicate) gives the
+// hand-entered row the statement's data, so there is still one row
 const decisionSchema = z.object({
   line: z.number().int(),
   action: z.enum(['IMPORT', 'SKIP', 'LINK', 'TRANSFER']),
   categoryId: z.string().nullish(),
   payee: z.string().trim().max(120).nullish(),
-})
-export type ImportDecision = z.infer<typeof decisionSchema>
+  toAccountId: z.string().nullish(),
+}) satisfies z.ZodType<ImportDecision>
 
 const commitSchema = z.object({ previewId: z.string(), decisions: z.array(decisionSchema).default([]) })
-
-export interface CommitResult {
-  batchId: string
-  importedCount: number
-  linkedCount: number
-  skippedCount: number
-  /** Imported rows still without a category */
-  toCategorise: number
-}
 
 function defaultAction(row: PreviewRow): ImportDecision['action'] {
   if (row.status === 'NEW') return 'IMPORT'
@@ -161,7 +154,7 @@ function defaultAction(row: PreviewRow): ImportDecision['action'] {
 /**
  * Writes the chosen rows in one database transaction. Fingerprints and bank
  * references are checked again inside it, so a second click never inserts twice.
- * Throws: 'INVALID_INPUT', 'IMPORT_PREVIEW_EXPIRED', 'IMPORT_NOTHING_TO_IMPORT'
+ * Throws: 'INVALID_INPUT', 'IMPORT_PREVIEW_EXPIRED', 'IMPORT_NOTHING_TO_IMPORT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND'
  */
 export async function commitImport(input: unknown): Promise<CommitResult> {
   const parsed = commitSchema.safeParse(input)
@@ -176,13 +169,21 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
     .filter(r => r.status !== 'INVALID' && r.bookedAt !== null && r.amountCents !== null)
     .map(row => {
       const d = byLine.get(row.line)
-      return { row, action: d?.action ?? defaultAction(row), categoryId: d?.categoryId, payee: d?.payee }
+      return { row, action: d?.action ?? defaultAction(row), categoryId: d?.categoryId, payee: d?.payee, toAccountId: d?.toAccountId ?? null }
     })
     .filter(p => p.action !== 'SKIP')
   if (plan.length === 0) throw new Error('IMPORT_NOTHING_TO_IMPORT')
 
   const { accountId } = preview
   const usedRules = new Map<string, number>()
+
+  // Accounts that receive the other side of a transfer (an ATM withdrawal → Cash)
+  const targets = [...new Set(plan.map(p => p.action === 'TRANSFER' && !p.row.transferWith ? p.toAccountId : null).filter((id): id is string => id !== null))]
+  if (targets.includes(accountId)) throw new Error('SAME_ACCOUNT')
+  if (targets.length) {
+    const found = await prisma.account.count({ where: { id: { in: targets }, archivedAt: null } })
+    if (found !== targets.length) throw new Error('ACCOUNT_NOT_FOUND')
+  }
 
   const result = await prisma.$transaction(async tx => {
     const batch = await tx.importBatch.create({
@@ -201,7 +202,7 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
     let linked = 0
     let toCategorise = 0
 
-    for (const { row, action, categoryId, payee } of plan) {
+    for (const { row, action, categoryId, payee, toAccountId } of plan) {
       const clash = await tx.transaction.findFirst({
         where: { accountId, OR: [{ fingerprint: row.fingerprint }, ...(row.bankReference ? [{ bankReference: row.bankReference }] : [])] },
         select: { id: true },
@@ -236,6 +237,19 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
           imported++
           continue
         }
+        if (!row.transferWith && toAccountId) {
+          // The other side has no statement of its own: write it too, as part of this import
+          const transferId = randomUUID()
+          const bookedAt = dateOnlyToDate(row.bookedAt!)
+          await tx.transaction.create({
+            data: { ...bankData, accountId, importBatchId: batch.id, bookedAt, amountCents: row.amountCents!, transferId },
+          })
+          await tx.transaction.create({
+            data: { accountId: toAccountId, importBatchId: batch.id, bookedAt, amountCents: -row.amountCents!, transferId, description: row.description },
+          })
+          imported++
+          continue
+        }
         // The other side changed since the preview: import it as a plain row to categorise
       }
 
@@ -254,12 +268,14 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
         },
       })
       imported++
-      if (!chosen) toCategorise++
+      // A card payment is not waiting for a category but for the card statement
+      if (!chosen && !row.transferHint) toCategorise++
     }
 
     for (const [id, n] of usedRules) await tx.categoryRule.update({ where: { id }, data: { hitCount: { increment: n } } })
     const skipped = preview.rows.length - imported - linked
     await tx.importBatch.update({ where: { id: batch.id }, data: { importedCount: imported + linked, skippedCount: skipped } })
+    if (preview.mapping) await tx.account.update({ where: { id: accountId }, data: { importMapping: preview.mapping as object } })
     return { batchId: batch.id, importedCount: imported, linkedCount: linked, skippedCount: skipped, toCategorise }
   })
   return result
@@ -291,19 +307,6 @@ export async function undoImport(batchId: unknown): Promise<{ removedCount: numb
     await tx.importBatch.update({ where: { id: batchId }, data: { undoneAt: new Date() } })
     return { removedCount: removed.count }
   })
-}
-
-export interface ImportHistoryItem {
-  id: string
-  accountId: string
-  accountName: string
-  fileName: string
-  dateFrom: string
-  dateTo: string
-  importedAt: string
-  importedCount: number
-  skippedCount: number
-  undone: boolean
 }
 
 /** Past imports, newest first */
