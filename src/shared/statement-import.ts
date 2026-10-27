@@ -1,0 +1,74 @@
+// Statement import shapes shared by main (import engine) and the renderer
+// (wizard, Phase 3). Amounts are integer cents; dates 'yyyy-MM-dd'.
+
+import type { DateOrder } from './date-format'
+export type { DateOrder }
+
+/** Where a preview row stands, from exact to fuzzy (see docs/domain-model.md) */
+export const ROW_STATUSES = ['NEW', 'ALREADY_IMPORTED', 'POSSIBLE_DUPLICATE', 'TRANSFER_MATCH', 'INVALID'] as const
+export type RowStatus = (typeof ROW_STATUSES)[number]
+
+export type AmountMode = 'SIGNED' | 'DEBIT_CREDIT_COLUMNS' | 'AMOUNT_WITH_DC_FLAG'
+export type DecimalSeparator = ',' | '.'
+
+/** Statement columns the engine reads; the rest of a file is ignored */
+export const MAPPING_FIELDS = ['date', 'valueDate', 'description', 'amount', 'debit', 'credit', 'dcFlag', 'balance', 'reference'] as const
+export type MappingField = (typeof MAPPING_FIELDS)[number]
+
+/**
+ * How to read one bank's export. Saved on the account as `importMapping` when
+ * no preset fits; columns are named by their header text, so a new file with
+ * the same headers reads the same way.
+ */
+export interface ColumnMapping {
+  columns: Partial<Record<MappingField, string>>
+  dateOrder: DateOrder
+  decimalSeparator: DecimalSeparator
+  amountMode: AmountMode
+  /** Card exports print purchases as positive amounts: flip so spending is negative */
+  invertSign: boolean
+  /** Flag values that mean money out, for AMOUNT_WITH_DC_FLAG (e.g. "Χ", "D") */
+  debitFlags: string[]
+}
+
+/** Why a row could not be read */
+export type RowProblem = 'DATE' | 'AMOUNT'
+
+/** Hint for a row that looks like money moving between own accounts */
+export type TransferHint = 'CARD_PAYMENT' | 'ATM'
+
+export interface CategorySuggestion {
+  categoryId: string
+  payee: string | null
+  /** A rule (with its pattern) or the category last used for this payee */
+  source: { kind: 'rule'; ruleId: string; pattern: string } | { kind: 'history' }
+}
+
+export interface PreviewRow {
+  /** 1-based line in the file, for "line 14 could not be read" */
+  line: number
+  status: RowStatus
+  problem?: RowProblem
+  bookedAt: string | null
+  valueDate: string | null
+  amountCents: number | null
+  description: string
+  bankReference: string | null
+  balanceAfterCents: number | null
+  fingerprint: string | null
+  suggestion: CategorySuggestion | null
+  /** POSSIBLE_DUPLICATE: the hand-entered row it may be */
+  duplicateOf: { id: string; bookedAt: string; amountCents: number; payee: string | null } | null
+  /** TRANSFER_MATCH: the other side, already in another own account */
+  transferWith: { id: string; accountId: string; accountName: string; bookedAt: string } | null
+  transferHint: TransferHint | null
+}
+
+export interface PreviewSummary {
+  /** Rows per status */
+  counts: Record<RowStatus, number>
+  /** NEW rows (and transfer matches) without a category suggestion */
+  toCategorise: number
+  dateFrom: string | null
+  dateTo: string | null
+}

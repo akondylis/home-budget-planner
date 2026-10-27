@@ -34,8 +34,11 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 - **Transfers** are written as two rows in one database transaction. Deleting one side deletes a hand-entered other
   side; an imported other side stays (it is on a statement) and goes back to "to categorise".
 - **Imported rows** keep their bank text and fingerprint when edited, so a later import still recognises them.
-  The duplicate rule (fingerprint with an occurrence index, bank reference, fuzzy twin, transfer pairing) is in
-  `.claude/plans/in-the-app-i-quizzical-stroustrup.md` until the statement import ships.
+- **Statement import** never doubles a row: same bank reference or same fingerprint (account, date, cents, bank text
+  and its occurrence number inside the file) → already imported; a hand-entered row with the same amount ±3 days →
+  possible duplicate (Link keeps one row); the opposite amount in another own account ±5 days → transfer. Code and
+  rationale: `src/main/services/import/` (`fingerprint.ts`, `dedupe.ts`, `transfer-match.ts`). Undo removes the rows
+  an import created; rows it linked or paired stay.
 - **Starting data**: an empty database gets the category groups (one per type) and common Greek merchant rules, in
   the app language of that moment (`src/main/services/seed.ts`). After that they are the household's own data.
 
