@@ -8,6 +8,7 @@ import { AccountsScreen } from './pages/AccountsScreen'
 import { TransactionsScreen } from './pages/TransactionsScreen'
 import { TransactionForm } from './components/transactions/TransactionForm'
 import { ImportWizard } from './components/import/ImportWizard'
+import { ImportHistory } from './components/import/ImportHistory'
 import { SettingsScreen } from './pages/SettingsScreen'
 import { CommandPalette } from './components/CommandPalette'
 import { AppTour } from './components/tour/AppTour'
@@ -47,6 +48,7 @@ export default function App() {
   const paletteOpen = useUiStore(s => s.paletteOpen)
   const entry = useLedgerStore(s => s.entry)
   const importWizard = useImportStore(s => s.wizard)
+  const importHistory = useImportStore(s => s.history)
   // Subscribing re-renders the tree when the date format changes in Settings
   useUiStore(s => s.dateFormat)
 
@@ -95,6 +97,7 @@ export default function App() {
 
   /** After an import: the log shows just its rows */
   function showImport(batchId: string) {
+    useImportStore.getState().closeHistory()
     useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month: null, importBatchId: batchId })
     setView('transactions')
   }
@@ -111,6 +114,7 @@ export default function App() {
       case 'shortcut': commands[target.action](); break
       case 'tour': useUiStore.getState().startTour(); break
       case 'import': importStatement(); break
+      case 'importHistory': useImportStore.getState().openHistory(); break
       case 'worksheet': setWorksheetOpen(true); break
       case 'dataFolder': void window.api.openDataDir(); break
       case 'theme': changeTheme(target.theme); break
@@ -164,6 +168,13 @@ export default function App() {
           accountId={importWizard.accountId}
           onClose={() => useImportStore.getState().closeWizard()}
           onImported={showImport}
+        />
+      )}
+      {importHistory && (
+        <ImportHistory
+          accountId={importHistory.accountId}
+          onClose={() => useImportStore.getState().closeHistory()}
+          onShowRows={showImport}
         />
       )}
       {entry && <TransactionForm request={entry} onClose={() => useLedgerStore.getState().closeEntry()} />}

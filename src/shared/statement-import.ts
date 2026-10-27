@@ -116,6 +116,13 @@ export interface ImportDecision {
   toAccountId?: string | null
 }
 
+/** The statement's closing balance next to the app's balance on the same day */
+export interface Reconciliation {
+  date: string
+  statementBalanceCents: number
+  appBalanceCents: number
+}
+
 export interface CommitResult {
   batchId: string
   importedCount: number
@@ -123,6 +130,8 @@ export interface CommitResult {
   skippedCount: number
   /** Imported rows still without a category */
   toCategorise: number
+  /** null when the file has no balance column */
+  reconciliation: Reconciliation | null
 }
 
 export interface ImportHistoryItem {
@@ -136,6 +145,8 @@ export interface ImportHistoryItem {
   importedCount: number
   skippedCount: number
   undone: boolean
+  /** Checked now, so later edits show up; null when undone or the file had no balance */
+  reconciliation: Reconciliation | null
 }
 
 // ── Category rules ───────────────────────────────────────────────────────────
@@ -164,4 +175,25 @@ export interface RuleInput {
   match?: RuleMatch
   /** Also sort the rows still waiting for a category that the rule matches */
   applyToUncategorised?: boolean
+}
+
+// ── Subscription hints ───────────────────────────────────────────────────────
+
+export type SubscriptionInterval = 'MONTHLY' | 'YEARLY'
+
+/** "Looks like a subscription: Netflix €13,99 monthly" */
+export interface SubscriptionHint {
+  /** payeeKey() of the merchant */
+  key: string
+  label: string
+  /** Latest charge, positive */
+  amountCents: number
+  interval: SubscriptionInterval
+  /** Charges in the steady run */
+  count: number
+  lastDate: string
+  /** Category of the latest charge (null = not sorted yet) */
+  categoryId: string | null
+  /** The charges in the run, to sort them in one go */
+  transactionIds: string[]
 }

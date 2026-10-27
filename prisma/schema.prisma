@@ -141,6 +141,10 @@ model ImportBatch {
   rowCount      Int
   importedCount Int
   skippedCount  Int
+  /// Closing balance printed in the statement (account sign: a card's debt is negative); null when the file has no balance column
+  statementBalanceCents Int?
+  /// The day that balance belongs to
+  statementBalanceDate  DateTime?
   importedAt    DateTime      @default(now())
   undoneAt      DateTime?
   transactions  Transaction[]

@@ -7,6 +7,9 @@ import { TransactionList } from '../components/transactions/TransactionList'
 import { activeAccounts, useLedgerStore } from '../store/ledger'
 import { EMPTY_FILTER, PAGE_SIZES, currentMonth, useTransactionsStore } from '../store/transactions'
 import { useImportStore } from '../store/import'
+import { ReconciliationBanner, balanceGap } from '../components/import/ReconciliationNote'
+import { SubscriptionHints } from '../components/subscriptions/SubscriptionHints'
+import type { SubscriptionHint } from '../../../shared/statement-import'
 import { keysOf } from '../lib/command-palette'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 
@@ -25,10 +28,22 @@ export function TransactionsScreen({ onGoToAccounts, onImport }: TransactionsScr
   const [confirmUndo, setConfirmUndo] = useState(false)
   const [undoing, setUndoing] = useState(false)
   const [undoMessage, setUndoMessage] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null)
+  const dismissedHints = useLedgerStore(s => s.dismissedHints)
+  const [hints, setHints] = useState<SubscriptionHint[]>([])
+  const [hintsOpen, setHintsOpen] = useState(false)
 
   // Reload on open and after every write anywhere in the app
   useEffect(() => {
     void useTransactionsStore.getState().fetch()
+  }, [revision])
+
+  // Recomputed after every write: sorting one as a subscription makes it go away
+  useEffect(() => {
+    let alive = true
+    window.api.subscriptionHints()
+      .then(list => { if (alive) setHints(list) })
+      .catch(err => console.error('[subscriptions] hints failed:', err))
+    return () => { alive = false }
   }, [revision])
 
   // The highlight marks the row just saved; leaving the page ends it
@@ -41,6 +56,7 @@ export function TransactionsScreen({ onGoToAccounts, onImport }: TransactionsScr
   const account = open.find(a => a.id === filter.accountId)
   const addKeys = keysOf('addTransaction')?.[0]?.join('+')
   const justImported = lastImport !== null && lastImport.batchId === filter.importBatchId
+  const openHints = hints.filter(h => !dismissedHints.includes(h.key))
 
   function showAll() {
     setFilter({ importBatchId: null, month: currentMonth() })
@@ -137,8 +153,22 @@ export function TransactionsScreen({ onGoToAccounts, onImport }: TransactionsScr
             ? joinMeta([
                 t('import.done', { count: lastImport.importedCount + lastImport.linkedCount }),
                 lastImport.toCategorise > 0 && t('import.done_to_categorise', { count: lastImport.toCategorise }),
+                lastImport.reconciliation && balanceGap(lastImport.reconciliation) === 0 && t('import.balance_matches'),
               ])
             : t('import.showing_one')}
+        </Banner>
+      )}
+
+      {justImported && lastImport.reconciliation && <ReconciliationBanner reconciliation={lastImport.reconciliation} />}
+
+      {openHints.length > 0 && !filter.importBatchId && (
+        <Banner
+          tone="info"
+          icon="repeat"
+          className="mb-3"
+          action={<Button size="sm" onClick={() => setHintsOpen(true)}>{t('subscriptions.review')}</Button>}
+        >
+          {t('subscriptions.banner', { count: openHints.length, names: openHints.slice(0, 2).map(h => h.label).join(', ') })}
         </Banner>
       )}
 
@@ -194,6 +224,8 @@ export function TransactionsScreen({ onGoToAccounts, onImport }: TransactionsScr
           </div>
         </div>
       )}
+
+      {hintsOpen && <SubscriptionHints hints={openHints} onClose={() => setHintsOpen(false)} />}
 
       {confirmUndo && lastImport && (
         <ConfirmDialog

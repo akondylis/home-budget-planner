@@ -22,12 +22,15 @@ type LedgerStore = {
   entry: EntryRequest | null
   /** Row id or transferId of the entry just saved, highlighted in the log */
   highlightKey: string | null
+  /** Merchants (payee keys) the user said are not subscriptions */
+  dismissedHints: string[]
   load: () => Promise<void>
   /** Call after a write: reloads balances and suggestions and tells lists to refresh */
   changed: () => Promise<void>
   openEntry: (request?: EntryRequest) => void
   closeEntry: () => void
   saved: (key: string, accountId: string) => void
+  dismissHint: (key: string) => void
 }
 
 async function fetchAll() {
@@ -50,6 +53,7 @@ export const useLedgerStore = create<LedgerStore>()(
       lastAccountId: null,
       entry: null,
       highlightKey: null,
+      dismissedHints: [],
       load: async () => {
         set({ ...(await fetchAll()), loaded: true })
       },
@@ -60,11 +64,12 @@ export const useLedgerStore = create<LedgerStore>()(
       openEntry: (request = { mode: 'create' }) => set({ entry: request }),
       closeEntry: () => set({ entry: null }),
       saved: (key, accountId) => set({ highlightKey: key, lastAccountId: accountId }),
+      dismissHint: key => set(s => ({ dismissedHints: [...new Set([...s.dismissedHints, key])] })),
     }),
     {
       name: 'ledger-prefs',
       storage: createJSONStorage(() => safeStorage),
-      partialize: s => ({ lastAccountId: s.lastAccountId }),
+      partialize: s => ({ lastAccountId: s.lastAccountId, dismissedHints: s.dismissedHints }),
     },
   ),
 )

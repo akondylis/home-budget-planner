@@ -560,6 +560,35 @@
     "undo_message_one": "The {{count}} imported row is removed and balances go back. Rows you entered by hand stay. You can import the file again later.",
     "undo_message_other": "The {{count}} imported rows are removed and balances go back. Rows you entered by hand stay. You can import the file again later.",
     "undone_one": "Import undone: {{count}} row removed.",
-    "undone_other": "Import undone: {{count}} rows removed."
+    "undone_other": "Import undone: {{count}} rows removed.",
+    "history_title": "Past imports",
+    "history_empty": "No statements imported yet.",
+    "history_when": "imported {{date}}",
+    "history_count_one": "{{count}} row",
+    "history_count_other": "{{count}} rows",
+    "history_undone": "Undone",
+    "history_show": "Show its rows",
+    "balance_ok": "Matches the bank",
+    "balance_matches": "Balance matches the bank",
+    "balance_differs": "Differs by {{amount}}",
+    "balance_explain": "On {{date}} the bank says {{bank}} but the app shows {{app}}: a difference of {{amount}}.",
+    "balance_hint": "Check the account’s opening balance, rows entered by hand, or an earlier statement not imported yet."
+  },
+  "subscriptions": {
+    "banner_one": "{{count}} payment looks like a subscription: {{names}}.",
+    "banner_other": "{{count}} payments look like subscriptions: {{names}}…",
+    "review": "Review",
+    "hints_title": "Looks like a subscription",
+    "hints_subtitle": "The same merchant, about the same amount, every month or year.",
+    "hints_empty": "Nothing left to review.",
+    "every_MONTHLY": "{{amount}} monthly",
+    "every_YEARLY": "{{amount}} yearly",
+    "times_one": "{{count}} time",
+    "times_other": "{{count}} times",
+    "last": "last {{date}}",
+    "sort_as": "Sort {{name}} as a subscription",
+    "sort_placeholder": "Sort as subscription…",
+    "not_one": "Not a subscription",
+    "sorted": "{{name}} now goes to {{category}}, this time and next."
   }
 }

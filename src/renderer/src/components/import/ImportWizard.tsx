@@ -245,6 +245,9 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
       size="md"
       footer={
         <>
+          <Button variant="ghost" icon="undo" className="mr-auto" onClick={() => useImportStore.getState().openHistory(accountId)} disabled={busy}>
+            {t('import.history_title')}
+          </Button>
           {cancel}
           <Button variant="primary" icon="folder" onClick={() => void choose()} disabled={busy || !accountId}>
             {busy ? t('import.reading') : t('import.choose_file')}

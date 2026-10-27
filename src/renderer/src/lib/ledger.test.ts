@@ -36,6 +36,8 @@ describe('categories for a picker', () => {
     expect(groupsFor(tree, 'INCOME').map(g => g.id)).toEqual(['income'])
     expect(groupsFor(tree, 'EXPENSE').map(g => g.id)).toEqual(['bills'])
     expect(groupsFor(tree, 'ANY').map(g => g.id)).toEqual(['income', 'bills'])
+    expect(groupsFor(tree, 'BILL').map(g => g.id)).toEqual(['bills'])
+    expect(groupsFor(tree, 'SUBSCRIPTION')).toEqual([])
   })
 
   it('should find groups and categories by id', () => {

@@ -177,6 +177,26 @@
       ]
     },
     {
+      "id": "subscription",
+      "title": "Subscriptions",
+      "screen": [
+        "“Looks like a",
+        "subscription” (log)"
+      ],
+      "handler": "ipc/subscription.ts",
+      "service": [
+        "services/subscriptions.ts",
+        "import/subscription-detect.ts"
+      ],
+      "store": "SQLite · Transaction (read)",
+      "calls": [
+        {
+          "api": "subscriptionHints",
+          "channel": "subscription:hints"
+        }
+      ]
+    },
+    {
       "id": "category",
       "title": "Categories",
       "screen": [

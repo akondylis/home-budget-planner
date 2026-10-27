@@ -1,14 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import { SelectMenu, type SelectMenuOption } from '../ui'
-import { groupsFor } from '../../lib/ledger'
+import { groupsFor, type PickerKind } from '../../lib/ledger'
 import type { CategoryNode } from '../../../../shared/ledger'
 
 export interface CategoryPickerProps {
   categories: CategoryNode[]
   value: string | null
   onChange: (categoryId: string) => void
-  /** Which groups to offer: income only, everything but income, or all */
-  kind: 'EXPENSE' | 'INCOME' | 'ANY'
+  /** Which groups to offer: income only, everything but income, all, or one category type */
+  kind: PickerKind
   ariaLabel: string
   placeholder?: string
   /** Filter use: a group can be picked and stands for all its categories */

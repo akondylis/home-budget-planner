@@ -7,6 +7,7 @@ import { resetTestDb } from './test-db'
 import { createAccounts, listAccounts } from '../services/accounts'
 import { createTransaction, listTransactions } from '../services/transactions'
 import { seedDefaults } from '../services/seed'
+import { listSubscriptionHints } from '../services/subscriptions'
 import { clearPreviews, commitImport, listImports, previewImport, undoImport, type PreviewResult } from '../services/import/import-service'
 
 const csv = (lines: string[]) => new TextEncoder().encode(['Ημερομηνία;Περιγραφή;Ποσό', ...lines].join('\r\n'))
@@ -183,6 +184,22 @@ describe('statement import', () => {
     await expect(previewImport(bankId, 'odd.csv', odd, { columns: {} })).rejects.toThrow('INVALID_INPUT')
   })
 
+  it('should compare the statement balance with the app, now and in the history', async () => {
+    const { bankId } = await setup()
+    const withBalance = new TextEncoder().encode([
+      'Ημερομηνία;Περιγραφή;Ποσό;Υπόλοιπο',
+      '01/10/2026;ΜΙΣΘΟΣ;1.500,00;2.500,00',
+      '02/10/2026;ΚΑΦΕ;-2,50;2.497,50',
+    ].join('\r\n'))
+    const result = await commitImport({ previewId: (await preview(bankId, withBalance)).previewId })
+    expect(result.reconciliation).toEqual({ date: '2026-10-02', statementBalanceCents: 249750, appBalanceCents: 249750 })
+    // A row typed in by mistake on that day: the history shows the gap
+    const groceries = await prisma.category.findFirst({ where: { name: 'Σούπερ μάρκετ' } })
+    await createTransaction({ kind: 'EXPENSE', accountId: bankId, amountCents: 1240, bookedAt: '2026-10-02', categoryId: groceries!.id })
+    expect((await listImports(bankId))[0].reconciliation).toMatchObject({ statementBalanceCents: 249750, appBalanceCents: 248510 })
+    expect((await commitImport({ previewId: (await preview(bankId, OCT_NOV)).previewId })).reconciliation).toBeNull()
+  })
+
   it('should say when the format is unknown or the preview has expired', async () => {
     const { bankId } = await setup()
     expect(await previewImport(bankId, 'x.csv', new TextEncoder().encode('foo;bar\n1;2'))).toMatchObject({ ok: false, reason: 'UNKNOWN_FORMAT' })
@@ -219,5 +236,18 @@ describe('undo import', () => {
     const cashBatch = (await listImports(cashId))[0]
     await undoImport(cashBatch.id)
     expect(await prisma.transaction.findUnique({ where: { id: handId } })).not.toBeNull()
+  })
+})
+
+describe('subscription hints', () => {
+  it('should hint a monthly charge until it is sorted as a subscription', async () => {
+    const { bankId } = await setup()
+    const lines = ['07', '08', '09', '10'].map(m => `10/${m}/2026;FIT CLUB ΚΗΦΙΣΙΑ;-35,00`)
+    await commitImport({ previewId: (await preview(bankId, csv(lines))).previewId })
+    const hints = await listSubscriptionHints()
+    expect(hints).toEqual([expect.objectContaining({ label: 'FIT CLUB ΚΗΦΙΣΙΑ', amountCents: 3500, interval: 'MONTHLY', count: 4 })])
+    const gym = await prisma.category.findFirst({ where: { name: 'Γυμναστήριο' } })
+    await prisma.transaction.updateMany({ where: { id: { in: hints[0].transactionIds } }, data: { categoryId: gym!.id } })
+    expect(await listSubscriptionHints()).toEqual([])
   })
 })

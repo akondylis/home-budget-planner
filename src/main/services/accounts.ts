@@ -20,6 +20,15 @@ function parseAccountInput(input: unknown) {
   return { ...rest, openingDate: dateOnlyToDate(openingDate) }
 }
 
+/** What the app says an account held at the end of a day: opening balance + every row up to it */
+export async function balanceOn(accountId: string, date: string): Promise<number> {
+  const [account, sum] = await Promise.all([
+    prisma.account.findUniqueOrThrow({ where: { id: accountId }, select: { openingBalanceCents: true } }),
+    prisma.transaction.aggregate({ where: { accountId, bookedAt: { lte: dateOnlyToDate(date) } }, _sum: { amountCents: true } }),
+  ])
+  return account.openingBalanceCents + (sum._sum.amountCents ?? 0)
+}
+
 /** Active accounts by sort order (archived ones too when asked), each with its balance */
 export async function listAccounts(opts: { includeArchived?: boolean } = {}): Promise<AccountSummary[]> {
   const [accounts, sums, imports] = await Promise.all([

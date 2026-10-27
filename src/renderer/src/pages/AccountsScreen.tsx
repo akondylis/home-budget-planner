@@ -5,6 +5,7 @@ import { AccountCard } from '../components/accounts/AccountCard'
 import { AccountForm } from '../components/accounts/AccountForm'
 import { QuickSetup } from '../components/accounts/QuickSetup'
 import { activeAccounts, useLedgerStore } from '../store/ledger'
+import { useImportStore } from '../store/import'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { sumMoney } from '../../../shared/money'
 import type { AccountSummary } from '../../../shared/ledger'
@@ -62,6 +63,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
               account={account}
               onAddTransaction={() => openEntry({ mode: 'create', accountId: account.id })}
               onImport={() => onImport(account.id)}
+              onHistory={() => useImportStore.getState().openHistory(account.id)}
               onOpenTransactions={() => onOpenTransactions(account.id)}
               onEdit={() => setEditing(account)}
             />

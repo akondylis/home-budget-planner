@@ -47,6 +47,9 @@ contextBridge.exposeInMainWorld('api', {
   updateRule:        (id: string, input: unknown)     => ipcRenderer.invoke('rule:update', id, input),
   deleteRule:        (id: string)                     => ipcRenderer.invoke('rule:delete', id),
 
+  // ── Subscriptions ───────────────────────────────────────────────────────────
+  subscriptionHints: ()                               => ipcRenderer.invoke('subscription:hints'),
+
   // ── PDF ─────────────────────────────────────────────────────────────────────
   exportPdf:     (report: unknown, fileName: string, dialogTitle: string) => ipcRenderer.invoke('pdf:export', report, fileName, dialogTitle),
   openFile:      (filePath: string) => ipcRenderer.invoke('shell:openFile', filePath),

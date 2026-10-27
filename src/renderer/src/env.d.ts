@@ -45,6 +45,8 @@ interface Window {
     updateRule:        (id: string, input: Partial<Omit<import('../../shared/statement-import').RuleInput, 'applyToUncategorised' | 'accountId'>> & { priority?: number }) => Promise<void>
     deleteRule:        (id: string) => Promise<void>
 
+    subscriptionHints: () => Promise<import('../../shared/statement-import').SubscriptionHint[]>
+
     exportPdf:    (report: import('../../shared/report-document').ReportDocument, fileName: string, dialogTitle: string) =>
                      Promise<{ success: false } | { success: true; filePath: string }>
     openFile:      (filePath: string) => Promise<void>

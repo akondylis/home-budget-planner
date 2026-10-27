@@ -11,6 +11,7 @@ import type {
   ImportDecision,
   ImportHistoryItem,
   PreviewResult,
+  Reconciliation,
   PreviewRow,
   PreviewSummary,
 } from '../../../shared/statement-import'
@@ -21,6 +22,8 @@ import { sortRules } from './apply-rules'
 import { TWIN_WINDOW_DAYS } from './dedupe'
 import { TRANSFER_WINDOW_DAYS } from './transfer-match'
 import { parseSavedMapping } from './profiles'
+import { closingBalance, type StatementBalance } from './reconcile'
+import { balanceOn } from '../accounts'
 
 export type { CommitResult, ImportDecision, ImportHistoryItem, PreviewResult }
 
@@ -36,6 +39,7 @@ interface CachedPreview {
   summary: PreviewSummary
   /** Set in the column mapping step: saved on the account when the import is committed */
   mapping: ColumnMapping | null
+  closing: StatementBalance | null
   createdAt: number
 }
 
@@ -118,7 +122,11 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     history,
   })
 
-  const previewId = cachePreview({ accountId, fileName, fileHash: hash, rows, summary, mapping: userMapping, createdAt: Date.now() })
+  const previewId = cachePreview({
+    accountId, fileName, fileHash: hash, rows, summary, mapping: userMapping,
+    closing: closingBalance(read.rows, read.mapping.options.invertSign),
+    createdAt: Date.now(),
+  })
   return {
     ok: true,
     previewId,
@@ -196,6 +204,8 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
         rowCount: preview.rows.length,
         importedCount: 0,
         skippedCount: 0,
+        statementBalanceCents: preview.closing?.cents ?? null,
+        statementBalanceDate: preview.closing ? dateOnlyToDate(preview.closing.date) : null,
       },
     })
     let imported = 0
@@ -278,7 +288,11 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
     if (preview.mapping) await tx.account.update({ where: { id: accountId }, data: { importMapping: preview.mapping as object } })
     return { batchId: batch.id, importedCount: imported, linkedCount: linked, skippedCount: skipped, toCategorise }
   })
-  return result
+  return { ...result, reconciliation: preview.closing && (await reconcile(accountId, preview.closing)) }
+}
+
+async function reconcile(accountId: string, closing: StatementBalance): Promise<Reconciliation> {
+  return { date: closing.date, statementBalanceCents: closing.cents, appBalanceCents: await balanceOn(accountId, closing.date) }
 }
 
 // ── Undo and history ─────────────────────────────────────────────────────────
@@ -317,7 +331,7 @@ export async function listImports(accountId?: unknown): Promise<ImportHistoryIte
     include: { account: { select: { name: true } } },
     take: 200,
   })
-  return batches.map(b => ({
+  return Promise.all(batches.map(async b => ({
     id: b.id,
     accountId: b.accountId,
     accountName: b.account.name,
@@ -328,7 +342,10 @@ export async function listImports(accountId?: unknown): Promise<ImportHistoryIte
     importedCount: b.importedCount,
     skippedCount: b.skippedCount,
     undone: b.undoneAt !== null,
-  }))
+    reconciliation: b.undoneAt === null && b.statementBalanceCents !== null && b.statementBalanceDate
+      ? await reconcile(b.accountId, { date: dateToDateOnly(b.statementBalanceDate), cents: b.statementBalanceCents })
+      : null,
+  })))
 }
 
 /** Test hook: forget cached previews */
