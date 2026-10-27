@@ -41,6 +41,9 @@ export function setDateLanguage(lang: string | null | undefined): void {
 const pad = (n: number) => String(n).padStart(2, '0')
 
 function toDate(value: string | number | Date): Date | null {
+  // 'yyyy-MM-dd' is a calendar day: read it as local, not as UTC midnight
+  const day = typeof value === 'string' ? value.match(/^(\d{4})-(\d{2})-(\d{2})$/) : null
+  if (day) return new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]))
   const d = value instanceof Date ? value : new Date(value)
   return Number.isNaN(d.getTime()) ? null : d
 }
@@ -77,6 +80,52 @@ export function formatDate(
   if (value === null || value === undefined || value === '') return ''
   const d = toDate(value)
   return d ? formatParts(d, format) : ''
+}
+
+// ── Typed input ──────────────────────────────────────────────────────────────
+
+export type DateOrder = 'DMY' | 'MDY' | 'YMD'
+
+/** Order in which a date is typed; month-name formats are typed as numbers, day first */
+export function entryOrder(format: DateFormat = currentFormat): DateOrder {
+  if (format === 'MM/dd/yyyy') return 'MDY'
+  if (format === 'yyyy-MM-dd') return 'YMD'
+  return 'DMY'
+}
+
+/** The numeric format a date is typed and shown in while editing */
+export function entryFormat(format: DateFormat = currentFormat): DateFormat {
+  return format === 'dd MMM yyyy' || format === 'dd MMMM yyyy' ? 'dd/MM/yyyy' : format
+}
+
+/**
+ * Typed text → 'yyyy-MM-dd' in the order of the chosen format; null when it is not a real date.
+ * Any of / - . or space separates the parts; a 2-digit year means 20yy, and a missing year
+ * the year of `today` ("5/3" → 5 March this year, for DMY).
+ */
+export function parseDate(text: string, format: DateFormat = currentFormat, today: Date = new Date()): string | null {
+  return parseDateInOrder(text, entryOrder(format), today)
+}
+
+/** As parseDate, with the order of the parts given directly (bank statements) */
+export function parseDateInOrder(text: string, order: DateOrder, today: Date = new Date()): string | null {
+  const parts = text.trim().split(/[\s/.\-]+/).filter(Boolean)
+  if (parts.length < 2 || parts.length > 3 || !parts.every(p => /^\d+$/.test(p))) return null
+  let y: string | undefined, m: string, d: string
+  if (order === 'YMD') {
+    if (parts.length !== 3) return null
+    ;[y, m, d] = parts
+  } else {
+    ;[d, m, y] = order === 'DMY' ? parts : [parts[1], parts[0], parts[2]]
+  }
+  let year = y === undefined ? today.getFullYear() : Number(y)
+  if (y !== undefined && y.length === 2) year += 2000
+  else if (y !== undefined && y.length !== 4) return null
+  const month = Number(m)
+  const day = Number(d)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null
+  return `${year}-${pad(month)}-${pad(day)}`
 }
 
 /** Date in the chosen format plus 'HH:mm' (24-hour), local time; '' for missing or invalid input. */

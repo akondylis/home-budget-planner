@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Banner, Button, ConfirmDialog, Field, Input, Modal, Money, Segmented, Select } from '../ui'
+import { Banner, Button, ConfirmDialog, DateInput, Field, Input, Modal, Money, Segmented, Select } from '../ui'
 import { CategoryPicker } from './CategoryPicker'
 import { activeAccounts, useLedgerStore, type EntryRequest } from '../../store/ledger'
 import { useTransactionsStore } from '../../store/transactions'
@@ -288,7 +288,7 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('entry.date')} htmlFor={ids.date} required error={err(errors.bookedAt)}>
-              <Input id={ids.date} type="date" value={draft.bookedAt} onChange={e => update({ bookedAt: e.target.value })} className="w-full" />
+              <DateInput id={ids.date} value={draft.bookedAt} onChange={bookedAt => update({ bookedAt })} invalid={!!errors.bookedAt} />
             </Field>
             {!transfer && (
               <Field label={t('entry.account')} htmlFor={ids.account} required error={err(errors.accountId)}>

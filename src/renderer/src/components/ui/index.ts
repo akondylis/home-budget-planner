@@ -7,6 +7,7 @@ export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from '.
 export { CollapsibleCard, type CollapsibleCardProps } from './CollapsibleCard'
 export { ConfirmDialog, type ConfirmDialogProps, type ConfirmTone } from './ConfirmDialog'
 export { CopyButton, type CopyButtonProps } from './CopyButton'
+export { DateInput, shiftDay, type DateInputProps } from './DateInput'
 export { Field, Input, Select, Textarea, type FieldProps } from './Field'
 export {
   ActiveFilterPills,

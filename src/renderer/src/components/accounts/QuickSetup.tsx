@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Input, ListCard } from '../ui'
+import { Button, DateInput, Field, Input, ListCard } from '../ui'
 import { Icon } from '../shell/icons'
 import { useLedgerStore } from '../../store/ledger'
 import { ACCOUNT_KIND_ICON, QUICK_SETUP, parseAccountDraft } from '../../lib/ledger'
@@ -94,8 +94,8 @@ export function QuickSetup() {
         {submitted && !valid && <p role="alert" className="mt-2 text-xs text-red-700">{t('accounts.quick_fix')}</p>}
 
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-          <Field label={t('accounts.balances_as_of')} htmlFor={dateId}>
-            <Input id={dateId} type="date" value={date} onChange={e => setDate(e.target.value)} className="w-44" />
+          <Field label={t('accounts.balances_as_of')} htmlFor={dateId} error={submitted && !date ? t('accounts.errors.date_required') : undefined}>
+            <DateInput id={dateId} value={date} onChange={setDate} invalid={submitted && !date} className="w-44" />
           </Field>
           <Button type="submit" variant="primary" icon="check" loading={saving} disabled={chosen.length === 0} title={chosen.length === 0 ? t('accounts.quick_none') : undefined}>
             {t('accounts.quick_create', { count: chosen.length })}

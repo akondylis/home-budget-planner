@@ -25,7 +25,12 @@
     "collapse": "Collapse",
     "zoom_in_tooltip": "Zoom in (Ctrl +)",
     "zoom_out_tooltip": "Zoom out (Ctrl −)",
-    "zoom_reset_tooltip": "Reset zoom (Ctrl 0)"
+    "zoom_reset_tooltip": "Reset zoom (Ctrl 0)",
+    "date_dd": "DD",
+    "date_mm": "MM",
+    "date_yyyy": "YYYY",
+    "date_pick": "Pick from calendar",
+    "date_hint": "Type the date as {{pattern}}; ↑/↓ moves a day"
   },
   "shell": {
     "nav_label": "Main navigation",
@@ -313,7 +318,7 @@
       "amount_required": "Enter the amount.",
       "amount_invalid": "Enter an amount above zero, e.g. 12,50.",
       "account_required": "Choose an account.",
-      "date_required": "Choose a date.",
+      "date_required": "Enter a real date, e.g. 05/03/2026.",
       "same_account": "Choose a different account from the one the money leaves.",
       "category_required": "Choose a category, so totals stay right."
     }
@@ -414,7 +419,7 @@
     "errors": {
       "name_required": "Give the account a name.",
       "amount_invalid": "Enter an amount, e.g. 1.250,00 or -350,00.",
-      "date_required": "Choose a date."
+      "date_required": "Enter a real date, e.g. 05/03/2026."
     },
     "quick_title": "Quick setup",
     "quick_intro": "The household's usual accounts, ready to go. Untick what you don't have, rename if you like, and type today's balance.",

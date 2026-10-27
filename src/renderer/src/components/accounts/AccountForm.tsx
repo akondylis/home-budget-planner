@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ConfirmDialog, Field, Input, Modal, Select } from '../ui'
+import { Button, ConfirmDialog, DateInput, Field, Input, Modal, Select } from '../ui'
 import { useLedgerStore } from '../../store/ledger'
 import { centsToInput, parseAccountDraft, type AccountDraft } from '../../lib/ledger'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
@@ -108,7 +108,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               <Input id={ids.balance} inputMode="decimal" placeholder="0,00" value={draft.openingBalance} onChange={e => update({ openingBalance: e.target.value })} className="w-full tabular-nums" />
             </Field>
             <Field label={t('accounts.opening_date')} htmlFor={ids.date} required error={err(errors.openingDate)} hint={t('accounts.opening_date_hint')}>
-              <Input id={ids.date} type="date" value={draft.openingDate} onChange={e => update({ openingDate: e.target.value })} className="w-full" />
+              <DateInput id={ids.date} value={draft.openingDate} onChange={openingDate => update({ openingDate })} invalid={!!errors.openingDate} />
             </Field>
           </div>
           {serverError && <p role="alert" className="text-sm text-red-700">{serverError}</p>}

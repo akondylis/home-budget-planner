@@ -28,6 +28,8 @@ import {
   nextEnabledIndex,
 } from '.'
 import { createPanelRegistry, placePanel } from './Popover'
+import { DateInput, shiftDay } from './DateInput'
+import { setDateFormat } from '../../lib/date-format'
 
 beforeAll(async () => {
   await i18next.use(initReactI18next).init({
@@ -150,6 +152,26 @@ describe('Modal', () => {
     const html = renderToStaticMarkup(<Modal title="Editor" onClose={noop} bare>CONTENT</Modal>)
     expect(html).toContain('CONTENT')
     expect(html).not.toContain(`aria-label="${en.common.close}"`)
+  })
+})
+
+describe('DateInput', () => {
+  it('shows the day in the format chosen in Settings, with its pattern and a calendar button', () => {
+    setDateFormat('dd MMM yyyy')
+    const html = renderToStaticMarkup(<DateInput id="d" value="2026-03-05" onChange={noop} invalid />)
+    // Month-name formats are typed as numbers
+    expect(html).toContain('value="05/03/2026"')
+    expect(html).toContain('placeholder="DD/MM/YYYY"')
+    expect(html).toContain('aria-invalid="true"')
+    expect(html).toContain(`aria-label="${en.ui.date_pick}"`)
+    setDateFormat('MM/dd/yyyy')
+    expect(renderToStaticMarkup(<DateInput value="2026-03-05" onChange={noop} />)).toContain('value="03/05/2026"')
+    setDateFormat('dd/MM/yyyy')
+  })
+
+  it('moves a day across month and year ends', () => {
+    expect(shiftDay('2026-12-31', 1)).toBe('2027-01-01')
+    expect(shiftDay('2028-03-01', -1)).toBe('2028-02-29')
   })
 })
 
