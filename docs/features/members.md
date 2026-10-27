@@ -49,7 +49,8 @@ and nobody has to type it again. Children are not tracked ("children included?" 
 - **Names are unique among active parents**, ignoring case and accents (`normalise()`).
 - **Colours** are palette keys (`MEMBER_COLOURS`). The renderer maps them to theme classes (`MEMBER_DOT_CLASS`),
   so they change with light and dark mode.
-- **Next:** #2 (account holders) will default **For** on imported card rows to the card's holder.
+- **Holders:** accounts and cards name their holder ([accounts.md](accounts.md)), but the holder is shown only and is
+  never a default **For** (decided 2026-10-27). The Household row shows how many accounts each parent holds.
 
 ## Code
 

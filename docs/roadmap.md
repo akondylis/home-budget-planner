@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-28 | Account holders & cards | Each account has a holder (a parent or Joint), shown on its card; cards per account (debit cards, main and supplementary credit cards) with last 4 digits and holder, edited in the account form and saved in one go. The holder is shown only, never a default "For" (decided 2026-10-27) · [accounts](features/accounts.md) |
 | 2026-10-27 | Members | Parents only ("children included?" answered 2026-10-27), name and colour, in Settings → Household; "who is using the app" chip in the sidebar (per PC, `Ctrl+K`) stamps who entered each row and import; transactions carry **For** (a parent or Household) with a payee default, a log filter and bulk **Set "For"…** · [members](features/members.md) |
 | 2026-10-27 | Statement import | Alpha Bank and Eurobank CSV (accounts and cards; "which banks first?" answered 2026-10-26). Wizard: account + file, column mapping once per account for unknown files, review with status chips. Never doubles a row (fingerprint with in-file occurrence, hand-entered twin → **Link**, transfer pairing, ATM → Cash); merchant rules learned with "Always put X in Y?"; undo; past imports; statement balance checked against the app. Bank presets read the column layouts of the household's earlier converter (2026-10-27); a real file of each type still to be tried · [statement import](features/statement-import.md) |
 | 2026-10-26 | Transactions & categories | Log with month/account/type/category filters and a **To categorise** inbox; entry form (expense, income, transfer; amount first, smart defaults, **Add & new**, `Ctrl+N`); six category types (income, bills, subscriptions, spending, debt, savings) with a Greek starter set. Added 2026-10-27: dates typed in the Settings format, rule prompt in the log, "looks like a subscription" hints · [transactions](features/transactions.md) |
@@ -42,7 +43,6 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 2 | Account holders & card details | S | The rest of accounts & cards: holder (member), card statement and due day, credit limit | #1 (holder; #1 done 2026-10-27): the holder becomes the default **For** of imported card rows | — |
 | 3 | Category management | S | Screen to rename, move, merge and archive categories, and to see and edit merchant rules (the services exist) | — | — |
 
 ### Everyday money
@@ -69,6 +69,7 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 | --- | --- | --- | --- | --- | --- |
 | 12 | Reports & stats | M–L | Spending by category/member/month, trends, year-over-year, balances across accounts over time; charts per `dataviz` skill; Excel/PDF export | Transactions; PDF export with preview | — |
 | 18 | Net worth *(new)* | S–M | Assets − debts, a monthly snapshot and its trend | Accounts, #9 | — |
+| 19 | Card matching *(new)* | S | Read the last 4 digits in statement text and mark which card (and so which parent) paid | Account holders & cards; Statement import | Do Alpha/Eurobank files show the card number? |
 | 13 | More statement formats | S–M | Try one real Alpha Bank and Eurobank export of each type (layouts taken from the old converter, 2026-10-27); Excel (`.xlsx`) exports; more Greek banks | Statement import | Which banks next? |
 | 16 | Direct printing *(new)* | S | **Print** button in the PDF preview: silent print to the default printer (Matchday's `pdf-to-printer`) | PDF export with preview | Needed, or is Open → print enough? |
 | 14 | Backups | M | Automatic backups (on quit/weekly, keep N), restore; encrypted option | Startup copy from the portable edition (`startup-backup.ts`) | Folder (cloud-synced folder?) |
@@ -90,4 +91,6 @@ Nothing yet.
 
 ## Dropped
 
-Nothing yet.
+| Item | Why |
+| --- | --- |
+| Card limit, statement day, due day | Not needed for now (2026-10-27); can return with Notifications (#8) |

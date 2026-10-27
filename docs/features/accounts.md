@@ -1,7 +1,7 @@
 # Accounts & cards
 
-**User's job:** see what each bank account, card and the cash in the wallet holds right now, and know where its
-numbers come from (a statement, or entered by hand).
+**User's job:** see what each bank account, card and the cash in the wallet holds right now, whose it is and which
+cards draw on it, and know where its numbers come from (a statement, or entered by hand).
 
 ## UX
 
@@ -13,6 +13,12 @@ numbers come from (a statement, or entered by hand).
 - **Account card:** name, kind and bank; the balance (a card's says "negative = owed"); where the data comes from:
   "Imported up to 09/10/2026" (a link to that account's past imports), "Not imported yet" or "Entered by hand"
   (cash); the row count.
+- **Holder and cards on the account card:** the meta line reads kind · bank · holder (dot and name, or "Joint"
+  once parents exist); a quieter line lists the cards, `•••• 1234 Ανδρέας · •••• 5678 Μαρία`.
+- **Account form:** after name, kind and bank come **Holder** (Joint, then each parent; hidden without parents) and
+  **Cards** (not for cash): rows of last 4 digits + holder + remove, then **Add card**. A new card's holder is the
+  account's holder, else the parent using the app; focus goes to its digits. Wrong digits or a repeat show on that
+  row. Everything is saved by the form's one primary button; Cancel drops card changes.
 - **Actions per card:** bank accounts and cards lead with **Import statement**, then **Add transaction**; cash has
   only **Add transaction**. Header icons: the account's transactions, and edit.
 - **Page header:** total across active accounts as the context line; **New account** becomes the primary button
@@ -30,6 +36,14 @@ numbers come from (a statement, or entered by hand).
 - **Import settings live on the account:** `importProfile` (bank preset, from bank and kind) and `importMapping`
   (columns the user mapped once for a file no preset knew); see [statement-import.md](statement-import.md).
 - **Imported up to** = the latest `dateTo` of the account's imports that were not undone.
+- **Holder** (`holderMemberId`, null = joint) is shown only; it never sets who an imported row is **For**
+  (decided 2026-10-27). An archived parent stays on accounts and cards that already name them, but cannot be
+  newly chosen.
+- **Cards** (`Card`): debit cards on a current account, main and supplementary cards on a credit card account.
+  `account:create` / `account:update` take the whole list and sync it in one write (add, change, remove, order;
+  two cards may swap digits). Left out = cards untouched (Quick setup). An account switched to cash drops its
+  cards. Card limit, statement and due day were dropped for now (2026-10-27); reading the card in statement text
+  is roadmap #19.
 - **Cash** is an account of kind `CASH`: no statement, every row typed in. ATM withdrawals are transfers into it,
   so cash spending is counted once, when it is entered.
 
@@ -40,21 +54,22 @@ numbers come from (a statement, or entered by hand).
 | `src/main/services/accounts.ts` | List with balances and "imported up to", create (one or many), update, archive, `balanceOn` |
 | `src/main/ipc/account.ts` | Thin handlers |
 | `src/renderer/src/pages/AccountsScreen.tsx` | Grid, archived list, form |
-| `src/renderer/src/components/accounts/` | `AccountCard`, `AccountForm`, `QuickSetup` |
+| `src/renderer/src/components/accounts/` | `AccountCard`, `AccountForm`, `CardListEditor`, `QuickSetup` |
 | `src/renderer/src/store/ledger.ts` | Accounts, categories and payees for every screen; `changed()` after each write |
-| `src/renderer/src/lib/ledger.ts` | `QUICK_SETUP`, account icons, `parseAccountDraft` |
+| `src/renderer/src/lib/ledger.ts` | `QUICK_SETUP`, account icons, `parseAccountDraft` (cards included) |
 
 ## IPC
 
 | Channel | Args → result | Errors |
 | --- | --- | --- |
 | `account:list` | `({ includeArchived? })` → `AccountSummary[]` | — |
-| `account:create` | `(AccountInput)` → id | `INVALID_INPUT` |
-| `account:createMany` | `(AccountInput[])` → ids (Quick setup, one write) | `INVALID_INPUT` |
-| `account:update` | `(id, AccountInput)` → `void` | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND` |
+| `account:create` | `(AccountInput)` → id (holder and cards included) | `INVALID_INPUT`, `MEMBER_NOT_FOUND`, `CARD_DUPLICATE` |
+| `account:createMany` | `(AccountInput[])` → ids (Quick setup, one write) | `INVALID_INPUT`, `MEMBER_NOT_FOUND` |
+| `account:update` | `(id, AccountInput)` → `void`; syncs the card list when given | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND`, `MEMBER_NOT_FOUND`, `CARD_DUPLICATE`, `CARD_NOT_FOUND` |
 | `account:archive` | `(id, archived = true)` → `void` | `ACCOUNT_NOT_FOUND` |
 
 ## Tests
 
 `src/main/__tests__/ledger-services.test.ts` (accounts: order, balance without rows, validation, archive keeps
-rows, missing account) and `lib/ledger.test.ts` (account draft parsing, default account).
+rows, missing account; holders and cards: list order, sync with swapped digits, duplicate / foreign card / unknown
+holder, archived holder kept) and `lib/ledger.test.ts` (account draft parsing with cards, default account).
