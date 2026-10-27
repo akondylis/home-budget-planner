@@ -24,6 +24,37 @@
   ],
   "domains": [
     {
+      "id": "member",
+      "title": "Members",
+      "screen": [
+        "Settings › Household",
+        "Sidebar chip (who is using)"
+      ],
+      "handler": "ipc/member.ts",
+      "service": [
+        "services/members.ts"
+      ],
+      "store": "SQLite · Member",
+      "calls": [
+        {
+          "api": "listMembers",
+          "channel": "member:list"
+        },
+        {
+          "api": "createMember",
+          "channel": "member:create"
+        },
+        {
+          "api": "updateMember",
+          "channel": "member:update"
+        },
+        {
+          "api": "archiveMember",
+          "channel": "member:archive"
+        }
+      ]
+    },
+    {
       "id": "account",
       "title": "Accounts",
       "screen": [
@@ -90,6 +121,10 @@
         {
           "api": "setCategory",
           "channel": "transaction:setCategory"
+        },
+        {
+          "api": "setMember",
+          "channel": "transaction:setMember"
         },
         {
           "api": "createTransfer",

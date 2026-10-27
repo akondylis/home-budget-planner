@@ -6,7 +6,7 @@ As of 2026-10-27 · Andrew Kondylis
 
 The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
 The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
-Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **17 items** are queued
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **16 items** are queued
 in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
 decision.
 
@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-27 | Members | Parents only ("children included?" answered 2026-10-27), name and colour, in Settings → Household; "who is using the app" chip in the sidebar (per PC, `Ctrl+K`) stamps who entered each row and import; transactions carry **For** (a parent or Household) with a payee default, a log filter and bulk **Set "For"…** · [members](features/members.md) |
 | 2026-10-27 | Statement import | Alpha Bank and Eurobank CSV (accounts and cards; "which banks first?" answered 2026-10-26). Wizard: account + file, column mapping once per account for unknown files, review with status chips. Never doubles a row (fingerprint with in-file occurrence, hand-entered twin → **Link**, transfer pairing, ATM → Cash); merchant rules learned with "Always put X in Y?"; undo; past imports; statement balance checked against the app. Bank presets read the column layouts of the household's earlier converter (2026-10-27); a real file of each type still to be tried · [statement import](features/statement-import.md) |
 | 2026-10-26 | Transactions & categories | Log with month/account/type/category filters and a **To categorise** inbox; entry form (expense, income, transfer; amount first, smart defaults, **Add & new**, `Ctrl+N`); six category types (income, bills, subscriptions, spending, debt, savings) with a Greek starter set. Added 2026-10-27: dates typed in the Settings format, rule prompt in the log, "looks like a subscription" hints · [transactions](features/transactions.md) |
 | 2026-10-26 | Accounts & cards | Quick setup of the usual five (Alpha and Eurobank account and card, Cash) with balances; balance per account (a card's debt is negative); cash as an account; archive instead of delete · [accounts](features/accounts.md) |
@@ -41,8 +42,7 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Members | S | Family members with name and colour; "who is using the app" picker | — | Children included? |
-| 2 | Account holders & card details | S | The rest of accounts & cards: holder (member), card statement and due day, credit limit | #1 (holder) | — |
+| 2 | Account holders & card details | S | The rest of accounts & cards: holder (member), card statement and due day, credit limit | #1 (holder; #1 done 2026-10-27): the holder becomes the default **For** of imported card rows | — |
 | 3 | Category management | S | Screen to rename, move, merge and archive categories, and to see and edit merchant rules (the services exist) | — | — |
 
 ### Everyday money

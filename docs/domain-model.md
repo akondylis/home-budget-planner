@@ -14,12 +14,12 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 
 | Entity | Purpose | Key fields |
 | --- | --- | --- |
-| **Member** | A family member who owns accounts or spends (parents; maybe children for pocket money) | name, colour, role (`PARENT`/`CHILD`) |
+| **Member** *(in schema)* | A parent of the household (children are not tracked); archived, never deleted. Who uses the app is chosen per PC, not stored here | name, colour (palette key from `MEMBER_COLOURS`), sortOrder, archivedAt |
 | **Account** *(in schema)* | Where money sits. One statement source = one account, so a credit card is an account of kind `CREDIT_CARD` | name, kind (`CURRENT`/`SAVINGS`/`CASH`/`CREDIT_CARD`), institution (`ALPHA`/`EUROBANK`/`OTHER`), currency, openingBalanceCents, openingDate, importProfile?, importMapping?, sortOrder, archivedAt |
 | **Card** | A debit card on an account (later; credit cards are accounts) | accountId, holderMemberId, last4, kind, statementDay, dueDay, limitCents |
 | **Category** *(in schema)* | Two levels: group → category (Bills → Electricity). The **type** is set on the group and its categories follow it | name, parentId, type (`INCOME`/`EXPENSE`/`BILL`/`SUBSCRIPTION`/`DEBT`/`SAVINGS`), icon, sortOrder, archivedAt |
-| **Transaction** *(in schema)* | A booked movement. `categoryId = null` means "to categorise" (transfers never need one) | accountId, bookedAt (date only, 12:00 UTC), amountCents, description (bank text), payee, categoryId?, note, transferId?, importBatchId?, fingerprint?, bankReference?, balanceAfterCents? |
-| **ImportBatch** *(in schema)* | One imported statement file; undo removes its rows; its closing balance is checked against the app | accountId, fileName, fileHash, dateFrom, dateTo, rowCount, importedCount, skippedCount, statementBalanceCents?, statementBalanceDate?, undoneAt |
+| **Transaction** *(in schema)* | A booked movement. `categoryId = null` means "to categorise" (transfers never need one) | accountId, bookedAt (date only, 12:00 UTC), amountCents, description (bank text), payee, categoryId?, note, memberId? (who it was for; null = household), createdByMemberId? (who entered it; set once), transferId?, importBatchId?, fingerprint?, bankReference?, balanceAfterCents? |
+| **ImportBatch** *(in schema)* | One imported statement file; undo removes its rows; its closing balance is checked against the app | accountId, fileName, fileHash, dateFrom, dateTo, rowCount, importedCount, skippedCount, statementBalanceCents?, statementBalanceDate?, createdByMemberId?, undoneAt |
 | **CategoryRule** *(in schema)* | Merchant rule: the first match by priority sets an imported row's category and payee | pattern (normalised), match (`CONTAINS`/`STARTS_WITH`/`EXACT`), accountId?, categoryId, payee?, priority, hitCount |
 | **Budget** | Plan for a month (yearly = 12 months) | month (`YYYY-MM`), lines: categoryId + plannedCents |
 | **RecurringRule** | Subscriptions, bills, salary, and **non-monthly** charges (yearly insurance, quarterly tax, every-2-months utilities) | name, amountCents (or estimate), interval (`MONTH`/`YEAR`/…, every N), nextDue, accountId, categoryId, remindDaysBefore, endsAt |
@@ -65,7 +65,8 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 1. Who enters data: both parents on one PC, or each on their own PC/phone? (drives the multi-PC decision)
 2. ~~Bank data: manual entry only, CSV/Excel statement import per bank, or later open-banking sync?~~ Manual entry
    plus CSV import for Alpha Bank and Eurobank (2026-10-26).
-3. Children: members with pocket money, or only as a spending tag?
+3. ~~Children: members with pocket money, or only as a spending tag?~~ Parents only; children are not tracked
+   (2026-10-27).
 4. ~~Cash: tracked as an account, or only as "cash withdrawal" expenses?~~ An account of kind `CASH`; ATM withdrawals
    are transfers to it (2026-10-26).
 5. Shared vs personal money: do the parents want private accounts hidden from each other?
