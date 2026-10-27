@@ -10,8 +10,8 @@ import { detectSubscriptions } from './import/subscription-detect'
 /** Far enough back for three yearly charges */
 const LOOKBACK_DAYS = 3 * 366 + 31
 
-export async function listSubscriptionHints(): Promise<SubscriptionHint[]> {
-  const today = todayDateOnly()
+/** `today` is passed in by tests; the app uses the real date */
+export async function listSubscriptionHints(today: string = todayDateOnly()): Promise<SubscriptionHint[]> {
   const since = new Date(dateOnlyToDate(today).getTime() - LOOKBACK_DAYS * 86_400_000)
   const rows = await prisma.transaction.findMany({
     where: { amountCents: { lt: 0 }, transferId: null, bookedAt: { gte: since }, account: { archivedAt: null } },

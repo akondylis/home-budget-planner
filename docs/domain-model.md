@@ -1,6 +1,6 @@
 # Domain Model (draft)
 
-As of 2026-10-26. Entities are added to `prisma/schema.prisma` one feature at a time, and this doc is updated in the
+As of 2026-10-27. Entities are added to `prisma/schema.prisma` one feature at a time, and this doc is updated in the
 same change. **In schema** marks what exists; the rest is a draft. Open questions are marked **?**.
 
 ## Money rules
@@ -38,7 +38,12 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
   and its occurrence number inside the file) → already imported; a hand-entered row with the same amount ±3 days →
   possible duplicate (Link keeps one row); the opposite amount in another own account ±5 days → transfer. Code and
   rationale: `src/main/services/import/` (`fingerprint.ts`, `dedupe.ts`, `transfer-match.ts`). Undo removes the rows
-  an import created; rows it linked or paired stay.
+  an import created; rows it linked or paired stay. An ATM withdrawal imported as a transfer to Cash writes the cash
+  side in the same import. Feature doc: [features/statement-import.md](features/statement-import.md).
+- **Balance check**: an import stores the statement's closing balance (a card's debt as negative) and its day; the
+  app compares it with the account's balance on that day, after the import and in past imports. It only warns.
+- **Category rules** are stored folded like the payee key (no accents, digits or "POS"); whole words match; a rule
+  the user teaches (priority 1000) beats the seeded merchants, and the same pattern again updates it.
 - **Starting data**: an empty database gets the category groups (one per type) and common Greek merchant rules, in
   the app language of that moment (`src/main/services/seed.ts`). After that they are the household's own data.
 
@@ -49,6 +54,9 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 - **Upcoming** = recurring rules and debt instalments due in the next N days, each `UPCOMING` / `DUE` / `OVERDUE` /
   `PAID` (matched to a transaction) / `SKIPPED`.
 - **Projection** = today's balances + planned income − recurring charges − instalments, month by month.
+- **Subscription hints** = the same merchant charging within ±10% every month (26–35 days) or year (350–380), at
+  least 3 times and recently, not already in a Subscriptions, Bills, Debt or Savings category
+  (`services/import/subscription-detect.ts`).
 - **Subscriptions without monthly payment**: rules with interval ≠ 1 month are spread as a monthly *provision*
   (yearly €480 insurance → €40/month set aside) so the monthly budget is honest.
 

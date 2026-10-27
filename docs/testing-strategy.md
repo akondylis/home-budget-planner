@@ -26,6 +26,14 @@ queries. Renderer code needs tests for shared UI primitives and critical flows.
   })
   ```
 
+### 2b. Statement import (`src/main/services/import/`)
+- **What**: decoding, CSV, header search, amounts and dates, fingerprints, duplicate and transfer rules, balance
+  check, subscription hints
+- **How**: the steps are pure (bytes or parsed rows in, rows out) and tested without a database
+  (`import-engine.test.ts`, `reconcile.test.ts`, `subscription-detect.test.ts`); the scenarios that need the
+  database (overlapping files, double click, undo, Link) live in `src/main/__tests__/statement-import.test.ts`.
+  Sample statements are written inline in the test, never real bank files
+
 ### 3. IPC handlers (`src/main/ipc/*.ts`)
 - **What**: the handler calls the right service with the right arguments
 - **How**: mock the service module; handlers have no logic of their own

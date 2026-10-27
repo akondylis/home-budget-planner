@@ -1,13 +1,14 @@
 # Home Budget — Feature Roadmap
 
-As of 2026-10-26 · Andrew Kondylis
+As of 2026-10-27 · Andrew Kondylis
 
 ## Overview
 
-The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported; nothing
-domain-specific has shipped yet. **16 items**
-are queued in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items
-wait on a decision.
+The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
+The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **17 items** are queued
+in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
+decision.
 
 - **Users:** the parents of one household (Greek first, English available).
 - **Rule:** every item gets its own plan with a UX section before work starts (see `docs/design-principles.md`).
@@ -21,6 +22,9 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-27 | Statement import | Alpha Bank and Eurobank CSV (accounts and cards; "which banks first?" answered 2026-10-26). Wizard: account + file, column mapping once per account for unknown files, review with status chips. Never doubles a row (fingerprint with in-file occurrence, hand-entered twin → **Link**, transfer pairing, ATM → Cash); merchant rules learned with "Always put X in Y?"; undo; past imports; statement balance checked against the app. Bank presets are unverified until real exports are tried · [statement import](features/statement-import.md) |
+| 2026-10-26 | Transactions & categories | Log with month/account/type/category filters and a **To categorise** inbox; entry form (expense, income, transfer; amount first, smart defaults, **Add & new**, `Ctrl+N`); six category types (income, bills, subscriptions, spending, debt, savings) with a Greek starter set. Added 2026-10-27: dates typed in the Settings format, rule prompt in the log, "looks like a subscription" hints · [transactions](features/transactions.md) |
+| 2026-10-26 | Accounts & cards | Quick setup of the usual five (Alpha and Eurobank account and card, Cash) with balances; balance per account (a card's debt is negative); cash as an account; archive instead of delete · [accounts](features/accounts.md) |
 | 2026-10-26 | Docs, roadmap & diagram conventions | One doc per feature in `docs/features/` (template, 150-line rule, overflow to `docs/archived/`); roadmap rows name their plan; `/redraw-diagram` draws the architecture + IPC diagram, checked against the code · [features](features/README.md) |
 | 2026-10-26 | PDF export with preview | Page-size preview of exactly what will print, sheet language ΕΛ/EN, **Export PDF** then **Open**; first report: a printable monthly budget worksheet (Overview, `Ctrl+K`); Greek fonts embedded · [pdf export](features/pdf-export.md) |
 | 2026-10-26 | Portable USB edition | `HomeBudget-Portable-{version}.zip`: data in `HomeBudget-data/` next to the exe, USB-safe SQLite (`DELETE` + `FULL`), startup copy (newest 5), clear error on a read-only stick, **Portable** badge · [portable](features/portable.md) |
@@ -38,24 +42,24 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Members | S | Family members with name and colour; "who is using the app" picker | — | Children included? |
-| 2 | Accounts & cards | M | Bank accounts, cash, credit cards with opening balance, holder, statement/due day; archive instead of delete | #1 (holder) | Institutions list (Greek banks) seeded? |
-| 3 | Categories | S–M | Two-level categories seeded with a Greek household set (Σπίτι, Σούπερ μάρκετ, Παιδιά, Αυτοκίνητο…); edit, merge, archive | — | — |
+| 2 | Account holders & card details | S | The rest of accounts & cards: holder (member), card statement and due day, credit limit | #1 (holder) | — |
+| 3 | Category management | S | Screen to rename, move, merge and archive categories, and to see and edit merchant rules (the services exist) | — | — |
 
 ### Everyday money
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 4 | Transactions | L | Add/edit expense, income, transfer; fast entry (amount first, smart defaults); list with filters (month, account, member, category) | #2, #3 | — |
-| 5 | Monthly budget | M | Plan per category, copy last month, budget vs actual with progress | #3, #4 | Rollover of unspent amounts? |
-| 6 | Overview (live) | M | Stat tiles from real data, upcoming bills, over-budget banners | #4, #5 | — |
+| 5 | Monthly budget | M | Plan per category, copy last month, budget vs actual with progress; **left to budget** (income − planned, zero-based) next to **left to spend**; rollover of unspent amounts as a per-category opt-in (decided 2026-10-26); budgeting per pay period as a later option | Categories, transactions | — |
+| 6 | Overview (live) | M | Stat tiles from real data, upcoming bills, over-budget banners | Transactions, #5 | — |
 
 ### Planning & reminders
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 7 | Subscriptions & bills | M | Recurring rules incl. yearly/quarterly charges with monthly provision; mark as paid | #2, #3 | Auto-create transactions or confirm each? |
+| 7 | Subscriptions & bills | M | Recurring rules incl. yearly/quarterly charges with monthly provision, **weekly/biweekly** and "every N"; mark as paid; turn a "looks like a subscription" hint into a rule | Accounts, categories | Auto-create transactions or confirm each? |
 | 8 | Notifications | M | Sidebar bell (Matchday pattern): bill due, overdue, over budget, instalment due; Windows toast | #7, #9 | Remind N days before? |
-| 9 | Debts & loans | M | Loans, interest-free instalments, money owed; remaining balance, payoff date, schedule | #2 | Interest calculation needed? |
+| 17 | Payment calendar *(new)* | M | Amounts due by date with paid marks, pay days across the year; week starts Monday or Sunday | #7 | — |
+| 9 | Debts & loans | M | Loans, interest-free instalments, money owed; remaining balance, payoff date, schedule; **snowball / avalanche** payoff with an extra monthly amount, interest before payment, manual balance override | Accounts | Interest calculation needed? |
 | 10 | Yearly budget | S–M | 12-month plan view, year vs last year | #5 | — |
 | 11 | Projections | M | Balance forecast per month from rules, instalments and planned income | #7, #9 | Horizon (6/12/24 months) |
 
@@ -63,11 +67,12 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 12 | Reports & stats | M–L | Spending by category/member/month, trends, year-over-year; charts per `dataviz` skill; Excel/PDF export | #4; PDF export with preview | — |
-| 13 | Statement import | L | CSV/Excel import per Greek bank with preview, duplicate detection and category rules | #4 | Which banks first? |
+| 12 | Reports & stats | M–L | Spending by category/member/month, trends, year-over-year, balances across accounts over time; charts per `dataviz` skill; Excel/PDF export | Transactions; PDF export with preview | — |
+| 18 | Net worth *(new)* | S–M | Assets − debts, a monthly snapshot and its trend | Accounts, #9 | — |
+| 13 | More statement formats | S–M | Check the Alpha Bank and Eurobank presets against real exports (first); Excel (`.xlsx`) exports; more Greek banks | Statement import | Which banks next? |
 | 16 | Direct printing *(new)* | S | **Print** button in the PDF preview: silent print to the default printer (Matchday's `pdf-to-printer`) | PDF export with preview | Needed, or is Open → print enough? |
 | 14 | Backups | M | Automatic backups (on quit/weekly, keep N), restore; encrypted option | Startup copy from the portable edition (`startup-backup.ts`) | Folder (cloud-synced folder?) |
-| 15 | Saving goals | S–M | Targets with progress and a monthly amount to reach them | #2 | — |
+| 15 | Saving goals | S–M | Targets with progress %, months left and a monthly amount to reach them; **sinking funds** tied to irregular bills; "ongoing" pots with no target; withdrawals | Accounts | — |
 
 ## Needs a decision
 
