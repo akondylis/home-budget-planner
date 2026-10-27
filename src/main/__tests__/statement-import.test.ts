@@ -29,7 +29,7 @@ const OCT_NOV = csv([
 async function setup() {
   await seedDefaults('el')
   const [bankId, cardId, cashId] = await createAccounts([
-    { name: 'Alpha', kind: 'CURRENT', institution: 'ALPHA', openingBalanceCents: 100_000, openingDate: '2026-09-30' },
+    { name: 'Eurobank', kind: 'CURRENT', institution: 'EUROBANK', openingBalanceCents: 100_000, openingDate: '2026-09-30' },
     { name: 'Alpha card', kind: 'CREDIT_CARD', institution: 'ALPHA', openingBalanceCents: 0, openingDate: '2026-09-30' },
     { name: 'Cash', kind: 'CASH', institution: 'OTHER', openingBalanceCents: 0, openingDate: '2026-09-30' },
   ])
@@ -126,7 +126,7 @@ describe('statement import', () => {
 
     // Card statement prints the payment as a negative amount owed; flipped it is +300 on the card
     const card = await preview(cardId, csv(['07/10/2026;PAYMENT THANK YOU;-300,00', '08/10/2026;NETFLIX;13,99']))
-    expect(card.rows[0]).toMatchObject({ status: 'TRANSFER_MATCH', amountCents: 30000, transferWith: { accountId: bankId, accountName: 'Alpha' } })
+    expect(card.rows[0]).toMatchObject({ status: 'TRANSFER_MATCH', amountCents: 30000, transferWith: { accountId: bankId, accountName: 'Eurobank' } })
     await commitImport({ previewId: card.previewId })
 
     const october = await listTransactions({ month: '2026-10' })

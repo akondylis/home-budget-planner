@@ -36,6 +36,10 @@ describe('decodeStatement', () => {
 })
 
 describe('csv', () => {
+  it('should unwrap Excel-style text cells, bare or quoted', () => {
+    expect(parseCsv('="0012";"=""ABC""";x')).toEqual([['0012', 'ABC', 'x']])
+  })
+
   it('should sniff ; even when amounts use decimal commas', () => {
     expect(sniffDelimiter('a;b;c\n1,5;2,5;x')).toBe(';')
     expect(sniffDelimiter('a,b,c\n1,2,3')).toBe(',')
@@ -92,7 +96,7 @@ describe('profiles', () => {
 
   it('should find the header below a few lines about the account', () => {
     const rows = parseCsv('Λογαριασμός;GR12 3456\nΠερίοδος;01/10–31/10\nΗμ/νία Συναλλαγής;Ημ/νία Αξίας;Αιτιολογία;Ποσό;Υπόλοιπο\n01/10/2026;01/10/2026;ΔΕΗ;-80,00;920,00')
-    expect(resolveColumns(rows, PROFILES['alpha-account'])).toMatchObject({
+    expect(resolveColumns(rows, PROFILES.generic)).toMatchObject({
       headerRow: 2,
       columns: { date: 0, valueDate: 1, description: 2, amount: 3, balance: 4 },
       options: { amountMode: 'SIGNED' },
@@ -110,6 +114,11 @@ describe('profiles', () => {
     expect(resolveColumns(parseCsv('foo;bar\n1;2'), PROFILES.generic)).toBeNull()
   })
 
+  it('should never read an Alpha account file as signed when its flag column is not found', () => {
+    const rows = parseCsv('Ημερομηνία;Περιγραφή;Ποσό\n01/10/2026;ΔΕΗ;80,00')
+    expect(resolveColumns(rows, PROFILES['alpha-account'])).toBeNull()
+  })
+
   it('should apply a saved mapping by header text and reject a malformed one', () => {
     const mapping = { columns: { date: 'When', description: 'What', amount: 'How much' }, dateOrder: 'MDY', decimalSeparator: '.', amountMode: 'SIGNED', invertSign: false, debitFlags: [] }
     expect(parseSavedMapping(mapping)).not.toBeNull()
@@ -121,7 +130,7 @@ describe('profiles', () => {
 })
 
 describe('parseRows', () => {
-  const resolve = (csv: string, profile = PROFILES['alpha-account']) => {
+  const resolve = (csv: string, profile = PROFILES.generic) => {
     const rows = parseCsv(csv)
     return parseRows(rows, resolveColumns(rows, profile)!)
   }
@@ -272,6 +281,52 @@ describe('rules', () => {
   it('should fall back to the category last used for the payee', () => {
     expect(suggestCategory('fournos', 'acc', [], new Map([['fournos', 'bakery']]))).toEqual({ categoryId: 'bakery', payee: null, source: { kind: 'history' } })
     expect(suggestCategory('unknown', 'acc', [], new Map())).toBeNull()
+  })
+})
+
+// Fixtures in the column layout of the real exports (processed_eurobank_alpha.py)
+describe('bank layouts', () => {
+  const read = (csv: string, institution: 'ALPHA' | 'EUROBANK', kind: 'CURRENT' | 'CREDIT_CARD') =>
+    readStatement(utf8(csv), { importProfile: null, importMapping: null, institution, kind })
+  const amounts = (result: ReturnType<typeof read>) => (result.ok ? result.rows.map(r => r.amountCents) : result.reason)
+
+  it('should read an Alpha account file by position, with Π as money in, whatever the flag column is called', () => {
+    const csv = [
+      'Αριθμός λογαριασμού;GR12 3456',
+      'Α/Α;Ημερομηνία;Αιτιολογία;Κατάστημα;Κωδικός;Κανάλι;Ποσό;Είδος;Υπόλοιπο',
+      '1;01/10/2026;ΔΕΗ ΠΑΓΙΑ;;123;WEB;80,00;Χ;920,00',
+      '2;02/10/2026;ΜΙΣΘΟΣ;;124;BRANCH;1.500,00;Π;2.420,00',
+    ].join('\n')
+    const result = read(csv, 'ALPHA', 'CURRENT')
+    expect(amounts(result)).toEqual([-8000, 150000])
+    expect(result).toMatchObject({ profile: 'alpha-account', rows: [{ description: 'ΔΕΗ ΠΑΓΙΑ', balanceAfterCents: 92000 }, {}] })
+  })
+
+  it('should read an Alpha card file below its preamble, a purchase as money out', () => {
+    const csv = [
+      'Κάρτα;**** 1234',
+      'Ημ/νία συναλλαγής;Περιγραφή;Πόλη;Χώρα;Ποσό',
+      '03/10/2026 14:22;SKLAVENITIS GERAK;ATHINA;GR;45,30',
+      '05/10/2026;ΕΠΙΣΤΡΟΦΗ;ATHINA;GR;-10,00',
+    ].join('\n')
+    expect(amounts(read(csv, 'ALPHA', 'CREDIT_CARD'))).toEqual([-4530, 1000])
+  })
+
+  it('should read Eurobank files with Excel-style text cells and dates with a time', () => {
+    const csv = [
+      'Ημ/νία;Κάρτα;Στοιχεία;Ποσό',
+      '01/10/2026 09:15;="5123";="NETFLIX.COM";-13,99',
+      '02/10/2026;="5123";="ΜΙΣΘΟΣ ΟΚΤ";1.234,56',
+    ].join('\n')
+    const account = read(csv, 'EUROBANK', 'CURRENT')
+    expect(amounts(account)).toEqual([-1399, 123456])
+    expect(account).toMatchObject({ profile: 'eurobank-account', rows: [{ bookedAt: '2026-10-01', description: 'NETFLIX.COM' }, {}] })
+    expect(amounts(read(csv, 'EUROBANK', 'CREDIT_CARD'))).toEqual([1399, -123456])
+  })
+
+  it('should fall back to the header names when the columns moved', () => {
+    expect(amounts(read('Περιγραφή;Ποσό;Ημερομηνία\nLIDL;-12,50;01/10/2026', 'EUROBANK', 'CURRENT'))).toEqual([-1250])
+    expect(amounts(read('Α;Β;Γ;Δ\nx;y;z;w', 'EUROBANK', 'CURRENT'))).toBe('UNKNOWN_FORMAT')
   })
 })
 

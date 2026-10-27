@@ -1,6 +1,7 @@
 // A small RFC 4180 reader: quoted cells, "" for a quote, line breaks inside
 // quotes, CRLF/LF/CR endings. The separator is sniffed: Greek exports use ';'
-// because ',' is the decimal mark.
+// because ',' is the decimal mark. Excel-style text cells (="0012", as Eurobank
+// writes them) lose the wrapper.
 
 export type Delimiter = ';' | ',' | '\t'
 
@@ -29,7 +30,8 @@ export function parseCsv(text: string, delimiter: Delimiter = sniffDelimiter(tex
   let inQuotes = false
 
   const endCell = () => {
-    row.push(cell)
+    const excelText = /^="(.*)"$/s.exec(cell.trim())
+    row.push(excelText ? excelText[1] : cell)
     cell = ''
   }
   const endRow = () => {

@@ -1,14 +1,16 @@
 // Statement presets per bank and source, and finding the header row in a file.
 //
-// UNVERIFIED: the aliases and options below are what Alpha Bank and Eurobank
-// exports are known to use, not yet checked against real files (Phase 2 gate in
-// .claude/plans/in-the-app-i-quizzical-stroustrup.md). A file no preset reads
-// goes to the column-mapping step, and that mapping is saved on the account.
+// The layouts (column positions) are the ones the household's own converter has
+// read Alpha Bank and Eurobank exports with for years. The header aliases are a
+// fallback for when a bank moves its columns, and are not checked against real
+// files. A file neither reads goes to the column-mapping step, and that mapping
+// is saved on the account.
 
 import { z } from 'zod'
 import { normalise } from '../../../shared/search-normalise'
 import type { AccountKind, Institution } from '../../../shared/ledger'
-import { MAPPING_FIELDS, type ColumnMapping, type MappingField, type ProfileKey } from '../../../shared/statement-import'
+import { MAPPING_FIELDS, type AmountMode, type ColumnMapping, type MappingField, type ProfileKey } from '../../../shared/statement-import'
+import { parseStatementAmount, parseStatementDate } from './parse-rows'
 
 export type { ProfileKey }
 
@@ -17,6 +19,15 @@ export interface StatementProfile {
   /** Header texts that name each column, matched after normalise() */
   aliases: Partial<Record<MappingField, string[]>>
   options: Omit<ColumnMapping, 'columns'>
+  /** Where a bank's export is known to keep its columns; tried before the aliases */
+  layout?: StatementLayout
+}
+
+export interface StatementLayout {
+  /** A fixed row, or the first row with every one of these texts in its cells */
+  header: { row: number } | { contains: string[] }
+  columns: Partial<Record<MappingField, number>>
+  amountMode: AmountMode
 }
 
 // Words Greek banks put in their column headers
@@ -34,20 +45,34 @@ const COMMON: Partial<Record<MappingField, string[]>> = {
 
 const DEBIT_FLAGS = ['Χ', 'Χρ', 'Χρέωση', 'D', 'DR', 'Debit', '-']
 
-const account = (key: ProfileKey): StatementProfile => ({
+const account = (key: ProfileKey, layout?: StatementLayout): StatementProfile => ({
   key,
   aliases: COMMON,
   options: { dateOrder: 'DMY', decimalSeparator: ',', amountMode: 'SIGNED', invertSign: false, debitFlags: DEBIT_FLAGS },
+  layout,
 })
 
 // Card statements: a purchase is printed as a positive amount owed
-const card = (key: ProfileKey): StatementProfile => ({ ...account(key), options: { ...account(key).options, invertSign: true } })
+const card = (key: ProfileKey, layout?: StatementLayout): StatementProfile => {
+  const base = account(key, layout)
+  return { ...base, options: { ...base.options, invertSign: true } }
+}
+
+// Alpha account: the amount has no sign; a flag column says Π (money in) or Χ (money out)
+const ALPHA_ACCOUNT: StatementLayout = {
+  header: { contains: ['Ημερομηνία', 'Ποσό'] },
+  columns: { date: 1, description: 2, amount: 6, dcFlag: 7 },
+  amountMode: 'AMOUNT_WITH_DC_FLAG',
+}
+const ALPHA_CARD: StatementLayout = { header: { contains: ['Ημ/νία συναλλαγής'] }, columns: { date: 0, description: 1, amount: 4 }, amountMode: 'SIGNED' }
+// Eurobank prints the same columns for the account and the card
+const EUROBANK: StatementLayout = { header: { row: 0 }, columns: { date: 0, description: 2, amount: 3 }, amountMode: 'SIGNED' }
 
 export const PROFILES: Record<ProfileKey, StatementProfile> = {
-  'alpha-account': account('alpha-account'),
-  'alpha-card': card('alpha-card'),
-  'eurobank-account': account('eurobank-account'),
-  'eurobank-card': card('eurobank-card'),
+  'alpha-account': account('alpha-account', ALPHA_ACCOUNT),
+  'alpha-card': card('alpha-card', ALPHA_CARD),
+  'eurobank-account': account('eurobank-account', EUROBANK),
+  'eurobank-card': card('eurobank-card', EUROBANK),
   generic: account('generic'),
 }
 
@@ -97,18 +122,57 @@ function matchHeader(header: string[], aliases: Partial<Record<MappingField, str
   return columns
 }
 
+const OPTIONAL_FIELDS: MappingField[] = ['valueDate', 'balance', 'reference']
+
+/**
+ * A bank's known layout applied to a file, when the first rows after its header have a
+ * date and an amount where the layout says and no header names those columns as
+ * something else (a changed export falls back to the aliases). Value date, balance and
+ * reference come from the header names when present.
+ */
+function resolveLayout(rows: string[][], profile: StatementProfile): ResolvedMapping | null {
+  const layout = profile.layout
+  if (!layout) return null
+  const { header } = layout
+  const headerRow = 'row' in header
+    ? header.row
+    : rows.slice(0, 30).findIndex(row => header.contains.every(m => row.some(c => normalise(c).includes(normalise(m)))))
+  if (headerRow < 0 || headerRow >= rows.length) return null
+
+  const { date, amount } = layout.columns
+  const dated = rows.slice(headerRow + 1, headerRow + 11).filter(row => parseStatementDate(row[date!] ?? '', profile.options.dateOrder) !== null)
+  if (dated.length === 0 || dated.some(row => parseStatementAmount(row[amount!] ?? '', profile.options.decimalSeparator) === null)) return null
+
+  // e.g. a balance column where the layout expects the amount
+  const named = Object.entries(matchHeader(rows[headerRow], profile.aliases))
+  if (named.some(([field, i]) => Object.entries(layout.columns).some(([f, c]) => c === i && f !== field))) return null
+
+  const used = new Set(Object.values(layout.columns))
+  const extra = named.filter(([field, i]) => OPTIONAL_FIELDS.includes(field as MappingField) && !used.has(i))
+  return {
+    headerRow,
+    columns: { ...Object.fromEntries(extra), ...layout.columns },
+    options: { ...profile.options, amountMode: layout.amountMode },
+  }
+}
+
 /**
  * The header row and columns of a file for a preset (statements often start with a few
- * lines about the account). The amount mode follows the columns found: separate debit
- * and credit columns, an amount with a Χ/Π flag, or a signed amount. null = not found.
+ * lines about the account): the bank's known layout first, then the header names. With
+ * names, the amount mode follows the columns found: separate debit and credit columns,
+ * an amount with a Χ/Π flag, or a signed amount. null = not found.
  */
 export function resolveColumns(rows: string[][], profile: StatementProfile): ResolvedMapping | null {
+  const fromLayout = resolveLayout(rows, profile)
+  if (fromLayout) return fromLayout
   for (let r = 0; r < Math.min(rows.length, 30); r++) {
     const columns = matchHeader(rows[r], profile.aliases)
     const amountMode: ColumnMapping['amountMode'] =
       columns.debit !== undefined && columns.credit !== undefined && columns.amount === undefined ? 'DEBIT_CREDIT_COLUMNS'
         : columns.amount !== undefined && columns.dcFlag !== undefined ? 'AMOUNT_WITH_DC_FLAG'
           : 'SIGNED'
+    // A bank that prints amounts without a sign must not be read as signed: every row would be money in
+    if (profile.layout?.amountMode === 'AMOUNT_WITH_DC_FLAG' && amountMode === 'SIGNED') continue
     if (isComplete(columns, amountMode)) return { headerRow: r, columns, options: { ...profile.options, amountMode } }
   }
   return null

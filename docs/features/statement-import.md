@@ -49,9 +49,19 @@ Each row ends with one status, from exact to fuzzy:
   file never insert twice. **Undo** removes the rows the import created (and a cash side it wrote); linked
   hand-entered rows stay, and the other side of a paired transfer goes back to "to categorise".
 - **Reading:** UTF-8 (with or without BOM), UTF-16 with BOM, else Windows-1253; `;`, `,` or tab; header row found in
-  the first 30 lines by Greek or English column names; amounts in cents with the bank's decimal separator.
-- **Presets** (`alpha-account`, `alpha-card`, `eurobank-account`, `eurobank-card`, `generic`) are educated guesses
-  until checked against real exports; the column mapping step covers any file they miss.
+  the first 30 lines by Greek or English column names; amounts in cents with the bank's decimal separator;
+  Excel-style text cells (`="…"`, Eurobank) unwrapped.
+- **Bank formats:** the bank presets know where the columns sit. These positions are taken from the household's
+  earlier converter script:
+  - **Eurobank** (account and card): header in row 0; date, description and amount in columns 1, 3 and 4.
+  - **Alpha card:** the header row says `Ημ/νία συναλλαγής`; date, description and amount in columns 1, 2 and 5.
+  - **Alpha account:** the header row says `Ημερομηνία` and `Ποσό`; date, description and an unsigned amount in
+    columns 2, 3 and 7. Column 8 is the flag: `Π` means money in, `Χ` means money out.
+
+  Card exports print a purchase as a positive amount, so the app flips it. Order tried: the mapping saved on the
+  account → the bank's layout, used only when its dated rows all have an amount and no header names those columns
+  as something else → the header names → the column mapping step. An Alpha account file without a flag column is
+  never read as signed (every debit would turn into income).
 - **Balance check:** the balance after the statement's last movement (newest first or oldest first is detected;
   a card's debt is flipped to negative) is stored on the import and compared with the app's balance on that day,
   after the commit and again whenever past imports are listed.
