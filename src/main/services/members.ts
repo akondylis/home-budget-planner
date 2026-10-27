@@ -32,22 +32,25 @@ export async function assertMember(id: string, opts: { allowArchived?: boolean }
   if (!member || (member.archivedAt && !opts.allowArchived)) throw new Error('MEMBER_NOT_FOUND')
 }
 
-/** Active members by sort order (archived ones too when asked), each with its row count */
+/** Active members by sort order (archived ones too when asked), each with its row and account counts */
 export async function listMembers(opts: { includeArchived?: boolean } = {}): Promise<MemberSummary[]> {
-  const [members, counts] = await Promise.all([
+  const [members, counts, held] = await Promise.all([
     prisma.member.findMany({
       where: opts.includeArchived ? {} : { archivedAt: null },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     }),
     prisma.transaction.groupBy({ by: ['memberId'], where: { memberId: { not: null } }, _count: { _all: true } }),
+    prisma.account.groupBy({ by: ['holderMemberId'], where: { holderMemberId: { not: null }, archivedAt: null }, _count: { _all: true } }),
   ])
   const countBy = new Map(counts.map(c => [c.memberId, c._count._all]))
+  const heldBy = new Map(held.map(h => [h.holderMemberId, h._count._all]))
   return members.map(m => ({
     id: m.id,
     name: m.name,
     colour: m.colour as MemberColour,
     archived: m.archivedAt !== null,
     transactionCount: countBy.get(m.id) ?? 0,
+    accountCount: heldBy.get(m.id) ?? 0,
   }))
 }
 

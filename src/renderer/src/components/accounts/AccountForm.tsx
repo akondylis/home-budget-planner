@@ -1,7 +1,11 @@
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ConfirmDialog, DateInput, Field, Input, Modal, Select } from '../ui'
+import { Button, ConfirmDialog, DateInput, Field, Input, Modal, Segmented, Select } from '../ui'
+import { CardListEditor } from './CardListEditor'
+import { MemberDot } from '../members/MemberDot'
 import { useLedgerStore } from '../../store/ledger'
+import { useUiStore } from '../../store/ui'
+import { activeMembers } from '../../lib/members'
 import { centsToInput, parseAccountDraft, type AccountDraft } from '../../lib/ledger'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
 import { todayDateOnly } from '../../../../shared/date-only'
@@ -13,9 +17,10 @@ export interface AccountFormProps {
   onClose: () => void
 }
 
-/** Add or edit an account; archiving lives here, behind a confirmation */
+/** Add or edit an account with its holder and cards; archiving lives here, behind a confirmation */
 export function AccountForm({ account, onClose }: AccountFormProps) {
   const { t } = useTranslation()
+  const members = useLedgerStore(s => s.members)
   const formId = useId()
   const ids = { name: useId(), kind: useId(), institution: useId(), balance: useId(), date: useId() }
   const [draft, setDraft] = useState<AccountDraft>(() => account
@@ -25,8 +30,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
         institution: account.institution,
         openingBalance: (account.openingBalanceCents < 0 ? '-' : '') + centsToInput(account.openingBalanceCents),
         openingDate: account.openingDate,
+        holderMemberId: account.holderMemberId,
+        cards: account.cards.map(c => ({ key: c.id, id: c.id, last4: c.last4, holderMemberId: c.holderMemberId })),
       }
-    : { name: '', kind: 'CURRENT', institution: 'OTHER', openingBalance: '', openingDate: todayDateOnly() })
+    : { name: '', kind: 'CURRENT', institution: 'OTHER', openingBalance: '', openingDate: todayDateOnly(), holderMemberId: null, cards: [] })
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -39,6 +46,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     setDraft(d => ({ ...d, ...patch }))
     setServerError(null)
   }
+
+  // Joint, then each parent; an archived parent stays listed when the account is already theirs
+  const showMembers = activeMembers(members).length > 0
+  const holderMembers = members.filter(m => !m.archived || m.id === account?.holderMemberId || draft.cards.some(c => c.holderMemberId === m.id))
 
   async function run(action: () => Promise<unknown>) {
     setSaving(true)
@@ -98,6 +109,21 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               </Select>
             </Field>
           </div>
+          {showMembers && (
+            <Field label={t('accounts.holder')} hint={t('accounts.holder_hint')}>
+              <Segmented<string>
+                label={t('accounts.holder')}
+                value={draft.holderMemberId ?? ''}
+                onChange={v => update({ holderMemberId: v || null })}
+                options={[
+                  { value: '', label: t('accounts.holder_joint'), icon: 'users' },
+                  ...holderMembers
+                    .filter(m => !m.archived || m.id === draft.holderMemberId)
+                    .map(m => ({ value: m.id, label: m.name, leading: <MemberDot colour={m.colour} size="md" /> })),
+                ]}
+              />
+            </Field>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field
               label={t('accounts.opening_balance')}
@@ -111,6 +137,17 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               <DateInput id={ids.date} value={draft.openingDate} onChange={openingDate => update({ openingDate })} invalid={!!errors.openingDate} />
             </Field>
           </div>
+          {draft.kind !== 'CASH' && (
+            <Field label={t('accounts.cards')} hint={t(draft.kind === 'CREDIT_CARD' ? 'accounts.cards_hint_credit' : 'accounts.cards_hint_debit')}>
+              <CardListEditor
+                cards={draft.cards}
+                onChange={cards => update({ cards })}
+                members={showMembers ? holderMembers : []}
+                defaultHolderId={draft.holderMemberId ?? useUiStore.getState().currentMemberId}
+                errors={errors.cards}
+              />
+            </Field>
+          )}
           {serverError && <p role="alert" className="text-sm text-red-700">{serverError}</p>}
         </form>
       </Modal>

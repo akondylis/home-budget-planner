@@ -8,7 +8,7 @@ generator client {
 }
 
 // Money rule: every amount is an Int of minor units (cents), never Float.
-// Domain models not built yet (Card, Budget, Recurring, Debt) are
+// Domain models not built yet (Budget, Recurring, Debt) are
 // drafted in docs/domain-model.md and added per feature.
 
 // ── Models ───────────────────────────────────────────────────────────────────
@@ -66,6 +66,8 @@ model Member {
   transactionsFor     Transaction[] @relation("TransactionMember")
   transactionsEntered Transaction[] @relation("TransactionCreatedBy")
   importBatches       ImportBatch[]
+  accountsHeld        Account[]     @relation("AccountHolder")
+  cardsHeld           Card[]        @relation("CardHolder")
 }
 
 /// One statement source = one account (a credit card is an account of kind CREDIT_CARD)
@@ -81,6 +83,9 @@ model Account {
   importProfile       String?
   /// Custom column map for statements no preset knows; shape validated with zod in the import service
   importMapping       Json?
+  /// The parent whose account it is; null = joint
+  holderMemberId      String?
+  holder              Member?       @relation("AccountHolder", fields: [holderMemberId], references: [id])
   sortOrder           Int           @default(0)
   archivedAt          DateTime?
   createdAt           DateTime      @default(now())
@@ -88,6 +93,24 @@ model Account {
   transactions        Transaction[]
   importBatches       ImportBatch[]
   rules               CategoryRule[]
+  cards               Card[]
+}
+
+/// A plastic card on an account: a debit card on a current account, or a main or supplementary card on a credit card account
+model Card {
+  id             String   @id @default(cuid())
+  accountId      String
+  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// Exactly 4 digits, as printed on the card
+  last4          String
+  /// null = no one parent (or no members yet)
+  holderMemberId String?
+  holder         Member?  @relation("CardHolder", fields: [holderMemberId], references: [id])
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([accountId, last4])
 }
 
 /// Two levels: a group (parentId null) holds categories; `type` lives on both and follows the group

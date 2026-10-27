@@ -27,7 +27,7 @@ export function QuickSetup() {
 
   const parsed = rows.map((row, i) => ({
     row,
-    result: parseAccountDraft({ name: row.name, kind: QUICK_SETUP[i].kind, institution: QUICK_SETUP[i].institution, openingBalance: row.balance, openingDate: date }),
+    result: parseAccountDraft({ name: row.name, kind: QUICK_SETUP[i].kind, institution: QUICK_SETUP[i].institution, openingBalance: row.balance, openingDate: date, holderMemberId: null, cards: [] }),
   }))
   const chosen = parsed.filter(p => p.row.checked)
   const valid = chosen.every(p => 'input' in p.result)

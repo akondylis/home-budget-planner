@@ -15,6 +15,8 @@ export interface MemberSummary {
   archived: boolean
   /** Rows marked as for this member */
   transactionCount: number
+  /** Active accounts this member holds */
+  accountCount: number
 }
 
 export interface MemberInput {

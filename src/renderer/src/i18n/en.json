@@ -280,7 +280,9 @@
     "IMPORT_ALREADY_UNDONE": "This import was already undone.",
     "RULE_NOT_FOUND": "That rule no longer exists.",
     "MEMBER_NOT_FOUND": "That parent no longer exists or is archived.",
-    "MEMBER_NAME_TAKEN": "There is already a parent with this name."
+    "MEMBER_NAME_TAKEN": "There is already a parent with this name.",
+    "CARD_DUPLICATE": "Two cards have the same last 4 digits.",
+    "CARD_NOT_FOUND": "A card no longer exists. Close and reopen the account."
   },
   "categories": {
     "choose": "Choose a category…",
@@ -440,7 +442,9 @@
     "who_is_using": "Who is using the app?",
     "who_is_using_hint": "Pick who you are; what you enter is recorded under your name.",
     "using_hint": "New entries are recorded as entered by {{name}}. Click to switch.",
-    "manage": "Manage household"
+    "manage": "Manage household",
+    "account_count_one": "holds {{count}} account",
+    "account_count_other": "holds {{count}} accounts"
   },
   "accounts": {
     "add": "Add account",
@@ -482,7 +486,9 @@
     "errors": {
       "name_required": "Give the account a name.",
       "amount_invalid": "Enter an amount, e.g. 1.250,00 or -350,00.",
-      "date_required": "Enter a real date, e.g. 05/03/2026."
+      "date_required": "Enter a real date, e.g. 05/03/2026.",
+      "card_last4": "Type exactly 4 digits, as on the card.",
+      "card_duplicate": "This card is already in the list."
     },
     "quick_title": "Quick setup",
     "quick_intro": "The household's usual accounts, ready to go. Untick what you don't have, rename if you like, and type today's balance.",
@@ -502,7 +508,19 @@
     "balances_as_of": "Balances as of",
     "quick_create_one": "Create {{count}} account",
     "quick_create_other": "Create {{count}} accounts",
-    "quick_none": "Tick at least one account"
+    "quick_none": "Tick at least one account",
+    "holder": "Holder",
+    "holder_hint": "Whose account it is; “Joint” when it belongs to both.",
+    "holder_joint": "Joint",
+    "cards": "Cards",
+    "cards_hint_credit": "Main and supplementary cards, by their last 4 digits.",
+    "cards_hint_debit": "Debit cards on this account, by their last 4 digits.",
+    "card_last4": "Last 4 digits",
+    "card_named": "card •••• {{last4}}",
+    "card_new": "new card",
+    "card_holder": "Holder of {{card}}",
+    "card_remove": "Remove {{card}}",
+    "card_add": "Add card"
   },
   "rules": {
     "prompt": "Always put “{{merchant}}” in {{category}}?",

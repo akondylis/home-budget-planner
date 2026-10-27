@@ -5,6 +5,7 @@ vi.mock('../db/prisma', async () => (await import('./test-db')).createTestDb())
 import { prisma } from '../db/prisma'
 import { resetTestDb } from './test-db'
 import { archiveAccount, createAccount, createAccounts, listAccounts, updateAccount } from '../services/accounts'
+import { archiveMember, createMember, listMembers } from '../services/members'
 import { archiveCategory, createCategory, listCategories, updateCategory } from '../services/categories'
 import { SEED_GROUPS, SEED_RULES, seedDefaults } from '../services/seed'
 import {
@@ -63,6 +64,57 @@ describe('accounts', () => {
 
   it('should throw ACCOUNT_NOT_FOUND when updating a missing account', async () => {
     await expect(updateAccount('nope', bank)).rejects.toThrow('ACCOUNT_NOT_FOUND')
+  })
+})
+
+describe('account holders and cards', () => {
+  const card: AccountInput = { name: 'Alpha card', kind: 'CREDIT_CARD', institution: 'ALPHA', openingBalanceCents: 0, openingDate: '2026-10-01' }
+
+  it('should save a holder and cards, and list them in order with their holders', async () => {
+    const andreas = await createMember({ name: 'Ανδρέας', colour: 'blue' })
+    const maria = await createMember({ name: 'Μαρία', colour: 'purple' })
+    const id = await createAccount({ ...card, holderMemberId: andreas, cards: [{ last4: '1234', holderMemberId: andreas }, { last4: '5678', holderMemberId: maria }] })
+    const [listed] = await listAccounts()
+    expect(listed).toMatchObject({ id, holderMemberId: andreas, holderName: 'Ανδρέας', holderColour: 'blue' })
+    expect(listed.cards.map(c => [c.last4, c.holderName])).toEqual([['1234', 'Ανδρέας'], ['5678', 'Μαρία']])
+    expect((await listMembers()).map(m => m.accountCount)).toEqual([1, 0])
+  })
+
+  it('should sync the card list on update: add, change, swap digits and remove', async () => {
+    const id = await createAccount({ ...card, cards: [{ last4: '1111', holderMemberId: null }, { last4: '2222', holderMemberId: null }, { last4: '3333', holderMemberId: null }] })
+    const [a, b] = (await listAccounts())[0].cards
+    await updateAccount(id, { ...card, cards: [{ id: b.id, last4: '1111', holderMemberId: null }, { id: a.id, last4: '2222', holderMemberId: null }, { last4: '4444', holderMemberId: null }] })
+    const cards = (await listAccounts())[0].cards
+    expect(cards.map(c => [c.id, c.last4])).toEqual([[b.id, '1111'], [a.id, '2222'], [expect.any(String), '4444']])
+    await updateAccount(id, { ...card, name: 'Renamed' })
+    expect((await listAccounts())[0].cards).toHaveLength(3)
+  })
+
+  it('should refuse a repeated card, a card of another account and an unknown holder', async () => {
+    const id = await createAccount(card)
+    const other = await createAccount({ ...card, name: 'Other', cards: [{ last4: '9999', holderMemberId: null }] })
+    const foreign = (await listAccounts()).find(a => a.id === other)!.cards[0].id
+    await expect(updateAccount(id, { ...card, cards: [{ last4: '1234', holderMemberId: null }, { last4: '1234', holderMemberId: null }] })).rejects.toThrow('CARD_DUPLICATE')
+    await expect(updateAccount(id, { ...card, cards: [{ id: foreign, last4: '9999', holderMemberId: null }] })).rejects.toThrow('CARD_NOT_FOUND')
+    await expect(updateAccount(id, { ...card, holderMemberId: 'nope' })).rejects.toThrow('MEMBER_NOT_FOUND')
+    await expect(createAccount({ ...card, cards: [{ last4: '12a4', holderMemberId: null }] })).rejects.toThrow('INVALID_INPUT')
+    expect((await listAccounts()).find(a => a.id === other)!.cards).toHaveLength(1)
+  })
+
+  it('should keep an archived holder already stored, but not accept one newly', async () => {
+    const andreas = await createMember({ name: 'Andreas', colour: 'blue' })
+    const id = await createAccount({ ...card, holderMemberId: andreas, cards: [{ last4: '1234', holderMemberId: andreas }] })
+    await archiveMember(andreas)
+    const cardId = (await listAccounts())[0].cards[0].id
+    await updateAccount(id, { ...card, name: 'Still Andreas', holderMemberId: andreas, cards: [{ id: cardId, last4: '1234', holderMemberId: andreas }] })
+    expect((await listAccounts())[0]).toMatchObject({ name: 'Still Andreas', holderName: 'Andreas' })
+    await expect(createAccount({ ...card, name: 'New', holderMemberId: andreas })).rejects.toThrow('MEMBER_NOT_FOUND')
+  })
+
+  it('should keep the cards of an archived account', async () => {
+    const id = await createAccount({ ...card, cards: [{ last4: '1234', holderMemberId: null }] })
+    await archiveAccount(id)
+    expect((await listAccounts({ includeArchived: true }))[0].cards).toHaveLength(1)
   })
 })
 

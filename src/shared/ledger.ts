@@ -30,6 +30,28 @@ export interface AccountSummary {
   /** Last day covered by an import that was not undone; null for cash or before the first import */
   importedUntil: string | null
   archived: boolean
+  /** The parent whose account it is; null = joint */
+  holderMemberId: string | null
+  holderName: string | null
+  holderColour: MemberColour | null
+  /** In their saved order */
+  cards: CardSummary[]
+}
+
+export interface CardSummary {
+  id: string
+  /** 4 digits */
+  last4: string
+  holderMemberId: string | null
+  holderName: string | null
+  holderColour: MemberColour | null
+}
+
+export interface CardInput {
+  /** Set for a card that already exists on this account */
+  id?: string
+  last4: string
+  holderMemberId: string | null
 }
 
 export interface AccountInput {
@@ -39,6 +61,10 @@ export interface AccountInput {
   currency?: string
   openingBalanceCents: number
   openingDate: string
+  /** null = joint */
+  holderMemberId?: string | null
+  /** The whole card list, in order; left out = the cards stay as they are */
+  cards?: CardInput[]
 }
 
 // ── Categories ───────────────────────────────────────────────────────────────

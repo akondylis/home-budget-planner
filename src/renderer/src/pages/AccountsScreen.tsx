@@ -5,6 +5,7 @@ import { AccountCard } from '../components/accounts/AccountCard'
 import { AccountForm } from '../components/accounts/AccountForm'
 import { QuickSetup } from '../components/accounts/QuickSetup'
 import { activeAccounts, useLedgerStore } from '../store/ledger'
+import { activeMembers } from '../lib/members'
 import { useImportStore } from '../store/import'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { sumMoney } from '../../../shared/money'
@@ -19,6 +20,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   const { t } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
   const loaded = useLedgerStore(s => s.loaded)
+  const hasMembers = useLedgerStore(s => activeMembers(s.members).length > 0)
   const openEntry = useLedgerStore(s => s.openEntry)
   // undefined = closed, null = a new account
   const [editing, setEditing] = useState<AccountSummary | null | undefined>(undefined)
@@ -61,6 +63,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
             <AccountCard
               key={account.id}
               account={account}
+              showHolder={hasMembers}
               onAddTransaction={() => openEntry({ mode: 'create', accountId: account.id })}
               onImport={() => onImport(account.id)}
               onHistory={() => useImportStore.getState().openHistory(account.id)}

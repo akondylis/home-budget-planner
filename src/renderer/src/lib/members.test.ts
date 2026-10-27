@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { initialOf, resolveCurrentMember } from './members'
 import type { MemberSummary } from '../../../shared/members'
 
-const member = (id: string, archived = false): MemberSummary => ({ id, name: id, colour: 'blue', archived, transactionCount: 0 })
+const member = (id: string, archived = false): MemberSummary => ({ id, name: id, colour: 'blue', archived, transactionCount: 0, accountCount: 0 })
 
 describe('resolveCurrentMember', () => {
   it('should keep the remembered member while active', () => {

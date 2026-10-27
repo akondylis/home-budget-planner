@@ -69,7 +69,7 @@ export function HouseholdSection() {
                     <Badge tone="info" icon="monitor" title={t('members.this_pc_hint')}>{t('members.this_pc')}</Badge>
                   )}
                 </div>
-                <MetaLine parts={[t('members.row_count', { count: m.transactionCount })]} />
+                <MetaLine parts={[t('members.row_count', { count: m.transactionCount }), m.accountCount > 0 && t('members.account_count', { count: m.accountCount })]} />
               </div>
               {m.id !== currentMemberId && (
                 <Button size="sm" variant="ghost" icon="user" onClick={() => useUiStore.getState().setCurrentMember(m.id)}>

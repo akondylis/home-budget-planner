@@ -16,6 +16,7 @@ import type { AccountSummary, CategoryNode, TransactionRow } from '../../../shar
 const account = (id: string, kind: AccountSummary['kind'] = 'CURRENT', archived = false): AccountSummary => ({
   id, name: id, kind, institution: 'OTHER', currency: 'EUR', openingBalanceCents: 0, openingDate: '2026-10-01',
   balanceCents: 0, transactionCount: 0, importedUntil: null, archived,
+  holderMemberId: null, holderName: null, holderColour: null, cards: [],
 })
 
 const node = (id: string, type: CategoryNode['type'], children: CategoryNode[] = []): CategoryNode => ({
@@ -106,15 +107,34 @@ describe('draftFromRow', () => {
 })
 
 describe('parseAccountDraft', () => {
-  const base = { name: ' Alpha ', kind: 'CREDIT_CARD' as const, institution: 'ALPHA' as const, openingBalance: '-350,00', openingDate: '2026-10-01' }
+  const base = { name: ' Alpha ', kind: 'CREDIT_CARD' as const, institution: 'ALPHA' as const, openingBalance: '-350,00', openingDate: '2026-10-01', holderMemberId: null, cards: [] }
 
   it('should keep a negative card balance and treat an empty balance as zero', () => {
-    expect(parseAccountDraft(base)).toEqual({ input: { name: 'Alpha', kind: 'CREDIT_CARD', institution: 'ALPHA', openingBalanceCents: -35000, openingDate: '2026-10-01' } })
+    expect(parseAccountDraft(base)).toEqual({
+      input: { name: 'Alpha', kind: 'CREDIT_CARD', institution: 'ALPHA', openingBalanceCents: -35000, openingDate: '2026-10-01', holderMemberId: null, cards: [] },
+    })
     expect(parseAccountDraft({ ...base, openingBalance: '' })).toMatchObject({ input: { openingBalanceCents: 0 } })
   })
 
   it('should name what is wrong', () => {
     expect(parseAccountDraft({ ...base, name: '', openingBalance: 'x' })).toEqual({ errors: { name: 'name_required', openingBalance: 'amount_invalid' } })
+  })
+
+  it('should keep the card list in order, with ids only for saved cards', () => {
+    const cards = [{ key: 'a', id: 'c1', last4: ' 1234', holderMemberId: 'm1' }, { key: 'b', last4: '5678', holderMemberId: null }]
+    expect(parseAccountDraft({ ...base, holderMemberId: 'm1', cards })).toMatchObject({
+      input: { holderMemberId: 'm1', cards: [{ id: 'c1', last4: '1234', holderMemberId: 'm1' }, { last4: '5678', holderMemberId: null }] },
+    })
+  })
+
+  it('should flag card digits that are not 4 digits, and a card listed twice', () => {
+    const cards = [{ key: 'a', last4: '12a4', holderMemberId: null }, { key: 'b', last4: '5678', holderMemberId: null }, { key: 'c', last4: '5678', holderMemberId: null }]
+    expect(parseAccountDraft({ ...base, cards })).toEqual({ errors: { cards: { a: 'card_last4', c: 'card_duplicate' } } })
+  })
+
+  it('should drop the cards of an account that becomes cash', () => {
+    const cards = [{ key: 'a', last4: '12', holderMemberId: null }]
+    expect(parseAccountDraft({ ...base, kind: 'CASH', cards })).toMatchObject({ input: { cards: [] } })
   })
 })
 

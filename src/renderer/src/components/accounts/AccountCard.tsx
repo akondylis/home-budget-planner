@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Button, IconButton, ListCard, MetaLine, Money } from '../ui'
+import { MemberDot } from '../members/MemberDot'
 import { Icon } from '../shell/icons'
 import { ACCOUNT_KIND_ICON } from '../../lib/ledger'
 import { formatDate } from '../../lib/date-format'
@@ -7,6 +8,8 @@ import type { AccountSummary } from '../../../../shared/ledger'
 
 export interface AccountCardProps {
   account: AccountSummary
+  /** Members exist, so an account without a holder reads "Joint" */
+  showHolder: boolean
   onAddTransaction: () => void
   /** Bank accounts and cards: statement import is their main way in */
   onImport: () => void
@@ -17,7 +20,7 @@ export interface AccountCardProps {
 }
 
 /** One account: what it holds now, where its data comes from, and what to do next */
-export function AccountCard({ account, onAddTransaction, onImport, onHistory, onOpenTransactions, onEdit }: AccountCardProps) {
+export function AccountCard({ account, showHolder, onAddTransaction, onImport, onHistory, onOpenTransactions, onEdit }: AccountCardProps) {
   const { t } = useTranslation()
   const cash = account.kind === 'CASH'
   const source = cash ? t('accounts.source_cash') : account.importedUntil ? null : t('accounts.not_imported')
@@ -30,7 +33,29 @@ export function AccountCard({ account, onAddTransaction, onImport, onHistory, on
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold text-fg" title={account.name}>{account.name}</h2>
-          <MetaLine parts={[t(`accounts.kind.${account.kind}`), account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`)]} />
+          <div className="flex min-w-0 items-center gap-1 text-xs text-gray-500">
+            <MetaLine parts={[t(`accounts.kind.${account.kind}`), account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`)]} />
+            {showHolder && <>
+              <span aria-hidden="true">•</span>
+              {account.holderName && account.holderColour
+                ? <MemberDot colour={account.holderColour} name={account.holderName} className="shrink-0" />
+                : <span className="shrink-0">{t('accounts.holder_joint')}</span>}
+            </>}
+          </div>
+          {account.cards.length > 0 && (
+            <ul
+              aria-label={t('accounts.cards')}
+              title={account.cards.map(c => `•••• ${c.last4}${c.holderName ? ` ${c.holderName}` : ''}`).join(' · ')}
+              className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500"
+            >
+              {account.cards.map(c => (
+                <li key={c.id} className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="tabular-nums">•••• {c.last4}</span>
+                  {c.holderName && c.holderColour && <MemberDot colour={c.holderColour} name={c.holderName} />}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="-mr-2 -mt-1 flex shrink-0">
           <IconButton icon="receipt" size="sm" label={t('accounts.view_transactions')} onClick={onOpenTransactions} />

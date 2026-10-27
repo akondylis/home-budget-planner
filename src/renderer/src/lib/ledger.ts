@@ -132,21 +132,48 @@ export function validateEntry(draft: EntryDraft): EntryErrors {
 
 // ── Account form ─────────────────────────────────────────────────────────────
 
+export interface CardDraft {
+  /** Local list key (React), stable while the form is open */
+  key: string
+  /** Set for a card that is already saved */
+  id?: string
+  last4: string
+  holderMemberId: string | null
+}
+
 export interface AccountDraft {
   name: string
   kind: AccountKind
   institution: Institution
   openingBalance: string
   openingDate: string
+  /** null = joint */
+  holderMemberId: string | null
+  cards: CardDraft[]
+}
+
+export type AccountDraftErrors = Partial<Record<'name' | 'openingBalance' | 'openingDate', string>> & {
+  /** Per card key */
+  cards?: Record<string, string>
 }
 
 /** The input to save, or the i18n keys (under `accounts.errors`) of what is wrong */
-export function parseAccountDraft(draft: AccountDraft): { input: AccountInput } | { errors: Partial<Record<'name' | 'openingBalance' | 'openingDate', string>> } {
-  const errors: Partial<Record<'name' | 'openingBalance' | 'openingDate', string>> = {}
+export function parseAccountDraft(draft: AccountDraft): { input: AccountInput } | { errors: AccountDraftErrors } {
+  const errors: AccountDraftErrors = {}
   const cents = draft.openingBalance.trim() === '' ? 0 : parseMoney(draft.openingBalance)
   if (!draft.name.trim()) errors.name = 'name_required'
   if (cents === null) errors.openingBalance = 'amount_invalid'
   if (!isDateOnly(draft.openingDate)) errors.openingDate = 'date_required'
+  // Cash has no cards: switching an account to cash lets its cards go
+  const cards = draft.kind === 'CASH' ? [] : draft.cards.map(c => ({ ...c, last4: c.last4.trim() }))
+  const cardErrors: Record<string, string> = {}
+  const seen = new Set<string>()
+  for (const c of cards) {
+    if (!/^\d{4}$/.test(c.last4)) cardErrors[c.key] = 'card_last4'
+    else if (seen.has(c.last4)) cardErrors[c.key] = 'card_duplicate'
+    seen.add(c.last4)
+  }
+  if (Object.keys(cardErrors).length > 0) errors.cards = cardErrors
   if (Object.keys(errors).length > 0 || cents === null) return { errors }
   return {
     input: {
@@ -155,6 +182,8 @@ export function parseAccountDraft(draft: AccountDraft): { input: AccountInput } 
       institution: draft.institution,
       openingBalanceCents: cents,
       openingDate: draft.openingDate,
+      holderMemberId: draft.holderMemberId,
+      cards: cards.map(c => ({ ...(c.id ? { id: c.id } : {}), last4: c.last4, holderMemberId: c.holderMemberId })),
     },
   }
 }
