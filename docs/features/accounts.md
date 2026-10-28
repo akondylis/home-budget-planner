@@ -23,7 +23,15 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 - **Actions per card:** bank accounts and cards lead with **Import statement**, then **Add transaction**; cash has
   only **Add transaction**. Header icons: the account's transactions, and edit.
 - **Page header:** total across active accounts as the context line; **New account** becomes the primary button
-  once Quick setup is done.
+  once Quick setup is done. With a filter on it reads "Total shown: … • 3 of 7 accounts", so the number never
+  silently changes meaning.
+- **Group by and filters** (from two accounts on, under the header, same look as the Transactions filter bar):
+  **Group by** None · Bank · Holder · Type, then *All types / All banks / All holders* dropdowns. Each group gets a
+  `SectionHeader`: icon or the parent's dot, name, account count and its subtotal; inside a group the card drops
+  what the header already says. Banks and types keep their declared order ("Other / none" last); holders follow
+  the members' order, Joint last. A dropdown appears only when it has two or more values; Holder only once parents
+  exist. Nothing matching shows an empty state with **Clear all**. The grouping is remembered on this PC; filters
+  last for the session (Back returns to them) and never survive a restart. The archived list is not filtered.
 - **Archive, not delete:** an archived account leaves the grid and every picker, keeps its rows, and comes back
   from the "Archived (n)" list under the grid.
 
@@ -45,6 +53,9 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
   two cards may swap digits). Left out = cards untouched (Quick setup). An account switched to cash drops its
   cards. Card limit, statement and due day were dropped for now (2026-10-27); reading the card in statement text
   is roadmap #19.
+- **Holder filter** matches the account's holder **or** a card holder on it (a parent's card on a joint account
+  counts as theirs); **grouping by holder** uses the account's holder only. A stored choice whose dropdown is no
+  longer shown (one bank left, parents removed) is ignored rather than hiding accounts.
 - **Cash** is an account of kind `CASH`: no statement, every row typed in. ATM withdrawals are transfers into it,
   so cash spending is counted once, when it is entered.
 
@@ -54,8 +65,10 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 | --- | --- |
 | `src/main/services/accounts.ts` | List with balances and "imported up to", create (one or many), update, archive, `balanceOn` |
 | `src/main/ipc/account.ts` | Thin handlers |
-| `src/renderer/src/pages/AccountsScreen.tsx` | Grid, archived list, form |
-| `src/renderer/src/components/accounts/` | `AccountCard`, `AccountForm`, `CardListEditor`, `QuickSetup` |
+| `src/renderer/src/pages/AccountsScreen.tsx` | Grid (grouped or not), archived list, form |
+| `src/renderer/src/components/accounts/` | `AccountCard`, `AccountsToolbar`, `AccountForm`, `CardListEditor`, `QuickSetup` |
+| `src/renderer/src/lib/account-groups.ts` | Filter, group with subtotals, values offered, filter as applied |
+| `src/renderer/src/store/ui.ts` | `accountsGroupBy` (persisted), `accountsFilter` (session) |
 | `src/renderer/src/store/ledger.ts` | Accounts, categories and payees for every screen; `changed()` after each write |
 | `src/renderer/src/lib/ledger.ts` | `QUICK_SETUP`, account icons, `parseAccountDraft` (cards included) |
 
@@ -73,4 +86,5 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 
 `src/main/__tests__/ledger-services.test.ts` (accounts: order, balance without rows, validation, archive keeps
 rows, missing account; holders and cards: list order, sync with swapped digits, duplicate / foreign card / unknown
-holder, archived holder kept) and `lib/ledger.test.ts` (account draft parsing with cards, default account).
+holder, archived holder kept), `lib/ledger.test.ts` (account draft parsing with cards, default account) and
+`lib/account-groups.test.ts` (filters incl. card holders and Joint, group order and subtotals, filter as applied).
