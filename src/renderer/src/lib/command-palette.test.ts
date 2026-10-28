@@ -42,6 +42,12 @@ describe('buildActions', () => {
     expect(buildActions(base).find(a => a.id === 'shortcut:toggleSidebar')?.keys).toEqual([['Ctrl', '\\']])
   })
 
+  it('offers Print and the keyboard cheat-sheet with their keys', () => {
+    const actions = buildActions(base)
+    expect(actions.find(a => a.id === 'shortcut:print')?.keys).toEqual([['Ctrl', 'P']])
+    expect(actions.find(a => a.id === 'shortcut:showShortcuts')?.title).toBe('shortcuts.open')
+  })
+
   it('offers every page, the app actions, and only the other themes and language', () => {
     const ids = buildActions(base).map(a => a.id)
     expect(ids).toEqual(expect.arrayContaining(['view:overview', 'view:settings', 'tour', 'worksheet', 'dataFolder', 'theme:dark', 'theme:system', 'language:en']))

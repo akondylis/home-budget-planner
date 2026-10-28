@@ -17,6 +17,10 @@ import { AppTour } from './components/tour/AppTour'
 import { WorksheetPreviewModal } from './components/pdf/WorksheetPreviewModal'
 import { useThemeSync } from './hooks/useThemeSync'
 import { useShortcuts, type ShortcutAction } from './hooks/useShortcuts'
+import { useNavHistory } from './hooks/useNavHistory'
+import { useMouseNav } from './hooks/useMouseNav'
+import { ShortcutsModal } from './components/ShortcutsModal'
+import type { NavEntry } from './lib/nav-history'
 import { useUiStore } from './store/ui'
 import { activeAccounts, useLedgerStore } from './store/ledger'
 import { EMPTY_FILTER, currentMonth, useTransactionsStore } from './store/transactions'
@@ -53,6 +57,7 @@ export default function App() {
   const [worksheetOpen, setWorksheetOpen] = useState(false)
   const sidebarPosition = useUiStore(s => s.sidebarPosition)
   const paletteOpen = useUiStore(s => s.paletteOpen)
+  const shortcutsOpen = useUiStore(s => s.shortcutsOpen)
   const entry = useLedgerStore(s => s.entry)
   const importWizard = useImportStore(s => s.wizard)
   const importHistory = useImportStore(s => s.history)
@@ -78,9 +83,31 @@ export default function App() {
     if (!useUiStore.getState().tourSeen) useUiStore.getState().startTour()
   }, [])
 
+  // Back/forward (mouse side buttons, Alt+arrows, title bar) through views and the Categories tab
+  const nav = useNavHistory(
+    view === 'categories' ? { view, categoriesTab } : { view },
+    () => true,
+    restoreNavEntry,
+  )
+  useMouseNav(nav.back, nav.forward)
+
+  function restoreNavEntry(e: NavEntry) {
+    if (e.categoriesTab) setCategoriesTab(e.categoriesTab)
+    setView(e.view)
+  }
+
   const commands: Record<ShortcutAction, () => void> = {
     commandPalette: () => useUiStore.getState().setPaletteOpen(!useUiStore.getState().paletteOpen),
     addTransaction,
+    // The page on screen prints its own report; elsewhere the monthly worksheet
+    print: () => {
+      const target = useUiStore.getState().printTarget
+      if (target) target()
+      else setWorksheetOpen(true)
+    },
+    navBack: nav.back,
+    navForward: nav.forward,
+    showShortcuts: () => useUiStore.getState().setShortcutsOpen(true),
     toggleSidebar,
     swapSidebar,
     zoomIn: () => applyZoom(zoom + ZOOM_STEP),
@@ -209,6 +236,7 @@ export default function App() {
         onZoomIn={() => applyZoom(zoom + ZOOM_STEP)}
         onZoomOut={() => applyZoom(zoom - ZOOM_STEP)}
         onZoomReset={() => applyZoom(1.0)}
+        nav={nav}
       />
       <div className={`flex min-h-0 flex-1 ${sidebarPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
         <Sidebar view={view} onNavigate={setView} />
@@ -222,7 +250,8 @@ export default function App() {
         </div>
       </div>
       {paletteOpen && <CommandPalette onClose={() => useUiStore.getState().setPaletteOpen(false)} onRun={runPaletteTarget} />}
-      {worksheetOpen && <WorksheetPreviewModal onClose={() => setWorksheetOpen(false)} />}
+      {shortcutsOpen && <ShortcutsModal onClose={() => useUiStore.getState().setShortcutsOpen(false)} />}
+      {worksheetOpen &&<WorksheetPreviewModal onClose={() => setWorksheetOpen(false)} />}
       {importWizard && (
         <ImportWizard
           accountId={importWizard.accountId}

@@ -50,16 +50,18 @@ export interface PaletteSection {
 }
 
 // Shortcuts that make sense as a command (Ctrl+K itself would only close the palette)
-const PALETTE_SHORTCUTS = ['addTransaction', 'toggleSidebar', 'swapSidebar', 'zoomIn', 'zoomOut', 'zoomReset'] as const
+const PALETTE_SHORTCUTS = ['addTransaction', 'print', 'toggleSidebar', 'swapSidebar', 'zoomIn', 'zoomOut', 'zoomReset', 'showShortcuts'] as const
 export type PaletteShortcut = (typeof PALETTE_SHORTCUTS)[number]
 
 const SHORTCUT_ICON: Record<PaletteShortcut, IconName> = {
   addTransaction: 'plus',
+  print: 'printer',
   toggleSidebar: 'sidebar',
   swapSidebar: 'swap',
   zoomIn: 'plus',
   zoomOut: 'minus',
   zoomReset: 'search',
+  showShortcuts: 'keyboard',
 }
 
 const THEME_ICON: Record<ThemeMode, IconName> = { light: 'sun', dark: 'moon', system: 'monitor' }
@@ -97,7 +99,7 @@ export function buildActions({ t, theme, lang, members = [], currentMemberId = n
   const shortcuts: PaletteItem[] = PALETTE_SHORTCUTS.map(action => ({
     id: `shortcut:${action}`,
     group: 'actions',
-    title: t(`shortcuts.actions.${action}`),
+    title: action === 'showShortcuts' ? t('shortcuts.open') : t(`shortcuts.actions.${action}`),
     keys: keysOf(action),
     icon: SHORTCUT_ICON[action],
     target: { kind: 'shortcut', action },

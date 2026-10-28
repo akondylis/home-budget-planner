@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next'
 import { Icon } from '../components/shell/icons'
 import { ActionMenu, Banner, Button, ConfirmDialog, ListCard, MetaLine, PageHeader, Spinner } from '../components/ui'
 import { isModalOpen } from '../components/ui/Modal'
+import { usePrintShortcut } from '../hooks/useShortcuts'
 import { MonthSwitcher } from '../components/budget/MonthSwitcher'
 import { BudgetSummaryTiles } from '../components/budget/BudgetSummaryTiles'
 import { BudgetTable, isUnplanned } from '../components/budget/BudgetTable'
@@ -110,6 +111,8 @@ export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManage
   const ready = data !== null && data.month === month
   const plannedCount = ready ? data.groups.reduce((n, g) => n + g.categories.filter(c => c.plannedCents > 0).length, 0) : 0
   const showTable = ready && data.groups.length > 0 && (data.exists || blankMonth === month)
+  // Ctrl+P prints this month's budget while the table is showing
+  usePrintShortcut(() => setPrinting(true), showTable)
 
   return (
     <div className="mx-auto max-w-5xl">

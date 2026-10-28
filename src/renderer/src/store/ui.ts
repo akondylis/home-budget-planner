@@ -21,6 +21,10 @@ type UiStore = {
   collapsedSections: string[]
   // Command palette (Ctrl+K) is showing; per session
   paletteOpen: boolean
+  // Keyboard cheat-sheet (? / F1) is showing; per session
+  shortcutsOpen: boolean
+  // What Ctrl+P prints on the page on screen (usePrintShortcut); null = the monthly worksheet
+  printTarget: (() => void) | null
   // The app tour has been finished or skipped once; it starts by itself only before that
   tourSeen: boolean
   // Step of the running app tour, null when it isn't showing; per session
@@ -37,6 +41,8 @@ type UiStore = {
   toggleSection: (id: string) => void
   expandSection: (id: string) => void
   setPaletteOpen: (open: boolean) => void
+  setShortcutsOpen: (open: boolean) => void
+  setPrintTarget: (target: (() => void) | null) => void
   startTour: () => void
   setTourStep: (step: number) => void
   /** Finished or skipped: closes the tour and marks it seen */
@@ -78,6 +84,8 @@ export const useUiStore = create<UiStore>()(
       dateFormat: DEFAULT_DATE_FORMAT,
       collapsedSections: [],
       paletteOpen: false,
+      shortcutsOpen: false,
+      printTarget: null,
       tourSeen: false,
       tourStep: null,
       currentMemberId: null,
@@ -101,6 +109,8 @@ export const useUiStore = create<UiStore>()(
         s.collapsedSections.includes(id) ? { collapsedSections: s.collapsedSections.filter(c => c !== id) } : s
       )),
       setPaletteOpen: paletteOpen => set({ paletteOpen }),
+      setShortcutsOpen: shortcutsOpen => set({ shortcutsOpen }),
+      setPrintTarget: printTarget => set({ printTarget }),
       startTour: () => set({ tourStep: 0, paletteOpen: false }),
       setTourStep: tourStep => set({ tourStep }),
       endTour: () => set({ tourStep: null, tourSeen: true }),

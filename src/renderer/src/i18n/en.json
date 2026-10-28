@@ -57,7 +57,9 @@
     "debts": "Debts & loans",
     "projections": "Projections",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "back": "Back",
+    "forward": "Forward"
   },
   "status": {
     "upcoming": "Upcoming",
@@ -140,6 +142,13 @@
   "shortcuts": {
     "or": "or",
     "with_key": "{{action}} ({{key}})",
+    "title": "Keyboard shortcuts",
+    "subtitle": "Press ? or F1 at any time to see this list",
+    "open": "Keyboard shortcuts",
+    "groups": {
+      "general": "General",
+      "view": "View"
+    },
     "actions": {
       "commandPalette": "Search and commands",
       "toggleSidebar": "Collapse or expand sidebar",
@@ -147,7 +156,11 @@
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "zoomReset": "Reset zoom",
-      "addTransaction": "Add transaction"
+      "addTransaction": "Add transaction",
+      "print": "Print preview of this page (or the monthly worksheet)",
+      "showShortcuts": "Show this list",
+      "navBack": "Back (or the mouse back button)",
+      "navForward": "Forward (or the mouse forward button)"
     }
   },
   "tour": {

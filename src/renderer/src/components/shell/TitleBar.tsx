@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useUiStore, type ThemeMode } from '../../store/ui'
 import { cycleTheme, swapSidebar } from '../../lib/ui-actions'
+import type { NavHistoryControls } from '../../hooks/useNavHistory'
 import { Icon, type IconName } from './icons'
 import { Badge, HoverCard } from '../ui'
 
@@ -14,9 +15,11 @@ export interface TitleBarProps {
   onZoomIn: () => void
   onZoomOut: () => void
   onZoomReset: () => void
+  /** Back/forward buttons */
+  nav?: NavHistoryControls
 }
 
-export function TitleBar({ zoom, zoomMin, zoomMax, onZoomIn, onZoomOut, onZoomReset }: TitleBarProps) {
+export function TitleBar({ zoom, zoomMin, zoomMax, onZoomIn, onZoomOut, onZoomReset, nav }: TitleBarProps) {
   const { t } = useTranslation()
   const theme = useUiStore(s => s.theme)
   const [appInfo, setAppInfo] = useState<{ portable: boolean; dataDir: string } | null>(null)
@@ -33,6 +36,28 @@ export function TitleBar({ zoom, zoomMin, zoomMax, onZoomIn, onZoomOut, onZoomRe
     <header
       className="app-drag titlebar-inset flex h-9 shrink-0 items-center gap-2 border-b border-line bg-glass/80 pl-3 backdrop-blur-xl"
     >
+      {nav && (
+        <div className="-ml-1 flex items-center gap-0.5">
+          <button
+            onClick={nav.back}
+            disabled={!nav.canBack}
+            className={iconBtn}
+            title={t('shortcuts.with_key', { action: t('nav.back'), key: 'Alt+←' })}
+            aria-label={t('nav.back')}
+          >
+            <Icon name="arrow-left" size={16} />
+          </button>
+          <button
+            onClick={nav.forward}
+            disabled={!nav.canForward}
+            className={iconBtn}
+            title={t('shortcuts.with_key', { action: t('nav.forward'), key: 'Alt+→' })}
+            aria-label={t('nav.forward')}
+          >
+            <Icon name="arrow-right" size={16} />
+          </button>
+        </div>
+      )}
       <span className="truncate text-xs font-semibold tracking-wide text-fg">{t('app.title')}</span>
       {appInfo?.portable && (
         <div className="app-no-drag">
