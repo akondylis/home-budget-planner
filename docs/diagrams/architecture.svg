@@ -131,7 +131,7 @@
 <rect x="1574" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
 <text x="1592" y="144" font-size="16" font-weight="700" fill="#1f2328">Category rules</text>
 <text x="1592" y="166" font-size="13" fill="#57606a">“Always put X in Y?”</text>
-<text x="1592" y="184" font-size="13" fill="#57606a">(import review, log)</text>
+<text x="1592" y="184" font-size="13" fill="#57606a">Categories › Merchant rules</text>
 <text x="1592" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listRules()</text>
 <text x="1592" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createRule()</text>
 <text x="1592" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateRule()</text>
@@ -173,18 +173,28 @@
 <rect x="2246" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
 <rect x="2246" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
 <text x="2264" y="144" font-size="16" font-weight="700" fill="#1f2328">Categories</text>
-<text x="2264" y="166" font-size="13" fill="#57606a">Category pickers</text>
-<text x="2264" y="184" font-size="13" fill="#57606a">(entry form, log)</text>
+<text x="2264" y="166" font-size="13" fill="#57606a">Pickers; Manage categories</text>
+<text x="2264" y="184" font-size="13" fill="#57606a">(Transactions, Settings)</text>
 <text x="2264" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listCategories()</text>
 <text x="2264" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createCategory()</text>
 <text x="2264" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateCategory()</text>
 <text x="2264" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.archiveCategory()</text>
+<text x="2264" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.manageCategories()</text>
+<text x="2264" y="293" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.moveCategory()</text>
+<text x="2264" y="310" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.reorderCategories()</text>
+<text x="2264" y="327" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.mergeCategory()</text>
+<text x="2264" y="344" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.deleteCategory()</text>
 <rect x="2246" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
 <rect x="2246" y="430" width="6" height="204" rx="3" fill="#8250df"/>
 <text x="2264" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:list'</text>
 <text x="2264" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:create'</text>
 <text x="2264" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:update'</text>
 <text x="2264" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:archive'</text>
+<text x="2264" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:manage'</text>
+<text x="2264" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:move'</text>
+<text x="2264" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:reorder'</text>
+<text x="2264" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:merge'</text>
+<text x="2264" y="592" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:delete'</text>
 <rect x="2246" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
 <rect x="2246" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
 <text x="2264" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/category.ts</text>

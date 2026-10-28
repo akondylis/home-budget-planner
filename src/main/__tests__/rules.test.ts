@@ -72,4 +72,15 @@ describe('category rules', () => {
     await deleteRule(id)
     expect((await listRules()).some(r => r.id === id)).toBe(false)
   })
+
+  it('should limit a rule to one account and back, and tell learned rules from the starter list', async () => {
+    const { bankId, groceries } = await setup()
+    const { id } = await createRule({ pattern: 'kritikos', categoryId: groceries.id })
+    await updateRule(id, { accountId: bankId })
+    expect((await listRules()).find(r => r.id === id)).toMatchObject({ accountId: bankId, accountName: 'Alpha', learned: true })
+    await updateRule(id, { accountId: null })
+    expect((await listRules()).find(r => r.id === id)).toMatchObject({ accountId: null, accountName: null })
+    await expect(updateRule(id, { accountId: 'nope' })).rejects.toThrow('ACCOUNT_NOT_FOUND')
+    expect((await listRules()).some(r => !r.learned)).toBe(true)
+  })
 })

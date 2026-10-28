@@ -1,6 +1,7 @@
 // Shared UI primitives. Styles live in assets/index.css (@layer components);
 // these wrappers only pick classes, so pages never hand-roll button or badge styles.
 export { cx } from './cx'
+export { ActionMenu, type ActionMenuItem, type ActionMenuProps } from './ActionMenu'
 export { Badge, type BadgeProps, type BadgeTone } from './Badge'
 export { Banner, type BannerProps, type BannerTone } from './Banner'
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button'

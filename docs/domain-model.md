@@ -44,6 +44,10 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
   app compares it with the account's balance on that day, after the import and in past imports. It only warns.
 - **Category rules** are stored folded like the payee key (no accents, digits or "POS"); whole words match; a rule
   the user teaches (priority 1000) beats the seeded merchants, and the same pattern again updates it.
+- **Changing categories**: archiving hides a category (a group takes its categories) but its rows keep it and still
+  count; moving a category to another group gives it that group's type; **merging** A into B moves A's rows and
+  rules to B (a rule B already has is dropped) and archives the empty A; only a category no row uses can be
+  deleted (its rules go with it), and only an empty group. Feature doc: [features/categories.md](features/categories.md).
 - **Starting data**: an empty database gets the category groups (one per type) and common Greek merchant rules, in
   the app language of that moment (`src/main/services/seed.ts`). After that they are the household's own data.
 

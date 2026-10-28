@@ -159,10 +159,14 @@ export interface RuleSummary {
   pattern: string
   match: RuleMatch
   accountId: string | null
+  /** null = all accounts */
+  accountName: string | null
   categoryId: string
   categoryName: string
   payee: string | null
   priority: number
+  /** Made by the household (not from the starter list) */
+  learned: boolean
   hitCount: number
 }
 

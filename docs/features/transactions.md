@@ -34,7 +34,8 @@ spending are true. Cash is typed in by hand in seconds; bank and card rows come 
   (ΔΕΗ, COSMOTE, NETFLIX, ΣΚΛΑΒΕΝΙΤΗΣ, LIDL, SHELL…), in the app language of that moment.
 - Pickers search by name and group, ignoring accents and Greek/Latin script; income rows offer income groups, the
   rest offer everything else; the subscription hint offers only Subscriptions.
-- A screen to rename, merge or archive categories is not built yet (services exist).
+- Renaming, reordering, moving, merging, archiving and deleting categories, and editing merchant rules:
+  [category management](categories.md) (**Manage categories** in the page header).
 
 ## Behaviour
 
@@ -76,7 +77,8 @@ spending are true. Cash is typed in by hand in seconds; bank and card rows come 
 | `transaction:createTransfer` / `:updateTransfer` | `(input)` / `(transferId, input)` | `INVALID_INPUT`, `INVALID_AMOUNT`, `SAME_ACCOUNT`, `ACCOUNT_NOT_FOUND`; update adds `TRANSACTION_NOT_FOUND`, `TRANSFER_IMPORTED` |
 | `transaction:linkTransfer` | `(idA, idB)` → transferId | `TRANSACTION_NOT_FOUND`, `TRANSFER_MISMATCH` |
 | `transaction:delete` | `(id)` | `TRANSACTION_NOT_FOUND` |
-| `category:list` / `:create` / `:update` / `:archive` | tree; `(input)`; `(id, input)`; `(id)` | `INVALID_INPUT`, `CATEGORY_NOT_FOUND`, `CATEGORY_EXISTS` |
+| `category:list` / `:create` / `:update` | tree; `(input)`; `(id, input)` | `INVALID_INPUT`, `CATEGORY_NOT_FOUND`, `CATEGORY_EXISTS` |
+| `category:manage` / `:archive` / `:move` / `:reorder` / `:merge` / `:delete` | see [category management](categories.md#ipc) | |
 | `rule:list` / `:create` / `:update` / `:delete` | `RuleSummary[]`; `(RuleInput)` → `{ id, appliedCount }`; `(id, patch)`; `(id)` | `INVALID_INPUT`, `CATEGORY_NOT_FOUND`, `ACCOUNT_NOT_FOUND`, `RULE_NOT_FOUND` |
 | `subscription:hints` | `()` → `SubscriptionHint[]` | — |
 

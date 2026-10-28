@@ -4,6 +4,7 @@ import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import en from '../../i18n/en.json'
 import {
+  ActionMenu,
   ActiveFilterPills,
   Badge,
   Banner,
@@ -40,6 +41,18 @@ beforeAll(async () => {
 })
 
 const noop = vi.fn()
+
+describe('ActionMenu', () => {
+  it('starts closed: a labelled "more" button that announces its menu', () => {
+    const html = renderToStaticMarkup(
+      <ActionMenu label="More for Fuel" items={[{ id: 'a', label: 'Archive', icon: 'lock', onSelect: noop }]} />,
+    )
+    expect(html).toContain('aria-label="More for Fuel"')
+    expect(html).toContain('aria-haspopup="menu"')
+    expect(html).toContain('aria-expanded="false"')
+    expect(html).not.toContain('Archive')
+  })
+})
 
 describe('Banner', () => {
   it('gives warnings an amber surface with an accent edge', () => {

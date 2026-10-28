@@ -25,7 +25,12 @@ interface Window {
     listCategories:    () => Promise<import('../../shared/ledger').CategoryNode[]>
     createCategory:    (input: import('../../shared/ledger').CategoryInput) => Promise<string>
     updateCategory:    (id: string, input: Omit<import('../../shared/ledger').CategoryInput, 'parentId'>) => Promise<void>
-    archiveCategory:   (id: string) => Promise<void>
+    archiveCategory:   (id: string, archived?: boolean) => Promise<void>
+    manageCategories:  () => Promise<import('../../shared/ledger').ManagedCategoryNode[]>
+    moveCategory:      (id: string, parentId: string) => Promise<void>
+    reorderCategories: (parentId: string | null, orderedIds: string[]) => Promise<void>
+    mergeCategory:     (sourceId: string, targetId: string) => Promise<import('../../shared/ledger').MergeResult>
+    deleteCategory:    (id: string) => Promise<void>
 
     listTransactions:  (filter: import('../../shared/ledger').TransactionFilter) => Promise<import('../../shared/ledger').TransactionPage>
     listPayees:        () => Promise<import('../../shared/ledger').PayeeSuggestion[]>
@@ -48,7 +53,7 @@ interface Window {
 
     listRules:         () => Promise<import('../../shared/statement-import').RuleSummary[]>
     createRule:        (input: import('../../shared/statement-import').RuleInput) => Promise<{ id: string; appliedCount: number }>
-    updateRule:        (id: string, input: Partial<Omit<import('../../shared/statement-import').RuleInput, 'applyToUncategorised' | 'accountId'>> & { priority?: number }) => Promise<void>
+    updateRule:        (id: string, input: Partial<Omit<import('../../shared/statement-import').RuleInput, 'applyToUncategorised'>> & { priority?: number }) => Promise<void>
     deleteRule:        (id: string) => Promise<void>
 
     subscriptionHints: () => Promise<import('../../shared/statement-import').SubscriptionHint[]>

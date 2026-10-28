@@ -6,7 +6,7 @@ As of 2026-10-27 · Andrew Kondylis
 
 The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
 The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
-Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **16 items** are queued
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **15 items** are queued
 in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
 decision.
 
@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-28 | Category management | Categories page off Transactions (and Settings, `Ctrl+K`): rename, reorder, move between groups, merge (the merged one is archived, decided 2026-10-28), archive/restore, delete when unused, counts per category, **Show transactions**; **Merchant rules** tab to search, add, edit and delete rules · [categories](features/categories.md) |
 | 2026-10-28 | Account holders & cards | Each account has a holder (a parent or Joint), shown on its card; cards per account (debit cards, main and supplementary credit cards) with last 4 digits and holder, edited in the account form and saved in one go. The holder is shown only, never a default "For" (decided 2026-10-27) · [accounts](features/accounts.md) |
 | 2026-10-27 | Members | Parents only ("children included?" answered 2026-10-27), name and colour, in Settings → Household; "who is using the app" chip in the sidebar (per PC, `Ctrl+K`) stamps who entered each row and import; transactions carry **For** (a parent or Household) with a payee default, a log filter and bulk **Set "For"…** · [members](features/members.md) |
 | 2026-10-27 | Statement import | Alpha Bank and Eurobank CSV (accounts and cards; "which banks first?" answered 2026-10-26). Wizard: account + file, column mapping once per account for unknown files, review with status chips. Never doubles a row (fingerprint with in-file occurrence, hand-entered twin → **Link**, transfer pairing, ATM → Cash); merchant rules learned with "Always put X in Y?"; undo; past imports; statement balance checked against the app. Bank presets read the column layouts of the household's earlier converter (2026-10-27); a real file of each type still to be tried · [statement import](features/statement-import.md) |
@@ -38,12 +39,6 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 ## Future
 
 Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after 2026-10-26.
-
-### Foundation
-
-| # | Feature | Size | What it does | Depends on / plan | Open |
-| --- | --- | --- | --- | --- | --- |
-| 3 | Category management | S | Screen to rename, move, merge and archive categories, and to see and edit merchant rules (the services exist) | — | — |
 
 ### Everyday money
 

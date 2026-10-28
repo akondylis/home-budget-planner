@@ -10,6 +10,7 @@ import { TransactionForm } from './components/transactions/TransactionForm'
 import { ImportWizard } from './components/import/ImportWizard'
 import { ImportHistory } from './components/import/ImportHistory'
 import { SettingsScreen } from './pages/SettingsScreen'
+import { CategoriesScreen } from './pages/CategoriesScreen'
 import { CommandPalette } from './components/CommandPalette'
 import { AppTour } from './components/tour/AppTour'
 import { WorksheetPreviewModal } from './components/pdf/WorksheetPreviewModal'
@@ -22,6 +23,7 @@ import { useImportStore } from './store/import'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
 import type { PaletteTarget } from './lib/command-palette'
 import type { View } from './types'
+import type { CategoriesTab } from './lib/categories'
 
 // ── Zoom ──────────────────────────────────────────────────────────────────────
 
@@ -42,6 +44,9 @@ function readStoredZoom(): number {
 
 export default function App() {
   const [view, setView] = useState<View>('overview')
+  const [categoriesTab, setCategoriesTab] = useState<CategoriesTab>('categories')
+  // Where the Categories page's back button goes
+  const [categoriesFrom, setCategoriesFrom] = useState<View>('transactions')
   const [zoom, setZoom] = useState<number>(readStoredZoom)
   const [worksheetOpen, setWorksheetOpen] = useState(false)
   const sidebarPosition = useUiStore(s => s.sidebarPosition)
@@ -107,6 +112,17 @@ export default function App() {
     setView('transactions')
   }
 
+  function openCategories(tab: CategoriesTab = 'categories') {
+    setCategoriesTab(tab)
+    if (view !== 'categories') setCategoriesFrom(view === 'settings' ? 'settings' : 'transactions')
+    setView('categories')
+  }
+
+  function showCategoryTransactions(categoryId: string) {
+    useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month: null, categoryId })
+    setView('transactions')
+  }
+
   function runPaletteTarget(target: PaletteTarget) {
     useUiStore.getState().setPaletteOpen(false)
     switch (target.kind) {
@@ -121,6 +137,7 @@ export default function App() {
       case 'language': void changeLanguage(target.lang); break
       case 'member': useUiStore.getState().setCurrentMember(target.memberId); break
       case 'household': setView('settings'); break
+      case 'categories': openCategories(target.tab); break
     }
   }
 
@@ -136,8 +153,18 @@ export default function App() {
     switch (view) {
       case 'overview': return <OverviewScreen onPrintWorksheet={() => setWorksheetOpen(true)} onGoTo={setView} />
       case 'accounts': return <AccountsScreen onOpenTransactions={openAccountTransactions} onImport={importStatement} />
-      case 'transactions': return <TransactionsScreen onGoToAccounts={() => setView('accounts')} onImport={() => importStatement()} />
-      case 'settings': return <SettingsScreen />
+      case 'transactions': return <TransactionsScreen onGoToAccounts={() => setView('accounts')} onImport={() => importStatement()} onManageCategories={() => openCategories()} />
+      case 'settings': return <SettingsScreen onManageCategories={() => openCategories()} />
+      case 'categories':
+        return (
+          <CategoriesScreen
+            tab={categoriesTab}
+            onTabChange={setCategoriesTab}
+            backTo={categoriesFrom}
+            onBack={() => setView(categoriesFrom)}
+            onShowTransactions={showCategoryTransactions}
+          />
+        )
       default: return <PlannedScreen view={view} />
     }
   }

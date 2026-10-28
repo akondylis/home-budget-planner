@@ -9,7 +9,8 @@ import { MemberSwitcher } from '../members/MemberSwitcher'
 import { FOOTER_NAV_ITEMS, MAIN_NAV_ITEMS, type NavItem } from '../../lib/nav-items'
 
 function isActive(item: NavItem, view: View): boolean {
-  return item.id === view
+  // The Categories page belongs to Transactions
+  return item.id === view || (view === 'categories' && item.id === 'transactions')
 }
 
 export interface SidebarProps {

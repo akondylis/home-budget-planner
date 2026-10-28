@@ -1,8 +1,20 @@
 import { ipcMain } from 'electron'
-import { archiveCategory, createCategory, listCategories, updateCategory } from '../services/categories'
+import {
+  archiveCategory,
+  createCategory,
+  deleteCategory,
+  listCategories,
+  listCategoriesForManage,
+  mergeCategory,
+  moveCategory,
+  reorderCategories,
+  updateCategory,
+} from '../services/categories'
 
 export function registerCategoryHandlers(): void {
   ipcMain.handle('category:list', () => listCategories())
+
+  ipcMain.handle('category:manage', () => listCategoriesForManage())
 
   /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_EXISTS' */
   ipcMain.handle('category:create', (_e, input: unknown) => createCategory(input))
@@ -10,6 +22,18 @@ export function registerCategoryHandlers(): void {
   /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_EXISTS' */
   ipcMain.handle('category:update', (_e, id: unknown, input: unknown) => updateCategory(id, input))
 
-  /** Throws: 'CATEGORY_NOT_FOUND' */
-  ipcMain.handle('category:archive', (_e, id: unknown) => archiveCategory(id))
+  /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_EXISTS' */
+  ipcMain.handle('category:archive', (_e, id: unknown, archived: unknown) => archiveCategory(id, archived))
+
+  /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_EXISTS' */
+  ipcMain.handle('category:move', (_e, id: unknown, parentId: unknown) => moveCategory(id, parentId))
+
+  /** Throws: 'INVALID_INPUT' */
+  ipcMain.handle('category:reorder', (_e, parentId: unknown, orderedIds: unknown) => reorderCategories(parentId, orderedIds))
+
+  /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND' */
+  ipcMain.handle('category:merge', (_e, sourceId: unknown, targetId: unknown) => mergeCategory(sourceId, targetId))
+
+  /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_IN_USE' */
+  ipcMain.handle('category:delete', (_e, id: unknown) => deleteCategory(id))
 }

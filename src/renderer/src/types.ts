@@ -10,6 +10,8 @@ export type View =
   | 'projections'
   | 'reports'
   | 'settings'
+  /** Reached from Transactions, Settings and Ctrl+K; not in the sidebar */
+  | 'categories'
 
 export type AppLanguage = 'el' | 'en'
 

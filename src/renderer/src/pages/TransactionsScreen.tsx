@@ -16,9 +16,10 @@ import { ipcErrorMessage } from '../lib/ipc-errors'
 export interface TransactionsScreenProps {
   onGoToAccounts: () => void
   onImport: () => void
+  onManageCategories: () => void
 }
 
-export function TransactionsScreen({ onGoToAccounts, onImport }: TransactionsScreenProps) {
+export function TransactionsScreen({ onGoToAccounts, onImport, onManageCategories }: TransactionsScreenProps) {
   const { t, i18n } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
   const revision = useLedgerStore(s => s.revision)
@@ -90,6 +91,7 @@ export function TransactionsScreen({ onGoToAccounts, onImport }: TransactionsScr
       ])}
       actions={
         <>
+        <Button variant="ghost" icon="tag" onClick={onManageCategories}>{t('categories.manage')}</Button>
         <Button icon="download" onClick={onImport} disabled={open.length === 0}>{t('import.command')}</Button>
         <Button variant="primary" icon="plus" onClick={() => openEntry()} disabled={open.length === 0} title={addKeys ? t('shortcuts.with_key', { action: t('log.add'), key: addKeys }) : undefined}>
           {t('log.add')}

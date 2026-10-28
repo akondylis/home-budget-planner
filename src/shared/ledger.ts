@@ -80,6 +80,20 @@ export interface CategoryNode {
   children: CategoryNode[]
 }
 
+/** A node of the Categories page: archived ones included, with what uses them */
+export interface ManagedCategoryNode extends Omit<CategoryNode, 'children'> {
+  archived: boolean
+  /** Rows sorted into it (a group: 0, its categories carry the rows) */
+  transactionCount: number
+  ruleCount: number
+  children: ManagedCategoryNode[]
+}
+
+export interface MergeResult {
+  transactions: number
+  rules: number
+}
+
 export interface CategoryInput {
   name: string
   /** null = a new group */

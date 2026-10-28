@@ -185,7 +185,7 @@
       "title": "Category rules",
       "screen": [
         "“Always put X in Y?”",
-        "(import review, log)"
+        "Categories › Merchant rules"
       ],
       "handler": "ipc/rule.ts",
       "service": [
@@ -235,8 +235,8 @@
       "id": "category",
       "title": "Categories",
       "screen": [
-        "Category pickers",
-        "(entry form, log)"
+        "Pickers; Manage categories",
+        "(Transactions, Settings)"
       ],
       "handler": "ipc/category.ts",
       "service": [
@@ -260,6 +260,26 @@
         {
           "api": "archiveCategory",
           "channel": "category:archive"
+        },
+        {
+          "api": "manageCategories",
+          "channel": "category:manage"
+        },
+        {
+          "api": "moveCategory",
+          "channel": "category:move"
+        },
+        {
+          "api": "reorderCategories",
+          "channel": "category:reorder"
+        },
+        {
+          "api": "mergeCategory",
+          "channel": "category:merge"
+        },
+        {
+          "api": "deleteCategory",
+          "channel": "category:delete"
         }
       ]
     },

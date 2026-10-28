@@ -9,7 +9,7 @@ import type { RuleSummary } from '../../shared/statement-import'
 import { ruleMatches } from './import/apply-rules'
 
 /** Rules the user makes beat the seeded merchant list */
-const LEARNED_PRIORITY = 1000
+export const LEARNED_PRIORITY = 1000
 
 const MATCHES = ['CONTAINS', 'STARTS_WITH', 'EXACT'] as const
 
@@ -26,6 +26,7 @@ const ruleUpdate = z.object({
   pattern: z.string().trim().min(1).max(80).optional(),
   categoryId: z.string().optional(),
   payee: z.string().trim().max(120).nullish(),
+  accountId: z.string().nullish(),
   match: z.enum(MATCHES).optional(),
   priority: z.number().int().optional(),
 })
@@ -35,17 +36,19 @@ export async function listRules(): Promise<RuleSummary[]> {
   const rules = await prisma.categoryRule.findMany({
     where: { category: { archivedAt: null } },
     orderBy: [{ priority: 'desc' }, { pattern: 'asc' }],
-    include: { category: { select: { name: true } } },
+    include: { category: { select: { name: true } }, account: { select: { name: true } } },
   })
   return rules.map(r => ({
     id: r.id,
     pattern: r.pattern,
     match: r.match,
     accountId: r.accountId,
+    accountName: r.account?.name ?? null,
     categoryId: r.categoryId,
     categoryName: r.category.name,
     payee: r.payee,
     priority: r.priority,
+    learned: r.priority >= LEARNED_PRIORITY,
     hitCount: r.hitCount,
   }))
 }
@@ -100,19 +103,21 @@ export async function createRule(input: unknown): Promise<{ id: string; appliedC
   })
 }
 
-/** Throws: 'INVALID_INPUT', 'RULE_NOT_FOUND', 'CATEGORY_NOT_FOUND' */
+/** Throws: 'INVALID_INPUT', 'RULE_NOT_FOUND', 'CATEGORY_NOT_FOUND', 'ACCOUNT_NOT_FOUND' */
 export async function updateRule(id: unknown, input: unknown): Promise<void> {
   const parsed = ruleUpdate.safeParse(input)
   if (typeof id !== 'string' || !parsed.success) throw new Error('INVALID_INPUT')
   if (!(await prisma.categoryRule.findUnique({ where: { id } }))) throw new Error('RULE_NOT_FOUND')
-  const { pattern, categoryId, payee, match, priority } = parsed.data
+  const { pattern, categoryId, payee, accountId, match, priority } = parsed.data
   if (categoryId) await assertCategory(categoryId)
+  if (accountId && !(await prisma.account.findUnique({ where: { id: accountId } }))) throw new Error('ACCOUNT_NOT_FOUND')
   await prisma.categoryRule.update({
     where: { id },
     data: {
       ...(pattern !== undefined ? { pattern: storedPattern(pattern) } : {}),
       ...(categoryId !== undefined ? { categoryId } : {}),
       ...(payee !== undefined ? { payee: payee || null } : {}),
+      ...(accountId !== undefined ? { accountId: accountId || null } : {}),
       ...(match !== undefined ? { match } : {}),
       ...(priority !== undefined ? { priority } : {}),
     },

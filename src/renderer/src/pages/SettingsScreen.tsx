@@ -16,7 +16,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-export function SettingsScreen() {
+export interface SettingsScreenProps {
+  onManageCategories: () => void
+}
+
+export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
   const { t, i18n } = useTranslation()
   const [portable, setPortable] = useState(false)
   const theme = useUiStore(s => s.theme)
@@ -43,6 +47,12 @@ export function SettingsScreen() {
       <PageHeader title={t('settings.title')} />
 
       <HouseholdSection />
+
+      <Section title={t('settings.categories')}>
+        <Field label={t('categories.title')} hint={t('settings.categories_hint')}>
+          <Button icon="tag" onClick={onManageCategories}>{t('categories.manage')}</Button>
+        </Field>
+      </Section>
 
       <Section title={t('settings.appearance')}>
         <Field label={t('appearance.theme')}>

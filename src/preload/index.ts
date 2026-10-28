@@ -27,7 +27,12 @@ contextBridge.exposeInMainWorld('api', {
   listCategories:    ()                               => ipcRenderer.invoke('category:list'),
   createCategory:    (input: unknown)                 => ipcRenderer.invoke('category:create', input),
   updateCategory:    (id: string, input: unknown)     => ipcRenderer.invoke('category:update', id, input),
-  archiveCategory:   (id: string)                     => ipcRenderer.invoke('category:archive', id),
+  archiveCategory:   (id: string, archived?: boolean) => ipcRenderer.invoke('category:archive', id, archived),
+  manageCategories:  ()                               => ipcRenderer.invoke('category:manage'),
+  moveCategory:      (id: string, parentId: string)   => ipcRenderer.invoke('category:move', id, parentId),
+  reorderCategories: (parentId: string | null, orderedIds: string[]) => ipcRenderer.invoke('category:reorder', parentId, orderedIds),
+  mergeCategory:     (sourceId: string, targetId: string) => ipcRenderer.invoke('category:merge', sourceId, targetId),
+  deleteCategory:    (id: string)                     => ipcRenderer.invoke('category:delete', id),
 
   // ── Transactions ────────────────────────────────────────────────────────────
   listTransactions:  (filter: unknown)                => ipcRenderer.invoke('transaction:list', filter),
