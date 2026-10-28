@@ -1,6 +1,6 @@
 # Domain Model (draft)
 
-As of 2026-10-27. Entities are added to `prisma/schema.prisma` one feature at a time, and this doc is updated in the
+As of 2026-10-28. Entities are added to `prisma/schema.prisma` one feature at a time, and this doc is updated in the
 same change. **In schema** marks what exists; the rest is a draft. Open questions are marked **?**.
 
 ## Money rules
@@ -17,11 +17,12 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 | **Member** *(in schema)* | A parent of the household (children are not tracked); archived, never deleted. Who uses the app is chosen per PC, not stored here | name, colour (palette key from `MEMBER_COLOURS`), sortOrder, archivedAt |
 | **Account** *(in schema)* | Where money sits. One statement source = one account, so a credit card is an account of kind `CREDIT_CARD` | name, kind (`CURRENT`/`SAVINGS`/`CASH`/`CREDIT_CARD`), institution (`ALPHA`/`EUROBANK`/`OTHER`), currency, openingBalanceCents, openingDate, importProfile?, importMapping?, holderMemberId? (null = joint), sortOrder, archivedAt |
 | **Card** *(in schema)* | A plastic card on an account: debit cards on a current account, main and supplementary cards on a credit card account (the credit card itself is the account). Removed with its account's card list; matching a row to its card: later | accountId, last4 (4 digits, unique per account), holderMemberId?, sortOrder |
-| **Category** *(in schema)* | Two levels: group → category (Bills → Electricity). The **type** is set on the group and its categories follow it | name, parentId, type (`INCOME`/`EXPENSE`/`BILL`/`SUBSCRIPTION`/`DEBT`/`SAVINGS`), icon, sortOrder, archivedAt |
+| **Category** *(in schema)* | Two levels: group → category (Bills → Electricity). The **type** is set on the group and its categories follow it | name, parentId, type (`INCOME`/`EXPENSE`/`BILL`/`SUBSCRIPTION`/`DEBT`/`SAVINGS`), icon, sortOrder, carryOver (unspent budget moves to next month), archivedAt |
 | **Transaction** *(in schema)* | A booked movement. `categoryId = null` means "to categorise" (transfers never need one) | accountId, bookedAt (date only, 12:00 UTC), amountCents, description (bank text), payee, categoryId?, note, memberId? (who it was for; null = household), createdByMemberId? (who entered it; set once), transferId?, importBatchId?, fingerprint?, bankReference?, balanceAfterCents? |
 | **ImportBatch** *(in schema)* | One imported statement file; undo removes its rows; its closing balance is checked against the app | accountId, fileName, fileHash, dateFrom, dateTo, rowCount, importedCount, skippedCount, statementBalanceCents?, statementBalanceDate?, createdByMemberId?, undoneAt |
 | **CategoryRule** *(in schema)* | Merchant rule: the first match by priority sets an imported row's category and payee | pattern (normalised), match (`CONTAINS`/`STARTS_WITH`/`EXACT`), accountId?, categoryId, payee?, priority, hitCount |
-| **Budget** | Plan for a month (yearly = 12 months) | month (`YYYY-MM`), lines: categoryId + plannedCents |
+| **Budget** *(in schema)* | The plan for one month (yearly = 12 months, later) | month (`YYYY-MM`, unique) |
+| **BudgetLine** *(in schema)* | Planned amount of one category (never a group) in one month, stored positive; removed with its budget | budgetId, categoryId, plannedCents (unique per budget and category) |
 | **RecurringRule** | Subscriptions, bills, salary, and **non-monthly** charges (yearly insurance, quarterly tax, every-2-months utilities) | name, amountCents (or estimate), interval (`MONTH`/`YEAR`/…, every N), nextDue, accountId, categoryId, remindDaysBefore, endsAt |
 | **Debt** | Loans, instalment purchases (άτοκες δόσεις), money owed to/by relatives | kind, principalCents, rate?, instalmentCents, startDate, termMonths, accountId, counterparty |
 | **Goal** *(later)* | Saving target (holidays, car) | targetCents, targetDate, accountId |
@@ -47,14 +48,19 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 - **Changing categories**: archiving hides a category (a group takes its categories) but its rows keep it and still
   count; moving a category to another group gives it that group's type; **merging** A into B moves A's rows and
   rules to B (a rule B already has is dropped) and archives the empty A; only a category no row uses can be
-  deleted (its rules go with it), and only an empty group. Feature doc: [features/categories.md](features/categories.md).
+  deleted (its rules and budget lines go with it), and only an empty group; a merge adds A's budget lines to B's
+  (same month → summed). Feature doc: [features/categories.md](features/categories.md).
 - **Starting data**: an empty database gets the category groups (one per type) and common Greek merchant rules, in
   the app language of that moment (`src/main/services/seed.ts`). After that they are the household's own data.
 
 ## Derived views (no tables)
 
 - **Balance** of an account = opening balance + sum of its transactions.
-- **Budget vs actual** per category and month = planned lines vs sum of expense transactions (transfers excluded).
+- **Budget vs actual** per category and month: *actual* = −sum of its rows for outgoing types (a refund lowers
+  it), +sum for income; transfers have no category, so they never count. *Carried in* (carry-over categories) =
+  max(0, last month's planned + carried in − actual), chained from the first planned month; *available* = planned +
+  carried in. **Left to budget** = planned income − planned outgoings (zero-based goal 0); **left to spend** =
+  available − actual over outgoing types. Feature doc: [features/budget.md](features/budget.md).
 - **Upcoming** = recurring rules and debt instalments due in the next N days, each `UPCOMING` / `DUE` / `OVERDUE` /
   `PAID` (matched to a transaction) / `SKIPPED`.
 - **Projection** = today's balances + planned income − recurring charges − instalments, month by month.

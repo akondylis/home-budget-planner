@@ -1,12 +1,12 @@
 # Home Budget — Feature Roadmap
 
-As of 2026-10-27 · Andrew Kondylis
+As of 2026-10-28 · Andrew Kondylis
 
 ## Overview
 
 The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
 The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
-Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **15 items** are queued
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **14 items** are queued
 in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
 decision.
 
@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-28 | Monthly budget | Plan per category (groups sum), income planned per category; inline amounts that save on their own; copy last month's plan or last month's spending into empty lines; budget vs actual with meters; **Left to budget** (zero-based) and **Left to spend**; per-category **Carry over** of unspent money only (plan level, income, rollover and editing decided 2026-10-28); banners for rows to categorise and unplanned spending; printable sheet filled from the plan · [budget](features/budget.md) |
 | 2026-10-28 | Category management | Categories page off Transactions (and Settings, `Ctrl+K`): rename, reorder, move between groups, merge (the merged one is archived, decided 2026-10-28), archive/restore, delete when unused, counts per category, **Show transactions**; **Merchant rules** tab to search, add, edit and delete rules · [categories](features/categories.md) |
 | 2026-10-28 | Account holders & cards | Each account has a holder (a parent or Joint), shown on its card; cards per account (debit cards, main and supplementary credit cards) with last 4 digits and holder, edited in the account form and saved in one go. The holder is shown only, never a default "For" (decided 2026-10-27) · [accounts](features/accounts.md) |
 | 2026-10-27 | Members | Parents only ("children included?" answered 2026-10-27), name and colour, in Settings → Household; "who is using the app" chip in the sidebar (per PC, `Ctrl+K`) stamps who entered each row and import; transactions carry **For** (a parent or Household) with a payee default, a log filter and bulk **Set "For"…** · [members](features/members.md) |
@@ -44,8 +45,7 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 5 | Monthly budget | M | Plan per category, copy last month, budget vs actual with progress; **left to budget** (income − planned, zero-based) next to **left to spend**; rollover of unspent amounts as a per-category opt-in (decided 2026-10-26); budgeting per pay period as a later option | Categories, transactions | — |
-| 6 | Overview (live) | M | Stat tiles from real data, upcoming bills, over-budget banners | Transactions, #5 | — |
+| 6 | Overview (live) | M | Stat tiles from real data, upcoming bills, over-budget banners | Transactions, Monthly budget | — |
 
 ### Planning & reminders
 
@@ -55,7 +55,7 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 | 8 | Notifications | M | Sidebar bell (Matchday pattern): bill due, overdue, over budget, instalment due; Windows toast | #7, #9 | Remind N days before? |
 | 17 | Payment calendar *(new)* | M | Amounts due by date with paid marks, pay days across the year; week starts Monday or Sunday | #7 | — |
 | 9 | Debts & loans | M | Loans, interest-free instalments, money owed; remaining balance, payoff date, schedule; **snowball / avalanche** payoff with an extra monthly amount, interest before payment, manual balance override | Accounts | Interest calculation needed? |
-| 10 | Yearly budget | S–M | 12-month plan view, year vs last year | #5 | — |
+| 10 | Yearly budget | S–M | 12-month plan view, year vs last year; budgeting per pay period as an option | Monthly budget | — |
 | 11 | Projections | M | Balance forecast per month from rules, instalments and planned income | #7, #9 | Horizon (6/12/24 months) |
 
 ### Insight & data

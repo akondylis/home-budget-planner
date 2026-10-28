@@ -232,11 +232,43 @@
       ]
     },
     {
+      "id": "budget",
+      "title": "Budget",
+      "screen": [
+        "Budget page",
+        "(sidebar, Ctrl+K)"
+      ],
+      "handler": "ipc/budget.ts",
+      "service": [
+        "services/budgets.ts",
+        "shared/budget.ts (maths)"
+      ],
+      "store": "SQLite · Budget, BudgetLine",
+      "calls": [
+        {
+          "api": "getBudget",
+          "channel": "budget:get"
+        },
+        {
+          "api": "setPlanned",
+          "channel": "budget:setPlanned"
+        },
+        {
+          "api": "copyBudget",
+          "channel": "budget:copy"
+        },
+        {
+          "api": "clearBudget",
+          "channel": "budget:clear"
+        }
+      ]
+    },
+    {
       "id": "category",
       "title": "Categories",
       "screen": [
-        "Pickers; Manage categories",
-        "(Transactions, Settings)"
+        "Pickers; Manage categories;",
+        "Budget (carry over)"
       ],
       "handler": "ipc/category.ts",
       "service": [
@@ -280,6 +312,10 @@
         {
           "api": "deleteCategory",
           "channel": "category:delete"
+        },
+        {
+          "api": "setCarryOver",
+          "channel": "category:setCarryOver"
         }
       ]
     },

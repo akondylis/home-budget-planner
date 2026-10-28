@@ -43,6 +43,8 @@ the right category — fix a wrong merchant rule in seconds instead of re-sortin
 - **Move** gives the category the new group's type and puts it last there. Groups never move under another group.
 - **Merge** A → B, in one database transaction: rows and rules move to B, a rule B already has (same pattern,
   account and match) is dropped, and A is archived (decided 2026-10-28). Merging into a group is refused.
+- **Budget:** a merge adds A's budget lines to B (same month → summed); a delete removes the category's lines. The
+  per-category **Carry over** switch lives on the Budget page ([budget](budget.md)).
 - **Delete** only when no row uses the category (its rules are deleted with it), or a group has no categories at
   all (archived ones included). Otherwise `CATEGORY_IN_USE`.
 - **Names:** the unique index also covers archived categories, so a rename or move onto the name of an archived
@@ -72,6 +74,7 @@ the right category — fix a wrong merchant rule in seconds instead of re-sortin
 | `category:reorder` | `(parentId \| null, orderedIds)` | `INVALID_INPUT` |
 | `category:merge` | `(sourceId, targetId)` → `{ transactions, rules }` | `INVALID_INPUT`, `CATEGORY_NOT_FOUND` |
 | `category:delete` | `(id)` | `INVALID_INPUT`, `CATEGORY_NOT_FOUND`, `CATEGORY_IN_USE` |
+| `category:setCarryOver` | `(id, carryOver)` | `INVALID_INPUT`, `CATEGORY_NOT_FOUND` |
 | `rule:update` | `(id, patch)`; the patch may set `accountId` | adds `ACCOUNT_NOT_FOUND` |
 
 `category:list` / `:create` / `:update` and the other `rule:*` channels are in [transactions](transactions.md#ipc).

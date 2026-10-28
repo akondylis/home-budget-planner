@@ -29,14 +29,15 @@ behind a transport adapter, without rewriting business logic.
 src/main/
   index.ts                   Window, startup (portable check → migrations → settings → handlers), clean shutdown
   user-data.ts               Portable edition: marker detection, data folder next to the exe
-  ipc/                       One file per domain: settings, pdf, window, member, account, category, transaction, import, rule, subscription
-  services/                  Business logic (settings, members, accounts, categories, transactions, rules, import/, pdf/; later budgets…)
+  ipc/                       One file per domain: settings, pdf, window, member, account, category, transaction, import, rule, subscription, budget
+  services/                  Business logic (settings, members, accounts, categories, transactions, rules, budgets, import/, pdf/)
   services/pdf/              report-pdf.ts (ReportDocument → PDF, pdf-lib), pdf-export.ts (save dialog), pdf-text.ts
   db/                        migrate.ts, prisma.ts, db-path.ts, pragmas.ts (journal mode), startup-backup.ts
 src/shared/                  Pure code used by both processes
   money.ts                   formatMoney / parseMoney / sumMoney (integer cents)
   date-format.ts             formatDate / formatDateTime in the chosen format
   report-document.ts         Printable report model (zod), shared by the PDF and its on-screen preview
+  budget.ts                  Budget types and maths (actual, carry, left to budget / to spend)
   search-normalise.ts        Greek → Latin, accent-free text for search
 src/preload/index.ts         contextBridge → window.api
 src/renderer/

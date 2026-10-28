@@ -17,8 +17,9 @@ see exactly what will be printed before saving it.
 
 Portrait A4 with tall ruled rows to write on: Income (2 categories + 2 blank + total), Expenses (14 starter
 categories + 2 blank + total), Summary (totals and what is left over), and a footnote explaining
-*Difference = planned − actual*. Once transactions and budgets exist, the same document gets real figures and
-becomes the monthly statement.
+*Difference = planned − actual*. Overview and `Ctrl+K` print it blank. The Budget page's **Print** fills it from
+the month (`buildBudgetStatement`): the household's groups and categories with planned (with carry), actual and
+difference, totals and what is left over ([budget](budget.md)).
 
 ## How it works
 
@@ -44,7 +45,7 @@ becomes the monthly statement.
 | `src/main/services/pdf/pdf-export.ts` | Save dialog and write; open the saved file |
 | `src/main/ipc/pdf.ts` | Thin handlers |
 | `src/renderer/src/components/pdf/` | `ReportPreviewModal`, `ReportPaper`, `WorksheetPreviewModal` |
-| `src/renderer/src/lib/budget-worksheet.ts` | Worksheet builder |
+| `src/renderer/src/lib/budget-worksheet.ts` | Worksheet builder, blank or filled from a budget |
 
 ## IPC
 
