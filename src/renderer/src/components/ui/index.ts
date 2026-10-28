@@ -37,6 +37,7 @@ export {
   type MetaPart,
   type SortHeaderProps,
 } from './List'
+export { Meter, type MeterProps, type MeterTone } from './Meter'
 export { Modal, type ModalProps, type ModalSize } from './Modal'
 export { MultiSelectDropdown, type MultiSelectDropdownProps } from './MultiSelectDropdown'
 export { PageHeader, type PageHeaderProps } from './PageHeader'

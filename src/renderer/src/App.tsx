@@ -11,6 +11,7 @@ import { ImportWizard } from './components/import/ImportWizard'
 import { ImportHistory } from './components/import/ImportHistory'
 import { SettingsScreen } from './pages/SettingsScreen'
 import { CategoriesScreen } from './pages/CategoriesScreen'
+import { BudgetScreen } from './pages/BudgetScreen'
 import { CommandPalette } from './components/CommandPalette'
 import { AppTour } from './components/tour/AppTour'
 import { WorksheetPreviewModal } from './components/pdf/WorksheetPreviewModal'
@@ -18,8 +19,9 @@ import { useThemeSync } from './hooks/useThemeSync'
 import { useShortcuts, type ShortcutAction } from './hooks/useShortcuts'
 import { useUiStore } from './store/ui'
 import { activeAccounts, useLedgerStore } from './store/ledger'
-import { EMPTY_FILTER, useTransactionsStore } from './store/transactions'
+import { EMPTY_FILTER, currentMonth, useTransactionsStore } from './store/transactions'
 import { useImportStore } from './store/import'
+import { useBudgetStore } from './store/budget'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
 import type { PaletteTarget } from './lib/command-palette'
 import type { View } from './types'
@@ -114,13 +116,33 @@ export default function App() {
 
   function openCategories(tab: CategoriesTab = 'categories') {
     setCategoriesTab(tab)
-    if (view !== 'categories') setCategoriesFrom(view === 'settings' ? 'settings' : 'transactions')
+    if (view !== 'categories') setCategoriesFrom(view === 'settings' || view === 'budget' ? view : 'transactions')
     setView('categories')
   }
 
   function showCategoryTransactions(categoryId: string) {
     useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month: null, categoryId })
     setView('transactions')
+  }
+
+  function showBudgetTransactions(month: string, categoryId: string) {
+    useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month, categoryId })
+    setView('transactions')
+  }
+
+  function showUncategorised(month: string) {
+    useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month, uncategorised: true })
+    setView('transactions')
+  }
+
+  /** Ctrl+K: this month's budget, its empty lines filled from last month's plan */
+  function copyLastMonthsPlan() {
+    const budget = useBudgetStore.getState()
+    budget.setMonth(currentMonth())
+    setView('budget')
+    budget.copyFromPrevious('PLAN')
+      .then(count => budget.setFlash({ kind: 'copied', count }))
+      .catch(error => budget.setFlash({ kind: 'error', error }))
   }
 
   function runPaletteTarget(target: PaletteTarget) {
@@ -138,6 +160,7 @@ export default function App() {
       case 'member': useUiStore.getState().setCurrentMember(target.memberId); break
       case 'household': setView('settings'); break
       case 'categories': openCategories(target.tab); break
+      case 'budgetCopy': copyLastMonthsPlan(); break
     }
   }
 
@@ -154,6 +177,14 @@ export default function App() {
       case 'overview': return <OverviewScreen onPrintWorksheet={() => setWorksheetOpen(true)} onGoTo={setView} />
       case 'accounts': return <AccountsScreen onOpenTransactions={openAccountTransactions} onImport={importStatement} />
       case 'transactions': return <TransactionsScreen onGoToAccounts={() => setView('accounts')} onImport={() => importStatement()} onManageCategories={() => openCategories()} />
+      case 'budget':
+        return (
+          <BudgetScreen
+            onShowTransactions={showBudgetTransactions}
+            onShowUncategorised={showUncategorised}
+            onManageCategories={() => openCategories()}
+          />
+        )
       case 'settings': return <SettingsScreen onManageCategories={() => openCategories()} />
       case 'categories':
         return (

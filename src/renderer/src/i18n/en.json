@@ -92,7 +92,6 @@
   "planned": {
     "title": "Coming soon",
     "transactions": "Every income and expense, from all accounts and cards, with categories, members and notes.",
-    "budget": "Monthly and yearly plan per category, compared with what was actually spent.",
     "accounts": "Bank accounts, cards and cash with their balances.",
     "recurring": "Subscriptions, bills and yearly charges (insurance, taxes) with reminders before they are due.",
     "debts": "Loans, instalments and money owed, with what is left to pay and the payoff date.",
@@ -135,7 +134,8 @@
     "hint_move": "move",
     "hint_open": "open",
     "hint_close": "close",
-    "use_as": "Use the app as {{name}}"
+    "use_as": "Use the app as {{name}}",
+    "budget_copy": "Budget: copy last month's plan"
   },
   "shortcuts": {
     "or": "or",
@@ -173,7 +173,7 @@
       },
       "budget": {
         "title": "$t(nav.budget)",
-        "body": "Coming soon: an amount per category for the month and the year, compared with what was actually spent."
+        "body": "An amount per category for each month: what is left to budget, what is left to spend, and where you went over the plan."
       },
       "accounts": {
         "title": "$t(nav.accounts)",
@@ -245,7 +245,9 @@
       "gifts": "Gifts",
       "savings": "Savings",
       "other": "Other"
-    }
+    },
+    "statement_subtitle": "Planned and actual amounts · printed {{date}}",
+    "statement_footnote": "Planned = the month's amount plus anything carried over from last month. Difference = planned − actual: a negative number means more was spent than planned (or more income came in than expected)."
   },
   "pdf": {
     "preview_hint": "This is what the PDF will look like.",
@@ -285,7 +287,8 @@
     "MEMBER_NAME_TAKEN": "There is already a parent with this name.",
     "CARD_DUPLICATE": "Two cards have the same last 4 digits.",
     "CARD_NOT_FOUND": "A card no longer exists. Close and reopen the account.",
-    "CATEGORY_IN_USE": "Still in use: move or merge what uses it first."
+    "CATEGORY_IN_USE": "Still in use: move or merge what uses it first.",
+    "BUDGET_SOURCE_EMPTY": "Last month has nothing to copy."
   },
   "categories": {
     "choose": "Choose a category…",
@@ -783,5 +786,79 @@
     "sort_placeholder": "Sort as subscription…",
     "not_one": "Not a subscription",
     "sorted": "{{name}} now goes to {{category}}, this time and next."
+  },
+  "budget": {
+    "title": "Budget",
+    "prev_month": "Previous month",
+    "next_month": "Next month",
+    "this_month": "This month",
+    "tense_past": "past month",
+    "tense_future": "coming month, nothing booked yet",
+    "meta_planned_one": "{{count}} category planned",
+    "meta_planned_other": "{{count}} categories planned",
+    "meta_updated": "updated {{date}}",
+    "tile_income": "Expected income",
+    "tile_income_hint": "{{received}} received so far",
+    "tile_income_future": "What you expect to come in this month",
+    "tile_left_to_budget": "Left to budget",
+    "ltb_zero": "Every euro has a job",
+    "ltb_no_income": "Start with the expected income",
+    "ltb_positive": "Income not given a job yet",
+    "ltb_negative": "The plan is more than the expected income",
+    "tile_left_to_spend": "Left to spend",
+    "lts_future": "What the plan allows for spending",
+    "lts_over": "Over the plan by {{amount}}",
+    "spent_of": "{{spent}} of {{available}}",
+    "section_summary": "planned {{planned}} · spent {{actual}}",
+    "section_income": "expected {{planned}} · received {{actual}}",
+    "col_category": "Category",
+    "col_planned": "Planned",
+    "col_expected": "Expected",
+    "col_spent": "Spent",
+    "col_received": "Received",
+    "col_left": "Left",
+    "col_to_come": "To come",
+    "col_progress": "Progress",
+    "planned_for": "Planned for {{name}}",
+    "saved": "Saved",
+    "error_invalid": "Type an amount, e.g. 120 or 85.50",
+    "error_negative": "A plan cannot be negative",
+    "archived": "Archived",
+    "not_planned": "Not planned",
+    "carry_hint": "Unspent money carries into next month",
+    "carried_in": "+{{amount}} from {{month}}",
+    "over_by": "Over the plan by {{amount}}",
+    "row_more": "More for {{name}}",
+    "action_transactions": "Show transactions",
+    "action_last_month": "Set to last month's spending ({{amount}})",
+    "no_last_month": "Nothing booked last month",
+    "action_carry_on": "Carry unspent money into next month",
+    "action_carry_off": "Stop carrying unspent money",
+    "empty_title": "No plan for {{month}} yet",
+    "empty_body": "Give each category an amount: income first, then bills and spending. Copying fills only the empty lines.",
+    "copy_plan": "Copy the plan of {{month}}",
+    "from_spending": "Start from {{month}} spending",
+    "start_blank": "Start blank",
+    "copy_done_one": "{{count}} line filled from {{month}}.",
+    "copy_done_other": "{{count}} lines filled from {{month}}.",
+    "copy_nothing": "Every line already had an amount; nothing changed.",
+    "fill_plan": "Fill empty lines from the plan of {{month}}",
+    "fill_actual": "Fill empty lines from {{month}} spending",
+    "no_previous_plan": "{{month}} has no plan",
+    "no_previous_actual": "{{month}} has no categorised transactions",
+    "more": "More for the budget",
+    "print": "Print",
+    "print_title": "Print budget",
+    "clear": "Clear plan",
+    "clear_title": "Clear the plan for {{month}}?",
+    "clear_message": "Every planned amount of this month is removed. Transactions are not touched.",
+    "banner_uncategorised_one": "{{count}} transaction this month has no category, so it is not in the budget.",
+    "banner_uncategorised_other": "{{count}} transactions this month have no category, so they are not in the budget.",
+    "banner_uncategorised_action": "Categorise",
+    "banner_unplanned_one": "{{amount}} was spent in {{count}} category with no plan.",
+    "banner_unplanned_other": "{{amount}} was spent in {{count}} categories with no plan.",
+    "banner_unplanned_action": "Show",
+    "no_categories_title": "No categories yet",
+    "no_categories_body": "The budget gives each category an amount. Add categories first."
   }
 }

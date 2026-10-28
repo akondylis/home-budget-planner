@@ -203,13 +203,24 @@ export async function mergeCategory(sourceId: unknown, targetId: unknown): Promi
     const duplicates = moving.filter(r => taken.has(ruleKey(r))).map(r => r.id)
     if (duplicates.length) await tx.categoryRule.deleteMany({ where: { id: { in: duplicates } } })
     const { count: rules } = await tx.categoryRule.updateMany({ where: { categoryId: sourceId }, data: { categoryId: targetId } })
+    // Budget lines follow the rows: in a month both planned, the target takes the sum
+    const sourceLines = await tx.budgetLine.findMany({ where: { categoryId: sourceId } })
+    for (const line of sourceLines) {
+      const twin = await tx.budgetLine.findUnique({ where: { budgetId_categoryId: { budgetId: line.budgetId, categoryId: targetId } } })
+      if (twin) {
+        await tx.budgetLine.update({ where: { id: twin.id }, data: { plannedCents: twin.plannedCents + line.plannedCents } })
+        await tx.budgetLine.delete({ where: { id: line.id } })
+      } else {
+        await tx.budgetLine.update({ where: { id: line.id }, data: { categoryId: targetId } })
+      }
+    }
     if (!source.archivedAt) await tx.category.update({ where: { id: sourceId }, data: { archivedAt: new Date() } })
     return { transactions, rules }
   })
 }
 
 /**
- * Removes a category no row uses (its rules go with it), or an empty group.
+ * Removes a category no row uses (its rules and budget lines go with it), or an empty group.
  * Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_IN_USE'
  */
 export async function deleteCategory(id: unknown): Promise<void> {
@@ -220,7 +231,22 @@ export async function deleteCategory(id: unknown): Promise<void> {
   })
   if (!found) throw new Error('CATEGORY_NOT_FOUND')
   if (found._count.transactions > 0 || found._count.children > 0) throw new Error('CATEGORY_IN_USE')
-  await prisma.category.delete({ where: { id } })
+  await prisma.$transaction([
+    prisma.budgetLine.deleteMany({ where: { categoryId: id } }),
+    prisma.category.delete({ where: { id } }),
+  ])
+}
+
+/**
+ * Opts a category in or out of carrying its unspent money into the next month.
+ * Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND'
+ */
+export async function setCarryOver(id: unknown, carryOver: unknown): Promise<void> {
+  if (typeof id !== 'string' || typeof carryOver !== 'boolean') throw new Error('INVALID_INPUT')
+  const found = await prisma.category.findUnique({ where: { id }, select: { parentId: true } })
+  // Groups hold no money of their own
+  if (!found || found.parentId === null) throw new Error('CATEGORY_NOT_FOUND')
+  await prisma.category.update({ where: { id }, data: { carryOver } })
 }
 
 // SQLite treats NULL parents as distinct in the unique index, so groups are checked here

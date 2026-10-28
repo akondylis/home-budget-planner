@@ -8,7 +8,7 @@ generator client {
 }
 
 // Money rule: every amount is an Int of minor units (cents), never Float.
-// Domain models not built yet (Budget, Recurring, Debt) are
+// Domain models not built yet (Recurring, Debt) are
 // drafted in docs/domain-model.md and added per feature.
 
 // ── Models ───────────────────────────────────────────────────────────────────
@@ -123,11 +123,14 @@ model Category {
   type         CategoryType
   icon         String?
   sortOrder    Int            @default(0)
+  /// Unspent money of a month carries into the next (overspending never does)
+  carryOver    Boolean        @default(false)
   archivedAt   DateTime?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   transactions Transaction[]
   rules        CategoryRule[]
+  budgetLines  BudgetLine[]
 
   @@unique([parentId, name])
 }
@@ -217,4 +220,31 @@ model CategoryRule {
   updatedAt  DateTime  @updatedAt
 
   @@index([priority])
+}
+
+// ── Budget ───────────────────────────────────────────────────────────────────
+
+/// The plan for one month; lines hold the amounts
+model Budget {
+  id        String       @id @default(cuid())
+  /// "YYYY-MM"
+  month     String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  lines     BudgetLine[]
+}
+
+/// Planned amount for one category (never a group) in one month; stored positive, the category type says which way it goes
+model BudgetLine {
+  id           String   @id @default(cuid())
+  budgetId     String
+  budget       Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
+  plannedCents Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([budgetId, categoryId])
+  @@index([categoryId])
 }

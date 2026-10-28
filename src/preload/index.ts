@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('api', {
   reorderCategories: (parentId: string | null, orderedIds: string[]) => ipcRenderer.invoke('category:reorder', parentId, orderedIds),
   mergeCategory:     (sourceId: string, targetId: string) => ipcRenderer.invoke('category:merge', sourceId, targetId),
   deleteCategory:    (id: string)                     => ipcRenderer.invoke('category:delete', id),
+  setCarryOver:      (id: string, carryOver: boolean) => ipcRenderer.invoke('category:setCarryOver', id, carryOver),
 
   // ── Transactions ────────────────────────────────────────────────────────────
   listTransactions:  (filter: unknown)                => ipcRenderer.invoke('transaction:list', filter),
@@ -61,6 +62,12 @@ contextBridge.exposeInMainWorld('api', {
 
   // ── Subscriptions ───────────────────────────────────────────────────────────
   subscriptionHints: ()                               => ipcRenderer.invoke('subscription:hints'),
+
+  // ── Budget ──────────────────────────────────────────────────────────────────
+  getBudget:         (month: string)                  => ipcRenderer.invoke('budget:get', month),
+  setPlanned:        (month: string, categoryId: string, plannedCents: number) => ipcRenderer.invoke('budget:setPlanned', month, categoryId, plannedCents),
+  copyBudget:        (input: unknown)                 => ipcRenderer.invoke('budget:copy', input),
+  clearBudget:       (month: string)                  => ipcRenderer.invoke('budget:clear', month),
 
   // ── PDF ─────────────────────────────────────────────────────────────────────
   exportPdf:     (report: unknown, fileName: string, dialogTitle: string) => ipcRenderer.invoke('pdf:export', report, fileName, dialogTitle),

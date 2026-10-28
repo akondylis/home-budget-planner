@@ -18,6 +18,7 @@ import {
   IconButton,
   joinMeta,
   ListRow,
+  Meter,
   PAYMENT_STATUS_TONES,
   MetaLine,
   Modal,
@@ -400,5 +401,17 @@ describe('placePanel', () => {
 
   it('matchWidth under a narrow anchor still allows 320px', () => {
     expect(placePanel(box(100, 100, 100), { width: 1200, height: 300 }, viewport, 'start', true).maxWidth).toBe(320)
+  })
+})
+
+describe('Meter', () => {
+  it('fills to the ratio, stays full when over, and exposes the value', () => {
+    const half = renderToStaticMarkup(<Meter value={50} max={100} label="€50 of €100" />)
+    expect(half).toContain('width:50%')
+    expect(half).toContain('role="meter"')
+    expect(half).toContain('aria-label="€50 of €100"')
+    expect(renderToStaticMarkup(<Meter value={150} max={100} tone="danger" label="over" />)).toContain('width:100%')
+    expect(renderToStaticMarkup(<Meter value={150} max={100} tone="danger" label="over" />)).toContain('bg-red-600')
+    expect(renderToStaticMarkup(<Meter value={0} max={0} label="none" />)).toContain('width:0%')
   })
 })

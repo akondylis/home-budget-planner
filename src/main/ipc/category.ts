@@ -8,6 +8,7 @@ import {
   mergeCategory,
   moveCategory,
   reorderCategories,
+  setCarryOver,
   updateCategory,
 } from '../services/categories'
 
@@ -36,4 +37,7 @@ export function registerCategoryHandlers(): void {
 
   /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_IN_USE' */
   ipcMain.handle('category:delete', (_e, id: unknown) => deleteCategory(id))
+
+  /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND' */
+  ipcMain.handle('category:setCarryOver', (_e, id: unknown, carryOver: unknown) => setCarryOver(id, carryOver))
 }

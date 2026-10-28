@@ -31,6 +31,7 @@ interface Window {
     reorderCategories: (parentId: string | null, orderedIds: string[]) => Promise<void>
     mergeCategory:     (sourceId: string, targetId: string) => Promise<import('../../shared/ledger').MergeResult>
     deleteCategory:    (id: string) => Promise<void>
+    setCarryOver:      (id: string, carryOver: boolean) => Promise<void>
 
     listTransactions:  (filter: import('../../shared/ledger').TransactionFilter) => Promise<import('../../shared/ledger').TransactionPage>
     listPayees:        () => Promise<import('../../shared/ledger').PayeeSuggestion[]>
@@ -57,6 +58,11 @@ interface Window {
     deleteRule:        (id: string) => Promise<void>
 
     subscriptionHints: () => Promise<import('../../shared/statement-import').SubscriptionHint[]>
+
+    getBudget:         (month: string) => Promise<import('../../shared/budget').BudgetMonth>
+    setPlanned:        (month: string, categoryId: string, plannedCents: number) => Promise<void>
+    copyBudget:        (input: { from: string; to: string; source: import('../../shared/budget').CopySource }) => Promise<number>
+    clearBudget:       (month: string) => Promise<void>
 
     exportPdf:    (report: import('../../shared/report-document').ReportDocument, fileName: string, dialogTitle: string) =>
                      Promise<{ success: false } | { success: true; filePath: string }>
