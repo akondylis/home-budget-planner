@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Banner, Button, ConfirmDialog, ListCard, Money, PageHeader, Pagination, Spinner, StatTile, joinMeta } from '../components/ui'
-import { Icon } from '../components/shell/icons'
+import { Banner, Button, ConfirmDialog, EmptyCard, Money, PageHeader, Pagination, Spinner, StatTile, joinMeta } from '../components/ui'
 import { TransactionFilters, monthLabel } from '../components/transactions/TransactionFilters'
 import { TransactionList } from '../components/transactions/TransactionList'
 import { activeAccounts, useLedgerStore } from '../store/ledger'
@@ -242,18 +241,5 @@ export function TransactionsScreen({ onGoToAccounts, onImport, onManageCategorie
         />
       )}
     </div>
-  )
-}
-
-function EmptyCard({ icon, title, body, children }: { icon: Parameters<typeof Icon>[0]['name']; title: string; body: string; children?: React.ReactNode }) {
-  return (
-    <ListCard className="flex flex-col items-center px-6 py-12 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-fg-muted">
-        <Icon name={icon} size={24} />
-      </span>
-      <h2 className="mt-4 text-sm font-semibold text-fg">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-fg-muted">{body}</p>
-      {children && <div className="mt-4 flex gap-2">{children}</div>}
-    </ListCard>
   )
 }

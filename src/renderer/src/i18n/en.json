@@ -574,6 +574,22 @@
     "archive_message": "It disappears from lists and pickers. Its transactions stay and still count in past totals. You can restore it later.",
     "archived_toggle": "Archived accounts ({{count}})",
     "restore": "Restore",
+    "group_by": "Group by",
+    "group": {
+      "none": "None",
+      "institution": "Bank",
+      "holder": "Holder",
+      "kind": "Type"
+    },
+    "all_kinds": "All types",
+    "all_banks": "All banks",
+    "all_holders": "All holders",
+    "total_shown": "Total shown",
+    "shown_of": "{{count}} of {{total}} accounts",
+    "count_one": "{{count}} account",
+    "count_other": "{{count}} accounts",
+    "no_match_title": "No accounts match these filters",
+    "no_match_body": "Change or clear the filters to see your accounts again.",
     "errors": {
       "name_required": "Give the account a name.",
       "amount_invalid": "Enter an amount, e.g. 1.250,00 or -350,00.",

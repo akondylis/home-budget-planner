@@ -9,6 +9,7 @@ export { CollapsibleCard, type CollapsibleCardProps } from './CollapsibleCard'
 export { ConfirmDialog, type ConfirmDialogProps, type ConfirmTone } from './ConfirmDialog'
 export { CopyButton, type CopyButtonProps } from './CopyButton'
 export { DateInput, shiftDay, type DateInputProps } from './DateInput'
+export { EmptyCard, type EmptyCardProps } from './EmptyCard'
 export { Field, Input, Select, Textarea, type FieldProps } from './Field'
 export {
   ActiveFilterPills,
@@ -43,6 +44,7 @@ export { MultiSelectDropdown, type MultiSelectDropdownProps } from './MultiSelec
 export { PageHeader, type PageHeaderProps } from './PageHeader'
 export { Pagination, type PaginationProps } from './Pagination'
 export { Popover, type PopoverProps } from './Popover'
+export { SectionHeader, type SectionHeaderProps } from './SectionHeader'
 export { Segmented, type SegmentedProps } from './Segmented'
 export { SelectMenu, nextEnabledIndex, type SelectMenuOption, type SelectMenuProps } from './SelectMenu'
 export { Spinner } from './Spinner'

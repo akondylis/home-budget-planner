@@ -3,6 +3,7 @@ import { Button, IconButton, ListCard, MetaLine, Money } from '../ui'
 import { MemberDot } from '../members/MemberDot'
 import { Icon } from '../shell/icons'
 import { ACCOUNT_KIND_ICON } from '../../lib/ledger'
+import type { AccountGroupBy } from '../../lib/account-groups'
 import { formatDate } from '../../lib/date-format'
 import type { AccountSummary } from '../../../../shared/ledger'
 
@@ -17,11 +18,18 @@ export interface AccountCardProps {
   onHistory: () => void
   onOpenTransactions: () => void
   onEdit: () => void
+  /** Inside a group the card leaves out what the group header already says (its bank, type or holder) */
+  groupedBy?: AccountGroupBy
 }
 
 /** One account: what it holds now, where its data comes from, and what to do next */
-export function AccountCard({ account, showHolder, onAddTransaction, onImport, onHistory, onOpenTransactions, onEdit }: AccountCardProps) {
+export function AccountCard({
+  account, showHolder, onAddTransaction, onImport, onHistory, onOpenTransactions, onEdit, groupedBy = 'none',
+}: AccountCardProps) {
   const { t } = useTranslation()
+  // Under a group header the name is one level down
+  const Heading = groupedBy === 'none' ? 'h2' : 'h3'
+  const holderLine = showHolder && groupedBy !== 'holder'
   const cash = account.kind === 'CASH'
   const source = cash ? t('accounts.source_cash') : account.importedUntil ? null : t('accounts.not_imported')
 
@@ -32,10 +40,13 @@ export function AccountCard({ account, showHolder, onAddTransaction, onImport, o
           <Icon name={ACCOUNT_KIND_ICON[account.kind]} size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-semibold text-fg" title={account.name}>{account.name}</h2>
-          <MetaLine parts={[t(`accounts.kind.${account.kind}`), account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`)]} />
+          <Heading className="truncate text-sm font-semibold text-fg" title={account.name}>{account.name}</Heading>
+          <MetaLine parts={[
+            groupedBy !== 'kind' && t(`accounts.kind.${account.kind}`),
+            groupedBy !== 'institution' && account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`),
+          ]} />
           {/* Its own line, so the bank never truncates to make room for the holder */}
-          {showHolder && (
+          {holderLine && (
             <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-gray-500" title={`${t('accounts.holder')}: ${account.holderName ?? t('accounts.holder_joint')}`}>
               {account.holderName && account.holderColour
                 ? <MemberDot colour={account.holderColour} name={account.holderName} />

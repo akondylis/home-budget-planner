@@ -1,12 +1,19 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ListCard, Money, PageHeader, RowTitle, Spinner } from '../components/ui'
+import { Button, EmptyCard, ListCard, Money, PageHeader, RowTitle, SectionHeader, Spinner } from '../components/ui'
 import { AccountCard } from '../components/accounts/AccountCard'
+import { AccountsToolbar } from '../components/accounts/AccountsToolbar'
+import { MemberDot } from '../components/members/MemberDot'
 import { AccountForm } from '../components/accounts/AccountForm'
 import { QuickSetup } from '../components/accounts/QuickSetup'
 import { activeAccounts, useLedgerStore } from '../store/ledger'
 import { activeMembers } from '../lib/members'
 import { useImportStore } from '../store/import'
+import { useUiStore } from '../store/ui'
+import { ACCOUNT_KIND_ICON } from '../lib/ledger'
+import {
+  EMPTY_ACCOUNT_FILTER, JOINT, applicableFilter, filterAccounts, groupAccounts, isAccountFilterActive, presentValues, type AccountGroup,
+} from '../lib/account-groups'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { sumMoney } from '../../../shared/money'
 import type { AccountSummary } from '../../../shared/ledger'
@@ -20,16 +27,61 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   const { t } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
   const loaded = useLedgerStore(s => s.loaded)
-  const hasMembers = useLedgerStore(s => activeMembers(s.members).length > 0)
+  const members = useLedgerStore(s => s.members)
+  const hasMembers = activeMembers(members).length > 0
   const openEntry = useLedgerStore(s => s.openEntry)
   // undefined = closed, null = a new account
   const [editing, setEditing] = useState<AccountSummary | null | undefined>(undefined)
   const [showArchived, setShowArchived] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const storedGroupBy = useUiStore(s => s.accountsGroupBy)
+  const storedFilter = useUiStore(s => s.accountsFilter)
+  const clearFilter = useUiStore(s => s.clearAccountsFilter)
 
   const open = activeAccounts(accounts)
   const archived = accounts.filter(a => a.archived)
-  const total = sumMoney(open.map(a => a.balanceCents))
+  // The toolbar shows from two accounts on; a stored choice whose control is not shown is ignored
+  const toolbar = open.length > 1
+  const values = presentValues(open, members)
+  const filter = toolbar ? applicableFilter(storedFilter, values, hasMembers) : EMPTY_ACCOUNT_FILTER
+  const groupBy = !toolbar || (storedGroupBy === 'holder' && !hasMembers) ? 'none' : storedGroupBy
+  const filtered = isAccountFilterActive(filter)
+  const visible = filterAccounts(open, filter)
+  const groups = groupAccounts(visible, groupBy, members)
+  const total = sumMoney(visible.map(a => a.balanceCents))
+
+  function groupTitle(group: AccountGroup): string {
+    if (groupBy === 'kind') return t(`accounts.kind.${group.key}`)
+    if (groupBy === 'institution') return t(`accounts.institution.${group.key}`)
+    return group.key === JOINT ? t('accounts.holder_joint') : group.holder?.name ?? ''
+  }
+
+  function groupLeading(group: AccountGroup) {
+    if (groupBy !== 'holder') return undefined
+    return group.holder?.colour && group.key !== JOINT ? <MemberDot colour={group.holder.colour} size="md" /> : undefined
+  }
+
+  const subtitle = open.length === 0 ? undefined : filtered
+    ? <>{t('accounts.total_shown')}: <Money cents={total} /> • {t('accounts.shown_of', { count: visible.length, total: open.length })}</>
+    : <>{t('accounts.total')}: <Money cents={total} /></>
+
+  const grid = (list: typeof open) => (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {list.map(account => (
+        <AccountCard
+          key={account.id}
+          account={account}
+          showHolder={hasMembers}
+          groupedBy={groupBy}
+          onAddTransaction={() => openEntry({ mode: 'create', accountId: account.id })}
+          onImport={() => onImport(account.id)}
+          onHistory={() => useImportStore.getState().openHistory(account.id)}
+          onOpenTransactions={() => onOpenTransactions(account.id)}
+          onEdit={() => setEditing(account)}
+        />
+      ))}
+    </div>
+  )
 
   async function restore(id: string) {
     try {
@@ -44,7 +96,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
     <div className="mx-auto max-w-5xl">
       <PageHeader
         title={t('nav.accounts')}
-        subtitle={open.length > 0 ? <>{t('accounts.total')}: <Money cents={total} /></> : undefined}
+        subtitle={subtitle}
         actions={
           // Quick setup owns the primary action until the first account exists
           <Button variant={open.length > 0 ? 'primary' : 'secondary'} icon="plus" onClick={() => setEditing(null)}>
@@ -58,20 +110,29 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
       ) : open.length === 0 ? (
         <QuickSetup />
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {open.map(account => (
-            <AccountCard
-              key={account.id}
-              account={account}
-              showHolder={hasMembers}
-              onAddTransaction={() => openEntry({ mode: 'create', accountId: account.id })}
-              onImport={() => onImport(account.id)}
-              onHistory={() => useImportStore.getState().openHistory(account.id)}
-              onOpenTransactions={() => onOpenTransactions(account.id)}
-              onEdit={() => setEditing(account)}
-            />
-          ))}
-        </div>
+        <>
+          {toolbar && <AccountsToolbar groupBy={groupBy} filter={filter} values={values} hasMembers={hasMembers} />}
+          {visible.length === 0 ? (
+            <EmptyCard icon="filter" title={t('accounts.no_match_title')} body={t('accounts.no_match_body')}>
+              <Button icon="close" onClick={clearFilter}>{t('ui.filter_clear_all')}</Button>
+            </EmptyCard>
+          ) : groupBy === 'none' ? grid(visible) : (
+            <div className="space-y-6">
+              {groups.map(group => (
+                <section key={group.key} aria-label={groupTitle(group)}>
+                  <SectionHeader
+                    title={groupTitle(group)}
+                    icon={groupBy === 'kind' ? ACCOUNT_KIND_ICON[group.key as keyof typeof ACCOUNT_KIND_ICON] : groupBy === 'institution' ? 'bank' : 'users'}
+                    leading={groupLeading(group)}
+                    meta={t('accounts.count', { count: group.accounts.length })}
+                    amount={<Money cents={group.totalCents} />}
+                  />
+                  {grid(group.accounts)}
+                </section>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {archived.length > 0 && (

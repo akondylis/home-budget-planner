@@ -13,6 +13,7 @@ import {
   CollapsibleCard,
   CopyButton,
   DraftBadge,
+  EmptyCard,
   FilterChip,
   FilterPopoverButton,
   IconButton,
@@ -23,6 +24,7 @@ import {
   MetaLine,
   Modal,
   Pagination,
+  SectionHeader,
   SelectMenu,
   SortHeader,
   StatusBadge,
@@ -413,5 +415,31 @@ describe('Meter', () => {
     expect(renderToStaticMarkup(<Meter value={150} max={100} tone="danger" label="over" />)).toContain('width:100%')
     expect(renderToStaticMarkup(<Meter value={150} max={100} tone="danger" label="over" />)).toContain('bg-red-600')
     expect(renderToStaticMarkup(<Meter value={0} max={0} label="none" />)).toContain('width:0%')
+  })
+})
+
+describe('SectionHeader', () => {
+  it('should render the title as the chosen heading, with its count and amount', () => {
+    const html = renderToStaticMarkup(<SectionHeader title="Alpha Bank" icon="bank" meta="2 accounts" amount="€1,00" as="h3" />)
+    expect(html).toContain('<h3')
+    expect(html).toContain('Alpha Bank')
+    expect(html).toContain('2 accounts')
+    expect(html).toContain('tabular-nums')
+  })
+
+  it('should default to h2 and draw the leading element instead of the icon', () => {
+    const html = renderToStaticMarkup(<SectionHeader title="Mum" icon="users" leading={<i data-dot="" />} />)
+    expect(html).toContain('<h2')
+    expect(html).toContain('data-dot')
+    expect(html).not.toContain('<svg')
+  })
+})
+
+describe('EmptyCard', () => {
+  it('should show the title, the next step and its button', () => {
+    const html = renderToStaticMarkup(<EmptyCard icon="filter" title="Nothing" body="Clear the filters"><button>Clear</button></EmptyCard>)
+    expect(html).toContain('Nothing')
+    expect(html).toContain('Clear the filters')
+    expect(html).toContain('<button>Clear</button>')
   })
 })
