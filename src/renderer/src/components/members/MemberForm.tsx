@@ -92,6 +92,7 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
             label={t('members.colour')}
             value={colour}
             onChange={setColour}
+            wrap
             options={MEMBER_COLOURS.map(c => ({
               value: c,
               label: t(`members.colours.${c}`),

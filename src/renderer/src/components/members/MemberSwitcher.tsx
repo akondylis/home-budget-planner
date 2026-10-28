@@ -70,8 +70,10 @@ export function MemberSwitcher({ collapsed, onManage }: MemberSwitcherProps) {
         >
           {current ? (
             collapsed ? (
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold">
+              <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold">
                 {initialOf(current.name)}
+                {/* The parent's colour stays visible when the sidebar is collapsed */}
+                <MemberDot colour={current.colour} className="absolute -bottom-1 -right-1 flex rounded-full ring-2 ring-surface" />
               </span>
             ) : (
               <MemberDot colour={current.colour} size="md" className="ml-1 shrink-0" />

@@ -14,11 +14,12 @@ and nobody has to type it again. Children are not tracked ("children included?" 
   this computer, and the row count as quiet meta.
   - Row actions: **Use on this PC**, edit and archive.
   - **Add parent** is the section's single primary button.
-  - The form asks for the name first (inline errors, a duplicate name included), then a colour. The colour starts
-    on the first one not in use.
+  - The form asks for the name first (inline errors, a duplicate name included), then a colour (five options, wrapping
+    to a second line). The colour starts on the first one not in use.
 - **Who is using the app:** a chip at the foot of the sidebar shows the current parent (dot and name). Clicking it
   opens a menu with each parent (a check on the current one) and **Manage household**.
-  - When the sidebar is collapsed, the chip shows the initial and a hover card gives the name.
+  - When the sidebar is collapsed, the chip shows the initial with a small colour dot, and a hover card gives
+    the name.
   - With two parents and none picked yet, the chip reads **Who is using the app?** in amber.
   - A lone parent is picked automatically.
   - `Ctrl+K` also has "Use the app as <name>".

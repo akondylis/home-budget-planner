@@ -8,12 +8,14 @@ export interface SegmentedProps<T extends string> {
   /** `leading` is drawn before the label instead of an icon (e.g. a member's colour dot) */
   options: { value: T; label: string; icon?: IconName; leading?: ReactNode; disabled?: boolean; title?: string }[]
   onChange: (value: T) => void
+  /** Lets a longer set (e.g. five colours) wrap onto a second line instead of overflowing */
+  wrap?: boolean
 }
 
 /** Pill toggle for 2–4 mutually exclusive options */
-export function Segmented<T extends string>({ label, value, options, onChange }: SegmentedProps<T>) {
+export function Segmented<T extends string>({ label, value, options, onChange, wrap = false }: SegmentedProps<T>) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-line bg-surface-2 p-0.5">
+    <div role="radiogroup" aria-label={label} className={`${wrap ? 'flex max-w-full flex-wrap' : 'inline-flex'} rounded-lg border border-line bg-surface-2 p-0.5`}>
       {options.map(opt => {
         const selected = opt.value === value
         return (

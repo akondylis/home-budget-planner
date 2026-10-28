@@ -13,8 +13,9 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 - **Account card:** name, kind and bank; the balance (a card's says "negative = owed"); where the data comes from:
   "Imported up to 09/10/2026" (a link to that account's past imports), "Not imported yet" or "Entered by hand"
   (cash); the row count.
-- **Holder and cards on the account card:** the meta line reads kind · bank · holder (dot and name, or "Joint"
-  once parents exist); a quieter line lists the cards, `•••• 1234 Ανδρέας · •••• 5678 Μαρία`.
+- **Holder and cards on the account card:** under kind · bank, the holder has its own line (dot and name, or
+  "Joint" once parents exist), so the bank never truncates; a quieter line lists the cards,
+  `•••• 1234 Ανδρέας · •••• 5678 Μαρία`.
 - **Account form:** after name, kind and bank come **Holder** (Joint, then each parent; hidden without parents) and
   **Cards** (not for cash): rows of last 4 digits + holder + remove, then **Add card**. A new card's holder is the
   account's holder, else the parent using the app; focus goes to its digits. Wrong digits or a repeat show on that

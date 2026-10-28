@@ -33,15 +33,15 @@ export function AccountCard({ account, showHolder, onAddTransaction, onImport, o
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold text-fg" title={account.name}>{account.name}</h2>
-          <div className="flex min-w-0 items-center gap-1 text-xs text-gray-500">
-            <MetaLine parts={[t(`accounts.kind.${account.kind}`), account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`)]} />
-            {showHolder && <>
-              <span aria-hidden="true">•</span>
+          <MetaLine parts={[t(`accounts.kind.${account.kind}`), account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`)]} />
+          {/* Its own line, so the bank never truncates to make room for the holder */}
+          {showHolder && (
+            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-gray-500" title={`${t('accounts.holder')}: ${account.holderName ?? t('accounts.holder_joint')}`}>
               {account.holderName && account.holderColour
-                ? <MemberDot colour={account.holderColour} name={account.holderName} className="shrink-0" />
-                : <span className="shrink-0">{t('accounts.holder_joint')}</span>}
-            </>}
-          </div>
+                ? <MemberDot colour={account.holderColour} name={account.holderName} />
+                : <><Icon name="users" size={12} className="shrink-0" />{t('accounts.holder_joint')}</>}
+            </div>
+          )}
           {account.cards.length > 0 && (
             <ul
               aria-label={t('accounts.cards')}
