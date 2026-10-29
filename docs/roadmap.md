@@ -1,6 +1,6 @@
 # Home Budget — Feature Roadmap
 
-As of 2026-10-28 · Andrew Kondylis
+As of 2026-10-29 · Andrew Kondylis
 
 ## Overview
 
@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-29 | Banks as an editable list | Add a bank (Revolut, Piraeus, NBG…) from the account form's **+ New bank…** or Settings › **Banks** (rename, reorder, archive) with no code change; common Greek banks and the meal-card issuers listed from the start; grouping and filters on Accounts follow the list and its order, **No bank** last; existing accounts keep their bank (decided 2026-10-29) · [banks](features/banks.md) |
 | 2026-10-28 | Meal-voucher cards | Edenred and Up Hellas cards as their own account kind: top-up = income in **Meal vouchers**, food = ordinary expense, so the budget shows what the family really eats; balance marked **Food only** and kept beside the accounts total; never a transfer source, never imported; overspending warns, never blocks (decided 2026-10-28) · [meal vouchers](features/meal-vouchers.md) |
 | 2026-10-28 | Accounts: group by & filters | Group the account cards by bank, holder or type, each group with its subtotal; filter by type, bank and holder (a parent's card counts as theirs); grouping remembered per PC, filters per session · [accounts](features/accounts.md) |
 | 2026-10-28 | Back/forward & shortcuts | Same as Matchday: mouse back/forward buttons, `Alt+←`/`Alt+→` and title-bar arrows through the pages visited; `?`/`F1` cheat-sheet; `Ctrl+P` prints the page on screen (or the monthly worksheet) · [command palette & shortcuts](features/command-palette.md) |

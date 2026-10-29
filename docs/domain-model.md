@@ -1,6 +1,6 @@
 # Domain Model (draft)
 
-As of 2026-10-28. Entities are added to `prisma/schema.prisma` one feature at a time, and this doc is updated in the
+As of 2026-10-29. Entities are added to `prisma/schema.prisma` one feature at a time, and this doc is updated in the
 same change. **In schema** marks what exists; the rest is a draft. Open questions are marked **?**.
 
 ## Money rules
@@ -15,7 +15,8 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 | Entity | Purpose | Key fields |
 | --- | --- | --- |
 | **Member** *(in schema)* | A parent of the household (children are not tracked); archived, never deleted. Who uses the app is chosen per PC, not stored here | name, colour (palette key from `MEMBER_COLOURS`), sortOrder, archivedAt |
-| **Account** *(in schema)* | Where money sits. One statement source = one account, so a credit card is an account of kind `CREDIT_CARD` | name, kind (`CURRENT`/`SAVINGS`/`CASH`/`CREDIT_CARD`/`MEAL_VOUCHER`), institution (`ALPHA`/`EUROBANK`/`EDENRED`/`UP_HELLAS`/`OTHER`), currency, openingBalanceCents, openingDate, importProfile?, importMapping?, holderMemberId? (null = joint), sortOrder, archivedAt |
+| **Account** *(in schema)* | Where money sits. One statement source = one account, so a credit card is an account of kind `CREDIT_CARD` | name, kind (`CURRENT`/`SAVINGS`/`CASH`/`CREDIT_CARD`/`MEAL_VOUCHER`), institutionId? (null = no bank), currency, openingBalanceCents, openingDate, importProfile?, importMapping?, holderMemberId? (null = joint), sortOrder, archivedAt |
+| **Institution** *(in schema)* | A bank or meal-card issuer from the user's list (Settings › Banks); archived, never deleted. Starter list seeded by its migration with fixed ids `inst_…` | name (unique), kind (`BANK`/`VOUCHER_ISSUER`), statementPreset? (`alpha`/`eurobank`), sortOrder, archivedAt |
 | **Card** *(in schema)* | A plastic card on an account: debit cards on a current account, main and supplementary cards on a credit card account (the credit card itself is the account). Removed with its account's card list; matching a row to its card: later | accountId, last4 (4 digits, unique per account), holderMemberId?, sortOrder |
 | **Category** *(in schema)* | Two levels: group → category (Bills → Electricity). The **type** is set on the group and its categories follow it | name, parentId, type (`INCOME`/`EXPENSE`/`BILL`/`SUBSCRIPTION`/`DEBT`/`SAVINGS`), icon, sortOrder, carryOver (unspent budget moves to next month), archivedAt |
 | **Transaction** *(in schema)* | A booked movement. `categoryId = null` means "to categorise" (transfers never need one) | accountId, bookedAt (date only, 12:00 UTC), amountCents, description (bank text), payee, categoryId?, note, memberId? (who it was for; null = household), createdByMemberId? (who entered it; set once), transferId?, importBatchId?, fingerprint?, bankReference?, balanceAfterCents? |

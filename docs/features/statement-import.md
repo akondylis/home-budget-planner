@@ -51,8 +51,8 @@ Each row ends with one status, from exact to fuzzy:
 - **Reading:** UTF-8 (with or without BOM), UTF-16 with BOM, else Windows-1253; `;`, `,` or tab; header row found in
   the first 30 lines by Greek or English column names; amounts in cents with the bank's decimal separator;
   Excel-style text cells (`="…"`, Eurobank) unwrapped.
-- **Bank formats:** the bank presets know where the columns sit. These positions are taken from the household's
-  earlier converter script:
+- **Bank formats:** the bank presets know where the columns sit; an account gets one through its bank's
+  `statementPreset` ([banks.md](banks.md)). These positions are taken from the household's earlier converter script:
   - **Eurobank** (account and card): header in row 0; date, description and amount in columns 1, 3 and 4.
   - **Alpha card:** the header row says `Ημ/νία συναλλαγής`; date, description and amount in columns 1, 2 and 5.
   - **Alpha account:** the header row says `Ημερομηνία` and `Ποσό`; date, description and an unsigned amount in

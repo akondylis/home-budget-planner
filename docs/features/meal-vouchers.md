@@ -6,7 +6,8 @@ Starts at sidebar › **Accounts & cards** › **New account** › kind **Meal-v
 
 ## UX
 
-- **Account form:** choosing the kind narrows **Issued by** to Edenred, Up Hellas or Other (Edenred first) and
+- **Account form:** choosing the kind narrows **Issued by** to the meal-card issuers (Edenred first) or none, with
+  **+ New issuer…** for another one ([banks.md](banks.md)), and
   makes **Holder** required, without **Joint**: the card comes from one parent's employer (the parent using the
   app is pre-picked). The opening balance hint asks for what the provider's app shows today; the card row takes
   the last 4 digits.
@@ -25,7 +26,8 @@ Starts at sidebar › **Accounts & cards** › **New account** › kind **Meal-v
 
 ## Behaviour
 
-- Kind `MEAL_VOUCHER`, institutions `EDENRED` / `UP_HELLAS` (SQLite stores enums as text: no migration).
+- Kind `MEAL_VOUCHER`; its issuer is an `Institution` of kind `VOUCHER_ISSUER` (`inst_edenred`, `inst_up_hellas`
+  in the starter list) or none.
 - Main-process rules (`VOUCHER_NO_TRANSFER_OUT`, `HOLDER_REQUIRED`, issuer check) hold whatever the renderer sends.
   The holder is required only once at least one active parent exists.
 - **Meal vouchers** income category: a starter category in new databases; for older ones it is created under the
@@ -39,7 +41,7 @@ Starts at sidebar › **Accounts & cards** › **New account** › kind **Meal-v
 
 | Path | Role |
 | --- | --- |
-| `src/shared/ledger.ts` | `MEAL_VOUCHER`, `EDENRED`/`UP_HELLAS`, `VOUCHER_INSTITUTIONS`, `isSpendable` |
+| `src/shared/ledger.ts` | `MEAL_VOUCHER`, `institutionKindFor`, `isSpendable` |
 | `src/main/services/accounts.ts` | issuer check, `assertVoucherHolders`, top-up category on save |
 | `src/main/services/seed.ts` | `meal_vouchers` starter, `ensureVoucherCategory` |
 | `src/main/services/transactions.ts` | no transfer out of a card (create, edit, link) |

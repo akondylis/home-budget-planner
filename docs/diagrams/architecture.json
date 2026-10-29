@@ -90,6 +90,41 @@
       ]
     },
     {
+      "id": "institution",
+      "title": "Banks",
+      "screen": [
+        "Account form (New bank…)",
+        "Settings › Banks"
+      ],
+      "handler": "ipc/institution.ts",
+      "service": [
+        "services/institutions.ts"
+      ],
+      "store": "SQLite · Institution",
+      "calls": [
+        {
+          "api": "listInstitutions",
+          "channel": "institution:list"
+        },
+        {
+          "api": "createInstitution",
+          "channel": "institution:create"
+        },
+        {
+          "api": "updateInstitution",
+          "channel": "institution:update"
+        },
+        {
+          "api": "archiveInstitution",
+          "channel": "institution:archive"
+        },
+        {
+          "api": "moveInstitution",
+          "channel": "institution:move"
+        }
+      ]
+    },
+    {
       "id": "transaction",
       "title": "Transactions",
       "screen": [

@@ -16,7 +16,8 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 - **Holder and cards on the account card:** under kind · bank, the holder has its own line (dot and name, or
   "Joint" once parents exist), so the bank never truncates; a quieter line lists the cards,
   `•••• 1234 Ανδρέας · •••• 5678 Μαρία`.
-- **Account form:** after name, kind and bank come **Holder** (Joint, then each parent; hidden without parents) and
+- **Account form:** after name, kind and bank (the user's bank list, with **+ New bank…** to add one on the spot,
+  see [banks.md](banks.md)) come **Holder** (Joint, then each parent; hidden without parents) and
   **Cards** (not for cash): rows of last 4 digits + holder + remove, then **Add card**. A new card's holder is the
   account's holder, else the parent using the app; focus goes to its digits. Wrong digits or a repeat show on that
   row. Everything is saved by the form's one primary button; Cancel drops card changes.
@@ -30,8 +31,9 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
   **Bank** and **Holder** sections of on/off chips, each with its account count (holders with their dot); any of
   the chosen values in a section, every section with a choice. Each chosen value shows as a removable pill under
   the toolbar, with **Clear all**. Each group gets a `SectionHeader`: icon or the parent's dot, name, account count
-  and its subtotal; inside a group the card drops what the header already says. Banks and types keep their
-  declared order ("Other / none" last); holders follow the members' order, Joint last. A section appears only
+  and its subtotal; inside a group the card drops what the header already says. Banks follow the order set in
+  Settings › Banks ("No bank" last, see [banks.md](banks.md)); types keep their declared order; holders follow the
+  members' order, Joint last. A section appears only
   with two or more values; Holder only once parents exist. Nothing matching shows an empty state with **Clear
   all**. The grouping is remembered on this PC; filters last for the session (Back returns to them) and never
   survive a restart. The archived list is not filtered.
@@ -69,7 +71,7 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 | `src/main/services/accounts.ts` | List with balances and "imported up to", create (one or many), update, archive, `balanceOn` |
 | `src/main/ipc/account.ts` | Thin handlers |
 | `src/renderer/src/pages/AccountsScreen.tsx` | Grid (grouped or not), archived list, form |
-| `src/renderer/src/components/accounts/` | `AccountCard`, `AccountsToolbar`, `AccountForm`, `CardListEditor`, `QuickSetup` |
+| `src/renderer/src/components/accounts/` | `AccountCard`, `AccountsToolbar`, `AccountForm`, `BankPicker`, `CardListEditor`, `QuickSetup` |
 | `src/renderer/src/lib/account-groups.ts` | Filter, group with subtotals, values offered with counts, filter as applied, pills |
 | `src/renderer/src/store/ui.ts` | `accountsGroupBy` (persisted), `accountsFilter` (session) |
 | `src/renderer/src/store/ledger.ts` | Accounts, categories and payees for every screen; `changed()` after each write |
@@ -80,9 +82,9 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 | Channel | Args → result | Errors |
 | --- | --- | --- |
 | `account:list` | `({ includeArchived? })` → `AccountSummary[]` | — |
-| `account:create` | `(AccountInput)` → id (holder and cards included) | `INVALID_INPUT`, `MEMBER_NOT_FOUND`, `CARD_DUPLICATE` |
-| `account:createMany` | `(AccountInput[])` → ids (Quick setup, one write) | `INVALID_INPUT`, `MEMBER_NOT_FOUND` |
-| `account:update` | `(id, AccountInput)` → `void`; syncs the card list when given | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND`, `MEMBER_NOT_FOUND`, `CARD_DUPLICATE`, `CARD_NOT_FOUND` |
+| `account:create` | `(AccountInput)` → id (holder and cards included) | `INVALID_INPUT`, `INSTITUTION_NOT_FOUND`, `MEMBER_NOT_FOUND`, `CARD_DUPLICATE` |
+| `account:createMany` | `(AccountInput[])` → ids (Quick setup, one write) | `INVALID_INPUT`, `INSTITUTION_NOT_FOUND`, `MEMBER_NOT_FOUND` |
+| `account:update` | `(id, AccountInput)` → `void`; syncs the card list when given | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND`, `INSTITUTION_NOT_FOUND`, `MEMBER_NOT_FOUND`, `CARD_DUPLICATE`, `CARD_NOT_FOUND` |
 | `account:archive` | `(id, archived = true)` → `void` | `ACCOUNT_NOT_FOUND` |
 
 ## Tests
