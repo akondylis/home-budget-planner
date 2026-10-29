@@ -50,10 +50,14 @@ export const QUICK_SETUP: { key: string; kind: AccountKind; institutionId: strin
 /** What a category picker offers: EXPENSE = every type but income; a category type = only that type */
 export type PickerKind = 'EXPENSE' | 'ANY' | CategoryType
 
-/** Groups a picker offers: income only for income, everything but income for an expense */
+/** Whether a group of this type suits the picker: income only for income, everything but income for an expense */
+export function fitsKind(type: CategoryType, kind: PickerKind): boolean {
+  return kind === 'ANY' || (kind === 'EXPENSE' ? type !== 'INCOME' : type === kind)
+}
+
+/** Groups a picker offers (those with categories in them) */
 export function groupsFor(tree: CategoryNode[], kind: PickerKind): CategoryNode[] {
-  const fits = (type: CategoryType) => kind === 'ANY' || (kind === 'EXPENSE' ? type !== 'INCOME' : type === kind)
-  return tree.filter(g => fits(g.type) && g.children.length > 0)
+  return tree.filter(g => fitsKind(g.type, kind) && g.children.length > 0)
 }
 
 export function findCategory(tree: CategoryNode[], id: string | null | undefined): CategoryNode | null {

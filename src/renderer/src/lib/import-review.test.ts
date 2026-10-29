@@ -11,10 +11,12 @@ import {
   sortRows,
   toColumnMapping,
   toDecisions,
+  transferAccounts,
   type MappingForm,
 } from './import-review'
 import { merchantText, payeeKey } from '../../../shared/payee-key'
 import type { PreviewRow } from '../../../shared/statement-import'
+import type { AccountSummary } from '../../../shared/ledger'
 
 let nextLine = 2
 function row(patch: Partial<PreviewRow>): PreviewRow {
@@ -163,5 +165,27 @@ describe('sortRows', () => {
   it('sorts by amount both ways, rows without an amount last', () => {
     expect(lines(sortRows(rows, { key: 'amount', direction: 'asc' }, 'el'))).toEqual(lines([a, c, b]))
     expect(lines(sortRows(rows, { key: 'amount', direction: 'desc' }, 'el'))).toEqual(lines([c, a, b]))
+  })
+})
+
+describe('transferAccounts', () => {
+  const account = (id: string, kind: AccountSummary['kind'], archived = false) => ({ id, name: id, kind, archived }) as AccountSummary
+  const accounts = [
+    account('Piraeus', 'CURRENT'),
+    account('Alpha', 'SAVINGS'),
+    account('Wallet', 'CASH'),
+    account('Old', 'CURRENT', true),
+    account('Edenred', 'MEAL_VOUCHER'),
+  ]
+  const names = (list: AccountSummary[]) => list.map(a => a.id)
+
+  it('offers every other active account, cash first', () => {
+    expect(names(transferAccounts(accounts, 'Piraeus', true))).toEqual(['Wallet', 'Alpha', 'Edenred'])
+  })
+
+  it('never takes money out of a meal-voucher account', () => {
+    expect(names(transferAccounts(accounts, 'Piraeus', false))).toEqual(['Wallet', 'Alpha'])
+    expect(transferAccounts(accounts, 'Edenred', true)).toEqual([])
+    expect(names(transferAccounts(accounts, 'Edenred', false))).toEqual(['Wallet', 'Alpha', 'Piraeus'])
   })
 })

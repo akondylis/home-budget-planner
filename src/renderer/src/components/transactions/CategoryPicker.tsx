@@ -19,6 +19,8 @@ export interface CategoryPickerProps {
   triggerClassName?: string
   /** `compact` inside dense tables (import review, inline edit) */
   density?: 'default' | 'compact'
+  /** Offers "Create «…»" when the search finds no such category; gets the typed name */
+  onCreate?: (name: string) => void
 }
 
 /** The picker's list: each group as a section heading (or a selectable "All in …" row) over its categories */
@@ -59,6 +61,7 @@ export function CategoryPicker({
   leading = [],
   triggerClassName = 'w-full',
   density,
+  onCreate,
 }: CategoryPickerProps) {
   const { t } = useTranslation()
   return (
@@ -71,6 +74,8 @@ export function CategoryPicker({
       searchable
       triggerClassName={triggerClassName}
       density={density}
+      onCreate={onCreate}
+      createLabel={name => t('categories.create_named', { name })}
     />
   )
 }

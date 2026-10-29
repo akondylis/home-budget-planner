@@ -30,6 +30,7 @@ import {
   StatusBadge,
   cx,
   nextEnabledIndex,
+  showCreate,
   visibleOptions,
 } from '.'
 import { createPanelRegistry, placePanel } from './Popover'
@@ -374,6 +375,27 @@ describe('SelectMenu', () => {
 
     it('finds every option of a section by the section name', () => {
       expect(visibleOptions(grouped, 'bills').map(o => o.value)).toEqual(['g1', 'c1'])
+    })
+  })
+
+  describe('showCreate', () => {
+    const grouped = [
+      { value: 'g1', label: 'Spending', kind: 'heading' as const },
+      { value: 'c1', label: 'Σούπερ μάρκετ', searchText: 'Σούπερ μάρκετ Spending' },
+    ]
+
+    it('is off without a query', () => {
+      expect(showCreate(grouped, '  ')).toBe(false)
+    })
+
+    it('is off when the query names an option, ignoring accents and case', () => {
+      expect(showCreate(grouped, 'σουπερ ΜΑΡΚΕΤ ')).toBe(false)
+    })
+
+    it('is on for a new name, even one that matches part of an option or a heading', () => {
+      expect(showCreate(grouped, 'Οπωροπωλείο')).toBe(true)
+      expect(showCreate(grouped, 'Σούπερ')).toBe(true)
+      expect(showCreate(grouped, 'Spending')).toBe(true)
     })
   })
 })

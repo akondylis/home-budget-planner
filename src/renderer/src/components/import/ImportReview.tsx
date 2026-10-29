@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next'
 import { Badge, FilterChip, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SortHeader, cx, type BadgeTone, type SelectMenuOption } from '../ui'
 import { Icon, type IconName } from '../shell/icons'
 import { CategoryPicker } from '../transactions/CategoryPicker'
+import { QuickCategoryDialog } from '../categories/QuickCategoryDialog'
 import { RulePrompt } from './RulePrompt'
 import { useLedgerStore } from '../../store/ledger'
 import { findCategory } from '../../lib/ledger'
@@ -12,12 +13,12 @@ import { ipcErrorMessage } from '../../lib/ipc-errors'
 import {
   SELECTABLE,
   applyToSamePayee,
-  cashAccounts,
   filterRows,
   needsCategory,
   offersRule,
   reviewCounts,
   sortRows,
+  transferAccounts,
   type Choices,
   type ReviewFilter,
   type ReviewSort,
@@ -25,6 +26,7 @@ import {
   type RowChoice,
 } from '../../lib/import-review'
 import { merchantText } from '../../../../shared/payee-key'
+import type { AccountSummary } from '../../../../shared/ledger'
 import { ROW_STATUSES, type PreviewRow, type PreviewSummary, type RowStatus } from '../../../../shared/statement-import'
 
 const COLS = cx(LIST_GRID, 'grid-cols-[1.5rem_6rem_minmax(0,1fr)_14rem_7.5rem_9.5rem]')
@@ -70,8 +72,9 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
   // Rows the user sorted by hand: a new rule does not overwrite them
   const [touched, setTouched] = useState<ReadonlySet<number>>(new Set())
   const [prompt, setPrompt] = useState<Prompt | null>(null)
+  // A category typed in a row's picker that does not exist yet
+  const [creating, setCreating] = useState<{ row: PreviewRow; name: string } | null>(null)
 
-  const cash = cashAccounts(accounts, accountId)
   const counts = reviewCounts(rows, choices)
   const visible = sortRows(filterRows(rows, choices, filter), sort, i18n.language)
   const tickable = visible.filter(r => SELECTABLE.has(r.status))
@@ -201,11 +204,12 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
                   <CategoryPicker
                     categories={categories}
                     value={pickerValue(choice)}
-                    kind={row.amountCents !== null && row.amountCents > 0 ? 'INCOME' : 'EXPENSE'}
+                    kind={kindOf(row)}
                     ariaLabel={t('import.goes_to_of', { name: row.description })}
                     placeholder={t('log.to_categorise')}
-                    leading={leadingOptions(row, cash, t)}
+                    leading={leadingOptions(row, transferAccounts(accounts, accountId, !isIncoming(row)), t)}
                     onChange={value => pick(row, value)}
+                    onCreate={name => setCreating({ row, name })}
                     density="compact"
                     triggerClassName={cx('h-8 w-full text-xs', needsCategory(row, choice) && 'border-amber-500 text-amber-700')}
                   />
@@ -221,9 +225,27 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
         {visible.length === 0 && <p className="px-4 py-6 text-center text-sm text-fg-muted">{t('import.filter_empty')}</p>}
       </ListCard>
       </div>
+
+      {creating && (
+        <QuickCategoryDialog
+          categories={categories}
+          initialName={creating.name}
+          kind={kindOf(creating.row)}
+          groupId={findCategory(categories, creating.row.suggestion?.categoryId)?.parentId}
+          onClose={() => setCreating(null)}
+          onCreated={id => {
+            const { row } = creating
+            setCreating(null)
+            pick(row, id)
+          }}
+        />
+      )}
     </div>
   )
 }
+
+const isIncoming = (row: PreviewRow) => row.amountCents !== null && row.amountCents > 0
+const kindOf = (row: PreviewRow) => (isIncoming(row) ? 'INCOME' : 'EXPENSE')
 
 function pickerValue(choice: RowChoice): string | null {
   const { target } = choice
@@ -232,15 +254,27 @@ function pickerValue(choice: RowChoice): string | null {
   return target.categoryId
 }
 
-/** Choices above the categories: link to the hand-entered twin, or move an ATM withdrawal to Cash */
-function leadingOptions(row: PreviewRow, cash: { id: string; name: string }[], t: TFunction): SelectMenuOption<string>[] {
-  if (row.status === 'POSSIBLE_DUPLICATE') return [{ value: LINK, label: t('import.target_link') }]
-  if (row.transferHint === 'ATM') return cash.map(a => ({ value: `${TRANSFER_TO}${a.id}`, label: t('import.target_transfer', { account: a.name }) }))
-  return []
+/**
+ * Choices above the categories: link to the hand-entered twin, then a transfer to (or from)
+ * one of our own accounts, cash first for an ATM withdrawal
+ */
+function leadingOptions(row: PreviewRow, targets: AccountSummary[], t: TFunction): SelectMenuOption<string>[] {
+  const options: SelectMenuOption<string>[] = row.status === 'POSSIBLE_DUPLICATE' ? [{ value: LINK, label: t('import.target_link') }] : []
+  if (targets.length === 0) return options
+  const label = isIncoming(row) ? 'import.transfer_from' : 'import.transfer_to'
+  options.push({ value: 'transfer-heading', label: t('import.transfer_heading'), kind: 'heading' })
+  for (const a of targets) {
+    options.push({
+      value: `${TRANSFER_TO}${a.id}`,
+      label: t(label, { account: a.name }),
+      searchText: [t('import.transfer_search'), t('import.transfer_heading'), a.name, a.institutionName].filter(Boolean).join(' '),
+    })
+  }
+  return options
 }
 
 /** The line under the description: why the row has its status, or where its category came from */
-function explain(row: PreviewRow, choice: RowChoice, t: TFunction, accounts: { id: string; name: string }[]): string | null {
+function explain(row: PreviewRow, choice: RowChoice, t: TFunction, accounts: AccountSummary[]): string | null {
   switch (row.status) {
     case 'ALREADY_IMPORTED': return t('import.why_already')
     case 'INVALID': return t(`import.why_invalid_${row.problem ?? 'DATE'}`, { line: row.line })
@@ -251,8 +285,10 @@ function explain(row: PreviewRow, choice: RowChoice, t: TFunction, accounts: { i
         : null
   }
   if (choice.target.kind === 'transfer' && choice.target.toAccountId) {
-    const to = accounts.find(a => a.id === (choice.target as { toAccountId: string }).toAccountId)?.name ?? ''
-    return t('import.why_atm', { account: to })
+    const other = accounts.find(a => a.id === (choice.target as { toAccountId: string }).toAccountId)
+    const account = other?.name ?? ''
+    if (row.transferHint === 'ATM' && other?.kind === 'CASH') return t('import.why_atm', { account })
+    return t(isIncoming(row) ? 'import.why_transfer_from' : 'import.why_transfer_to', { account })
   }
   if (row.transferHint === 'CARD_PAYMENT') return t('import.why_card_payment')
   const s = row.suggestion

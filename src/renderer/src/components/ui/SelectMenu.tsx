@@ -32,6 +32,10 @@ export interface SelectMenuProps<T extends string | number> {
   triggerClassName?: string
   /** `compact` rows (text-xs) for dropdowns inside dense tables */
   density?: 'default' | 'compact'
+  /** Offers "Create «query»" under the list when the search finds no exact match (needs `searchable`) */
+  onCreate?: (query: string) => void
+  /** Text of that row, e.g. `Create «Οπωροπωλείο»` */
+  createLabel?: (query: string) => ReactNode
 }
 
 const isChoosable = (o: { disabled?: boolean; kind?: string }) => !o.disabled && o.kind !== 'heading'
@@ -68,6 +72,15 @@ export function visibleOptions<T extends string | number>(options: SelectMenuOpt
   return shown
 }
 
+const optionName = <T extends string | number>(o: SelectMenuOption<T>) =>
+  typeof o.label === 'string' ? o.label : o.searchText ?? String(o.value)
+
+/** Whether to offer "Create «query»": a query that names no option exactly (accent- and case-insensitive) */
+export function showCreate<T extends string | number>(options: SelectMenuOption<T>[], query: string): boolean {
+  const q = normalise(query.trim())
+  return q !== '' && !options.some(o => o.kind !== 'heading' && normalise(optionName(o)) === q)
+}
+
 /** Single-choice dropdown in the filter-bar look (same trigger and panel as `MultiSelectDropdown`) */
 export function SelectMenu<T extends string | number>({
   value,
@@ -79,6 +92,8 @@ export function SelectMenu<T extends string | number>({
   panelWidth,
   triggerClassName = 'min-w-28',
   density = 'default',
+  onCreate,
+  createLabel,
 }: SelectMenuProps<T>) {
   const { t } = useTranslation()
   const anchorRef = useRef<HTMLButtonElement>(null)
@@ -90,6 +105,10 @@ export function SelectMenu<T extends string | number>({
   const selected = options.find(o => o.value === value && o.kind !== 'heading')
   const shown = visibleOptions(options, query)
   const compact = density === 'compact'
+  const creatable = searchable && onCreate !== undefined && showCreate(options, query)
+  // The create row sits after the options and takes part in arrow-key navigation
+  const createIndex = creatable ? shown.length : -1
+  const navigable = creatable ? [...shown, { kind: 'option' as const }] : shown
 
   // Open on the current choice, not at the top of a long list
   useEffect(() => {
@@ -99,6 +118,16 @@ export function SelectMenu<T extends string | number>({
     )
     return () => cancelAnimationFrame(frame)
   }, [isOpen])
+
+  // Keep the highlighted row in view while the arrow keys walk the list (held keys too);
+  // the first option of a section brings its heading along
+  useEffect(() => {
+    if (!isOpen || highlighted < 0) return
+    const row = listRef.current?.querySelector<HTMLElement>(`[data-index="${highlighted}"]`)
+    const heading = row?.previousElementSibling
+    ;(heading?.getAttribute('role') === 'presentation' ? heading : row)?.scrollIntoView({ block: 'nearest' })
+    row?.scrollIntoView({ block: 'nearest' })
+  }, [isOpen, highlighted])
 
   const open = () => {
     setIsOpen(true)
@@ -116,13 +145,20 @@ export function SelectMenu<T extends string | number>({
     close(true)
   }
 
+  const create = () => {
+    const name = query.trim()
+    close()
+    onCreate?.(name)
+  }
+
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault()
-      setHighlighted(prev => nextEnabledIndex(shown, prev < 0 && e.key === 'ArrowUp' ? 0 : prev, e.key === 'ArrowDown' ? 1 : -1))
+      setHighlighted(prev => nextEnabledIndex(navigable, prev < 0 && e.key === 'ArrowUp' ? 0 : prev, e.key === 'ArrowDown' ? 1 : -1))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      if (highlighted >= 0 && highlighted < shown.length) choose(shown[highlighted])
+      if (highlighted === createIndex && creatable) create()
+      else if (highlighted >= 0 && highlighted < shown.length) choose(shown[highlighted])
     } else if (e.key === 'Escape') {
       e.preventDefault()
       e.stopPropagation()
@@ -183,7 +219,7 @@ export function SelectMenu<T extends string | number>({
           data-autofocus={searchable ? undefined : true}
           className="max-h-72 overflow-y-auto py-1 focus:outline-none"
         >
-          {shown.length === 0 ? (
+          {shown.length === 0 && !creatable ? (
             <div className="px-3 py-2 text-xs text-gray-500">{t('ui.no_results')}</div>
           ) : (
             shown.map((option, index) => {
@@ -200,11 +236,13 @@ export function SelectMenu<T extends string | number>({
                 <div
                   key={String(option.value)}
                   role="option"
+                  data-index={index}
                   aria-selected={isSelected}
                   aria-disabled={option.disabled || undefined}
                   title={option.hint}
                   onClick={() => choose(option)}
-                  onMouseEnter={() => !option.disabled && setHighlighted(index)}
+                  // Move, not enter: the list scrolling under a resting pointer must not steal the highlight
+                  onMouseMove={() => !option.disabled && highlighted !== index && setHighlighted(index)}
                   className={cx(
                     'flex items-center gap-2 px-3 transition-colors',
                     compact ? 'py-1 text-xs' : 'py-1.5 text-sm',
@@ -220,6 +258,24 @@ export function SelectMenu<T extends string | number>({
                 </div>
               )
             })
+          )}
+          {creatable && (
+            <div
+              role="option"
+              aria-selected={false}
+              data-index={createIndex}
+              onClick={create}
+              onMouseMove={() => highlighted !== createIndex && setHighlighted(createIndex)}
+              className={cx(
+                'flex cursor-pointer items-center gap-2 px-3 font-medium text-accent transition-colors',
+                compact ? 'py-1 text-xs' : 'py-1.5 text-sm',
+                shown.length > 0 && 'mt-1 border-t border-line',
+                highlighted === createIndex ? 'bg-blue-100' : 'hover:bg-surface-hover',
+              )}
+            >
+              <Icon name="plus" size={compact ? 12 : 14} className="shrink-0" />
+              <span className="min-w-0 flex-1 break-words">{createLabel ? createLabel(query.trim()) : query.trim()}</span>
+            </div>
           )}
         </div>
       </Popover>

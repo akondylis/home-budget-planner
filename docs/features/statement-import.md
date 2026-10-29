@@ -20,6 +20,8 @@ minute, with no fear of doubles. Supported first: Alpha Bank and Eurobank, accou
   import** (disabled) when every row is known. The same file again shows an info banner with when it was imported.
 - **Learning:** picking a category asks "Always put *ΚΑΦΕ ΜΙΚΡΟ ΚΗΦΙΣΙΑ* in *Φαγητό έξω*?"; **Always** saves a
   rule and gives that category to the other rows of the merchant (not to rows sorted by hand or by another rule).
+- **New category on the spot:** typing a name the picker does not know offers **Create «Οπωροπωλείο»** (↓ + Enter
+  reaches it); a small dialog asks for the group and the new category is used for that row straight away.
 - **After import:** the log, filtered to that import, with "8 imported · 1 to categorise · Balance matches the
   bank", **Undo import** and **Show all**. If the statement's balance differs, an amber banner gives both amounts,
   the difference and where to look. It warns, never blocks.
@@ -42,8 +44,10 @@ Each row ends with one status, from exact to fuzzy:
 
 - Two identical €2,50 coffees on one day are occurrence 1 and 2, so both import, and an overlapping later file
   finds both again. A third one in a new file is new.
-- **ATM withdrawals** (ΑΝΑΛΗΨΗ, ATM) start as a transfer to Cash when a cash account exists; the import writes the
-  cash side too. **Card payments** (ΠΛΗΡΩΜΗ ΚΑΡΤΑΣ…) wait for the card statement, which pairs them; the review and the
+- **Transfers between own accounts:** every new row's picker has a *Transfer between my accounts* section, "To
+  {account}" for money out and "From {account}" for money in (search "μεταφορά" or the bank's name); the import
+  writes the other account's side too, and neither counts as spending or income. Money never leaves a meal-voucher
+  account this way. **ATM withdrawals** (ΑΝΑΛΗΨΗ, ATM) start as a transfer to Cash when a cash account exists. **Card payments** (ΠΛΗΡΩΜΗ ΚΑΡΤΑΣ…) wait for the card statement, which pairs them; the review and the
   landing banner do not count them as "to categorise".
 - **Commit** runs in one database transaction and checks every row again, so a double click or two previews of one
   file never insert twice. **Undo** removes the rows the import created (and a cash side it wrote); linked

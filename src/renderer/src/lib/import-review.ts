@@ -35,6 +35,18 @@ export function cashAccounts(accounts: AccountSummary[], importingInto: string):
 }
 
 /**
+ * Own accounts a row can move money to (`outgoing`) or from: every active account but the one
+ * being imported, cash first. Money never leaves a meal-voucher account by transfer.
+ */
+export function transferAccounts(accounts: AccountSummary[], importingInto: string, outgoing: boolean): AccountSummary[] {
+  const source = accounts.find(a => a.id === importingInto)
+  if (outgoing && source?.kind === 'MEAL_VOUCHER') return []
+  return accounts
+    .filter(a => !a.archived && a.id !== importingInto && (outgoing || a.kind !== 'MEAL_VOUCHER'))
+    .sort((a, b) => Number(b.kind === 'CASH') - Number(a.kind === 'CASH') || a.name.localeCompare(b.name))
+}
+
+/**
  * What each row starts as: new rows in with their suggestion, transfers paired,
  * possible duplicates out (ticking one links it), an ATM withdrawal to Cash when there is one.
  */
