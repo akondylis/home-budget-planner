@@ -211,6 +211,11 @@
     @apply text-xs font-semibold uppercase tracking-wide text-gray-500;
   }
 
+  /* Section title inside a dropdown list; stays pinned while its options scroll */
+  .menu-heading {
+    @apply table-header sticky -top-1 z-10 bg-surface px-3 pb-1 pt-2;
+  }
+
   .text-muted {
     @apply text-xs text-gray-500;
   }

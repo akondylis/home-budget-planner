@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icon } from '../shell/icons'
 import { Popover } from './Popover'
@@ -13,6 +13,10 @@ export interface SelectMenuOption<T extends string | number> {
   disabled?: boolean
   /** Tooltip, e.g. why the option is disabled */
   hint?: string
+  /** `heading` is a section title over the options that follow it, never chosen */
+  kind?: 'option' | 'heading'
+  /** Selectable option that opens a section (bold, divider above), e.g. "All in Bills" */
+  emphasis?: boolean
 }
 
 export interface SelectMenuProps<T extends string | number> {
@@ -26,16 +30,42 @@ export interface SelectMenuProps<T extends string | number> {
   searchable?: boolean
   panelWidth?: string
   triggerClassName?: string
+  /** `compact` rows (text-xs) for dropdowns inside dense tables */
+  density?: 'default' | 'compact'
 }
 
+const isChoosable = (o: { disabled?: boolean; kind?: string }) => !o.disabled && o.kind !== 'heading'
+
 /** Index of the next enabled option from `from` in `step` direction, wrapping; -1 when none is enabled */
-export function nextEnabledIndex(options: { disabled?: boolean }[], from: number, step: 1 | -1): number {
+export function nextEnabledIndex(options: { disabled?: boolean; kind?: string }[], from: number, step: 1 | -1): number {
   const n = options.length
   for (let i = 1; i <= n; i++) {
     const index = (((from + step * i) % n) + n) % n
-    if (!options[index].disabled) return index
+    if (isChoosable(options[index])) return index
   }
   return -1
+}
+
+/**
+ * Options matching the search query; a heading stays while any option under it matches.
+ * Accent-, case- and script-insensitive: "souper" finds "Σούπερ μάρκετ"
+ */
+export function visibleOptions<T extends string | number>(options: SelectMenuOption<T>[], query: string): SelectMenuOption<T>[] {
+  const q = normalise(query)
+  if (!q) return options
+  const shown: SelectMenuOption<T>[] = []
+  let heading: SelectMenuOption<T> | null = null
+  for (const o of options) {
+    if (o.kind === 'heading') {
+      heading = o
+      continue
+    }
+    if (!normalise(o.searchText ?? (typeof o.label === 'string' ? o.label : String(o.value))).includes(q)) continue
+    if (heading) shown.push(heading)
+    heading = null
+    shown.push(o)
+  }
+  return shown
 }
 
 /** Single-choice dropdown in the filter-bar look (same trigger and panel as `MultiSelectDropdown`) */
@@ -48,23 +78,31 @@ export function SelectMenu<T extends string | number>({
   searchable = false,
   panelWidth,
   triggerClassName = 'min-w-28',
+  density = 'default',
 }: SelectMenuProps<T>) {
   const { t } = useTranslation()
   const anchorRef = useRef<HTMLButtonElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlighted, setHighlighted] = useState(-1)
+  const listRef = useRef<HTMLDivElement>(null)
 
-  const selected = options.find(o => o.value === value)
-  // Accent-, case- and script-insensitive: "souper" finds "Σούπερ μάρκετ"
-  const q = normalise(query)
-  const shown = q
-    ? options.filter(o => normalise(o.searchText ?? (typeof o.label === 'string' ? o.label : String(o.value))).includes(q))
-    : options
+  const selected = options.find(o => o.value === value && o.kind !== 'heading')
+  const shown = visibleOptions(options, query)
+  const compact = density === 'compact'
+
+  // Open on the current choice, not at the top of a long list
+  useEffect(() => {
+    if (!isOpen) return
+    const frame = requestAnimationFrame(() =>
+      listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'center' }),
+    )
+    return () => cancelAnimationFrame(frame)
+  }, [isOpen])
 
   const open = () => {
     setIsOpen(true)
-    setHighlighted(options.findIndex(o => o.value === value))
+    setHighlighted(options.findIndex(o => o.value === value && isChoosable(o)))
   }
   const close = (refocus = false) => {
     setIsOpen(false)
@@ -73,7 +111,7 @@ export function SelectMenu<T extends string | number>({
     if (refocus) anchorRef.current?.focus()
   }
   const choose = (option: SelectMenuOption<T>) => {
-    if (option.disabled) return
+    if (!isChoosable(option)) return
     if (option.value !== value) onChange(option.value)
     close(true)
   }
@@ -137,6 +175,7 @@ export function SelectMenu<T extends string | number>({
           </div>
         )}
         <div
+          ref={listRef}
           role="listbox"
           aria-label={ariaLabel}
           tabIndex={searchable ? undefined : -1}
@@ -148,6 +187,14 @@ export function SelectMenu<T extends string | number>({
             <div className="px-3 py-2 text-xs text-gray-500">{t('ui.no_results')}</div>
           ) : (
             shown.map((option, index) => {
+              const divider = index > 0 && 'mt-1 border-t border-line'
+              if (option.kind === 'heading') {
+                return (
+                  <div key={`heading-${String(option.value)}`} role="presentation" className={cx('menu-heading', divider)}>
+                    {option.label}
+                  </div>
+                )
+              }
               const isSelected = option.value === value
               return (
                 <div
@@ -159,14 +206,16 @@ export function SelectMenu<T extends string | number>({
                   onClick={() => choose(option)}
                   onMouseEnter={() => !option.disabled && setHighlighted(index)}
                   className={cx(
-                    'flex items-center gap-2 px-3 py-1.5 text-sm transition-colors',
+                    'flex items-center gap-2 px-3 transition-colors',
+                    compact ? 'py-1 text-xs' : 'py-1.5 text-sm',
+                    option.emphasis && cx('font-medium', divider),
                     option.disabled
                       ? 'cursor-not-allowed text-fg-subtle'
                       : cx('cursor-pointer text-fg', highlighted === index ? 'bg-blue-100' : 'hover:bg-surface-hover'),
                     isSelected && 'font-medium',
                   )}
                 >
-                  <Icon name="check" size={14} className={cx('shrink-0 text-accent', !isSelected && 'invisible')} />
+                  <Icon name="check" size={compact ? 12 : 14} className={cx('shrink-0 text-accent', !isSelected && 'invisible')} />
                   <span className="min-w-0 flex-1">{option.label}</span>
                 </div>
               )

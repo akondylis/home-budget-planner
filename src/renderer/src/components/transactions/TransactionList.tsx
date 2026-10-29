@@ -197,6 +197,7 @@ export function TransactionList({ rows }: TransactionListProps) {
                     ariaLabel={t('log.category_of', { name: title })}
                     placeholder={t('log.to_categorise')}
                     onChange={id => void applyCategory([row.id], id)}
+                    density="compact"
                     triggerClassName={cx('h-8 w-full text-xs', !row.categoryId && 'border-amber-500 text-amber-700')}
                   />
                 )}

@@ -206,6 +206,7 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
                     placeholder={t('log.to_categorise')}
                     leading={leadingOptions(row, cash, t)}
                     onChange={value => pick(row, value)}
+                    density="compact"
                     triggerClassName={cx('h-8 w-full text-xs', needsCategory(row, choice) && 'border-amber-500 text-amber-700')}
                   />
                 )}

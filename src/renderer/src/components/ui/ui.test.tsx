@@ -30,6 +30,7 @@ import {
   StatusBadge,
   cx,
   nextEnabledIndex,
+  visibleOptions,
 } from '.'
 import { createPanelRegistry, placePanel } from './Popover'
 import { DateInput, shiftDay } from './DateInput'
@@ -347,6 +348,33 @@ describe('SelectMenu', () => {
     expect(nextEnabledIndex(options, 2, 1)).toBe(0)
     expect(nextEnabledIndex(options, 0, -1)).toBe(2)
     expect(nextEnabledIndex([{ disabled: true }], 0, 1)).toBe(-1)
+  })
+
+  it('skips section headings with the keyboard', () => {
+    const grouped = [{ kind: 'heading' as const }, {}, { kind: 'heading' as const }, {}]
+    expect(nextEnabledIndex(grouped, 1, 1)).toBe(3)
+    expect(nextEnabledIndex(grouped, -1, 1)).toBe(1)
+  })
+
+  describe('visibleOptions', () => {
+    const grouped = [
+      { value: 'g1', label: 'Bills', kind: 'heading' as const },
+      { value: 'c1', label: 'Ρεύμα', searchText: 'Ρεύμα Bills' },
+      { value: 'g2', label: 'Spending', kind: 'heading' as const },
+      { value: 'c2', label: 'Σούπερ μάρκετ', searchText: 'Σούπερ μάρκετ Spending' },
+    ]
+
+    it('returns every option without a query', () => {
+      expect(visibleOptions(grouped, '')).toBe(grouped)
+    })
+
+    it('keeps a heading over its matching options and drops empty sections', () => {
+      expect(visibleOptions(grouped, 'souper').map(o => o.value)).toEqual(['g2', 'c2'])
+    })
+
+    it('finds every option of a section by the section name', () => {
+      expect(visibleOptions(grouped, 'bills').map(o => o.value)).toEqual(['g1', 'c1'])
+    })
   })
 })
 
