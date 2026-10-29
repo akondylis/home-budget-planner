@@ -19,8 +19,8 @@ import { nextFreeColour } from '../../shared/members'
 
 async function setup() {
   const [bankId, cashId] = await createAccounts([
-    { name: 'Alpha', kind: 'CURRENT', institution: 'ALPHA', openingBalanceCents: 0, openingDate: '2026-10-01' },
-    { name: 'Cash', kind: 'CASH', institution: 'OTHER', openingBalanceCents: 0, openingDate: '2026-10-01' },
+    { name: 'Alpha', kind: 'CURRENT', institutionId: 'inst_alpha', openingBalanceCents: 0, openingDate: '2026-10-01' },
+    { name: 'Cash', kind: 'CASH', institutionId: null, openingBalanceCents: 0, openingDate: '2026-10-01' },
   ])
   const groupId = await createCategory({ name: 'Έξοδα', type: 'EXPENSE' })
   const groceriesId = await createCategory({ name: 'Σούπερ μάρκετ', parentId: groupId })

@@ -16,6 +16,13 @@ contextBridge.exposeInMainWorld('api', {
   updateMember:      (id: string, input: unknown)     => ipcRenderer.invoke('member:update', id, input),
   archiveMember:     (id: string, archived?: boolean) => ipcRenderer.invoke('member:archive', id, archived),
 
+  // ── Banks ───────────────────────────────────────────────────────────────────
+  listInstitutions:   (opts?: unknown)                 => ipcRenderer.invoke('institution:list', opts),
+  createInstitution:  (input: unknown)                 => ipcRenderer.invoke('institution:create', input),
+  updateInstitution:  (id: string, input: unknown)     => ipcRenderer.invoke('institution:update', id, input),
+  archiveInstitution: (id: string, archived?: boolean) => ipcRenderer.invoke('institution:archive', id, archived),
+  moveInstitution:    (id: string, direction: string)  => ipcRenderer.invoke('institution:move', id, direction),
+
   // ── Accounts ────────────────────────────────────────────────────────────────
   listAccounts:      (opts?: unknown)                 => ipcRenderer.invoke('account:list', opts),
   createAccount:     (input: unknown)                 => ipcRenderer.invoke('account:create', input),

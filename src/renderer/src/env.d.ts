@@ -16,6 +16,12 @@ interface Window {
     updateMember:      (id: string, input: import('../../shared/members').MemberInput) => Promise<void>
     archiveMember:     (id: string, archived?: boolean) => Promise<void>
 
+    listInstitutions:   (opts?: { includeArchived?: boolean }) => Promise<import('../../shared/ledger').InstitutionSummary[]>
+    createInstitution:  (input: import('../../shared/ledger').InstitutionInput) => Promise<string>
+    updateInstitution:  (id: string, input: import('../../shared/ledger').InstitutionInput) => Promise<void>
+    archiveInstitution: (id: string, archived?: boolean) => Promise<void>
+    moveInstitution:    (id: string, direction: 'up' | 'down') => Promise<void>
+
     listAccounts:      (opts?: { includeArchived?: boolean }) => Promise<import('../../shared/ledger').AccountSummary[]>
     createAccount:     (input: import('../../shared/ledger').AccountInput) => Promise<string>
     createAccounts:    (inputs: import('../../shared/ledger').AccountInput[]) => Promise<string[]>

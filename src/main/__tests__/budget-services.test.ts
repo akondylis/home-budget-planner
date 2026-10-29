@@ -12,8 +12,8 @@ import type { BudgetMonth } from '../../shared/budget'
 
 async function setup() {
   const [bankId, savingsId] = await createAccounts([
-    { name: 'Alpha', kind: 'CURRENT', institution: 'ALPHA', openingBalanceCents: 100_000, openingDate: '2026-08-01' },
-    { name: 'Savings', kind: 'SAVINGS', institution: 'ALPHA', openingBalanceCents: 0, openingDate: '2026-08-01' },
+    { name: 'Alpha', kind: 'CURRENT', institutionId: 'inst_alpha', openingBalanceCents: 100_000, openingDate: '2026-08-01' },
+    { name: 'Savings', kind: 'SAVINGS', institutionId: 'inst_alpha', openingBalanceCents: 0, openingDate: '2026-08-01' },
   ])
   const incomeId = await createCategory({ name: 'Έσοδα', type: 'INCOME' })
   const salaryId = await createCategory({ name: 'Μισθός', parentId: incomeId })

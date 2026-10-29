@@ -20,14 +20,17 @@ export function QuickSetup() {
   const { t } = useTranslation()
   const dateId = useId()
   const [rows, setRows] = useState<Row[]>(() => QUICK_SETUP.map(q => ({ key: q.key, checked: true, name: t(`accounts.quick.${q.key}`), balance: '' })))
+  const institutions = useLedgerStore(s => s.institutions)
   const [date, setDate] = useState(todayDateOnly())
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
+  // A starter bank the user has archived (or renamed away) is left off rather than failing the save
+  const activeBank = (id: string | null) => (institutions.some(b => b.id === id && !b.archived) ? id : null)
   const parsed = rows.map((row, i) => ({
     row,
-    result: parseAccountDraft({ name: row.name, kind: QUICK_SETUP[i].kind, institution: QUICK_SETUP[i].institution, openingBalance: row.balance, openingDate: date, holderMemberId: null, cards: [] }),
+    result: parseAccountDraft({ name: row.name, kind: QUICK_SETUP[i].kind, institutionId: activeBank(QUICK_SETUP[i].institutionId), openingBalance: row.balance, openingDate: date, holderMemberId: null, cards: [] }),
   }))
   const chosen = parsed.filter(p => p.row.checked)
   const valid = chosen.every(p => 'input' in p.result)

@@ -1,15 +1,17 @@
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, ConfirmDialog, DateInput, Field, Input, Modal, Segmented, Select } from '../ui'
+import { BankPicker } from './BankPicker'
 import { CardListEditor } from './CardListEditor'
 import { MemberDot } from '../members/MemberDot'
 import { useLedgerStore } from '../../store/ledger'
 import { useUiStore } from '../../store/ui'
 import { activeMembers } from '../../lib/members'
+import { bankAfterKindChange } from '../../lib/banks'
 import { centsToInput, parseAccountDraft, type AccountDraft } from '../../lib/ledger'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
 import { todayDateOnly } from '../../../../shared/date-only'
-import { ACCOUNT_KINDS, INSTITUTIONS, VOUCHER_INSTITUTIONS, type AccountKind, type AccountSummary } from '../../../../shared/ledger'
+import { ACCOUNT_KINDS, type AccountKind, type AccountSummary } from '../../../../shared/ledger'
 
 export interface AccountFormProps {
   /** null = a new account */
@@ -22,18 +24,18 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const { t } = useTranslation()
   const members = useLedgerStore(s => s.members)
   const formId = useId()
-  const ids = { name: useId(), kind: useId(), institution: useId(), balance: useId(), date: useId() }
+  const ids = { name: useId(), kind: useId(), balance: useId(), date: useId() }
   const [draft, setDraft] = useState<AccountDraft>(() => account
     ? {
         name: account.name,
         kind: account.kind,
-        institution: account.institution,
+        institutionId: account.institutionId,
         openingBalance: (account.openingBalanceCents < 0 ? '-' : '') + centsToInput(account.openingBalanceCents),
         openingDate: account.openingDate,
         holderMemberId: account.holderMemberId,
         cards: account.cards.map(c => ({ key: c.id, id: c.id, last4: c.last4, holderMemberId: c.holderMemberId })),
       }
-    : { name: '', kind: 'CURRENT', institution: 'OTHER', openingBalance: '', openingDate: todayDateOnly(), holderMemberId: null, cards: [] })
+    : { name: '', kind: 'CURRENT', institutionId: null, openingBalance: '', openingDate: todayDateOnly(), holderMemberId: null, cards: [] })
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -52,13 +54,13 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     setServerError(null)
   }
 
-  /** A meal-voucher card comes from Edenred or Up Hellas, and from one parent's employer (no joint) */
+  /** A meal-voucher card comes from a voucher issuer (Edenred, Up Hellas), and from one parent's employer (no joint) */
   function changeKind(kind: AccountKind) {
-    if (kind !== 'MEAL_VOUCHER') return update({ kind })
+    const institutionId = bankAfterKindChange(useLedgerStore.getState().institutions, draft.institutionId, kind)
+    if (kind !== 'MEAL_VOUCHER') return update({ kind, institutionId })
     update({
       kind,
-      // "Other" is the new-account default, so only a voucher company already chosen is kept
-      institution: draft.institution === 'EDENRED' || draft.institution === 'UP_HELLAS' ? draft.institution : 'EDENRED',
+      institutionId,
       holderMemberId: draft.holderMemberId ?? (showMembers ? useUiStore.getState().currentMemberId : null),
     })
   }
@@ -115,11 +117,12 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                 {ACCOUNT_KINDS.map(k => <option key={k} value={k}>{t(`accounts.kind.${k}`)}</option>)}
               </Select>
             </Field>
-            <Field label={t(voucher ? 'accounts.institution_label_voucher' : 'accounts.institution_label')} htmlFor={ids.institution}>
-              <Select id={ids.institution} value={draft.institution} onChange={e => update({ institution: e.target.value as AccountDraft['institution'] })} className="w-full">
-                {(voucher ? VOUCHER_INSTITUTIONS : INSTITUTIONS).map(i => <option key={i} value={i}>{t(`accounts.institution.${i}`)}</option>)}
-              </Select>
-            </Field>
+            <BankPicker
+              accountKind={draft.kind}
+              value={draft.institutionId}
+              onChange={institutionId => update({ institutionId })}
+              storedId={account?.institutionId}
+            />
           </div>
           {showMembers && (
             <Field label={t('accounts.holder')} required={voucher} hint={t(voucher ? 'accounts.holder_hint_voucher' : 'accounts.holder_hint')} error={err(errors.holder)}>

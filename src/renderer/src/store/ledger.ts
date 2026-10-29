@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { safeStorage, useUiStore } from './ui'
-import type { AccountSummary, CategoryNode, PayeeSuggestion, TransactionRow } from '../../../shared/ledger'
+import type { AccountSummary, CategoryNode, InstitutionSummary, PayeeSuggestion, TransactionRow } from '../../../shared/ledger'
 import type { FormKind } from '../lib/ledger'
 import { resolveCurrentMember } from '../lib/members'
 import type { MemberSummary } from '../../../shared/members'
@@ -17,6 +17,8 @@ type LedgerStore = {
   categories: CategoryNode[]
   /** Every member, archived ones included (pickers filter) */
   members: MemberSummary[]
+  /** Every bank in the user's order, archived ones included (pickers filter) */
+  institutions: InstitutionSummary[]
   payees: PayeeSuggestion[]
   loaded: boolean
   /** Bumped after every write, so open lists reload */
@@ -38,17 +40,18 @@ type LedgerStore = {
 }
 
 async function fetchAll() {
-  const [accounts, categories, members, payees] = await Promise.all([
+  const [accounts, categories, members, institutions, payees] = await Promise.all([
     window.api.listAccounts({ includeArchived: true }),
     window.api.listCategories(),
     window.api.listMembers({ includeArchived: true }),
+    window.api.listInstitutions({ includeArchived: true }),
     window.api.listPayees(),
   ])
   // An archived or deleted member stops being the one using the app; a lone parent becomes it
   const ui = useUiStore.getState()
   const current = resolveCurrentMember(members, ui.currentMemberId)
   if (current !== ui.currentMemberId) ui.setCurrentMember(current)
-  return { accounts, categories, members, payees }
+  return { accounts, categories, members, institutions, payees }
 }
 
 export const useLedgerStore = create<LedgerStore>()(
@@ -57,6 +60,7 @@ export const useLedgerStore = create<LedgerStore>()(
       accounts: [],
       categories: [],
       members: [],
+      institutions: [],
       payees: [],
       loaded: false,
       revision: 0,

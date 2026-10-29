@@ -21,8 +21,8 @@ import {
 } from '../services/transactions'
 import type { AccountInput } from '../../shared/ledger'
 
-const bank: AccountInput = { name: 'Alpha', kind: 'CURRENT', institution: 'ALPHA', openingBalanceCents: 100_000, openingDate: '2026-10-01' }
-const cash: AccountInput = { name: 'Μετρητά', kind: 'CASH', institution: 'OTHER', openingBalanceCents: 5_000, openingDate: '2026-10-01' }
+const bank: AccountInput = { name: 'Alpha', kind: 'CURRENT', institutionId: 'inst_alpha', openingBalanceCents: 100_000, openingDate: '2026-10-01' }
+const cash: AccountInput = { name: 'Μετρητά', kind: 'CASH', institutionId: null, openingBalanceCents: 5_000, openingDate: '2026-10-01' }
 
 async function setup() {
   const [bankId, cashId] = await createAccounts([bank, cash])
@@ -68,7 +68,7 @@ describe('accounts', () => {
 })
 
 describe('account holders and cards', () => {
-  const card: AccountInput = { name: 'Alpha card', kind: 'CREDIT_CARD', institution: 'ALPHA', openingBalanceCents: 0, openingDate: '2026-10-01' }
+  const card: AccountInput = { name: 'Alpha card', kind: 'CREDIT_CARD', institutionId: 'inst_alpha', openingBalanceCents: 0, openingDate: '2026-10-01' }
 
   it('should save a holder and cards, and list them in order with their holders', async () => {
     const andreas = await createMember({ name: 'Ανδρέας', colour: 'blue' })
@@ -316,22 +316,22 @@ describe('transfers', () => {
 })
 
 describe('meal-voucher cards', () => {
-  const voucher: AccountInput = { name: 'Edenred', kind: 'MEAL_VOUCHER', institution: 'EDENRED', openingBalanceCents: 12_000, openingDate: '2026-10-01' }
+  const voucher: AccountInput = { name: 'Edenred', kind: 'MEAL_VOUCHER', institutionId: 'inst_edenred', openingBalanceCents: 12_000, openingDate: '2026-10-01' }
   const voucherCategories = () => prisma.category.findMany({ where: { type: 'INCOME', name: { in: ['Κουπόνια σίτισης', 'Meal vouchers'] } } })
 
   it('should accept only a voucher issuer, and need a holder once parents exist', async () => {
-    await expect(createAccount({ ...voucher, institution: 'ALPHA' })).rejects.toThrow('INVALID_INPUT')
+    await expect(createAccount({ ...voucher, institutionId: 'inst_alpha' })).rejects.toThrow('INVALID_INPUT')
     expect(await createAccount(voucher)).toBeTruthy()
     const parent = await createMember({ name: 'Ανδρέας', colour: 'blue' })
     await expect(createAccount({ ...voucher, name: 'Up' })).rejects.toThrow('HOLDER_REQUIRED')
     await expect(createAccounts([{ ...voucher, name: 'Up' }])).rejects.toThrow('HOLDER_REQUIRED')
-    expect(await createAccount({ ...voucher, name: 'Up', institution: 'UP_HELLAS', holderMemberId: parent })).toBeTruthy()
+    expect(await createAccount({ ...voucher, name: 'Up', institutionId: 'inst_up_hellas', holderMemberId: parent })).toBeTruthy()
   })
 
   it('should add the top-up income category with the first card, once, under the income group', async () => {
     const { salaryId } = await setup()
     await createAccount(voucher)
-    await createAccounts([{ ...voucher, name: 'Up', institution: 'UP_HELLAS' }])
+    await createAccounts([{ ...voucher, name: 'Up', institutionId: 'inst_up_hellas' }])
     const [category, ...rest] = await voucherCategories()
     expect(rest).toEqual([])
     const salary = await prisma.category.findUniqueOrThrow({ where: { id: salaryId } })

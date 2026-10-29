@@ -46,7 +46,7 @@ export function AccountCard({
           <Heading className="truncate text-sm font-semibold text-fg" title={account.name}>{account.name}</Heading>
           <MetaLine parts={[
             groupedBy !== 'kind' && t(`accounts.kind.${account.kind}`),
-            groupedBy !== 'institution' && account.institution !== 'OTHER' && t(`accounts.institution.${account.institution}`),
+            groupedBy !== 'institution' && account.institutionName,
           ]} />
           {/* Its own line, so the bank never truncates to make room for the holder */}
           {holderLine && (

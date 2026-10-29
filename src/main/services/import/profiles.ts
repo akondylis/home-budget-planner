@@ -8,7 +8,7 @@
 
 import { z } from 'zod'
 import { normalise } from '../../../shared/search-normalise'
-import type { AccountKind, Institution } from '../../../shared/ledger'
+import type { AccountKind } from '../../../shared/ledger'
 import { MAPPING_FIELDS, type AmountMode, type ColumnMapping, type MappingField, type ProfileKey } from '../../../shared/statement-import'
 import { parseStatementAmount, parseStatementDate } from './parse-rows'
 
@@ -76,10 +76,13 @@ export const PROFILES: Record<ProfileKey, StatementProfile> = {
   generic: account('generic'),
 }
 
-/** The preset an account starts from: the one saved on it, else its bank and kind */
-export function profileFor(account: { importProfile: string | null; institution: Institution; kind: AccountKind }): StatementProfile {
+/** Preset families a bank can name (`Institution.statementPreset`) */
+const PRESET_BANKS = ['alpha', 'eurobank'] as const
+
+/** The preset an account starts from: the one saved on it, else its bank's preset family and its kind */
+export function profileFor(account: { importProfile: string | null; statementPreset: string | null; kind: AccountKind }): StatementProfile {
   if (account.importProfile && account.importProfile in PROFILES) return PROFILES[account.importProfile as ProfileKey]
-  const bank = account.institution === 'ALPHA' ? 'alpha' : account.institution === 'EUROBANK' ? 'eurobank' : null
+  const bank = PRESET_BANKS.find(b => b === account.statementPreset)
   if (!bank) return account.kind === 'CREDIT_CARD' ? card('generic') : PROFILES.generic
   return PROFILES[`${bank}-${account.kind === 'CREDIT_CARD' ? 'card' : 'account'}`]
 }

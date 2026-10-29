@@ -88,10 +88,10 @@ describe('amounts and dates', () => {
 
 describe('profiles', () => {
   it('should pick the preset from the bank and kind unless one is saved on the account', () => {
-    expect(profileFor({ importProfile: null, institution: 'ALPHA', kind: 'CREDIT_CARD' }).key).toBe('alpha-card')
-    expect(profileFor({ importProfile: null, institution: 'EUROBANK', kind: 'CURRENT' }).key).toBe('eurobank-account')
-    expect(profileFor({ importProfile: 'alpha-account', institution: 'OTHER', kind: 'CURRENT' }).key).toBe('alpha-account')
-    expect(profileFor({ importProfile: null, institution: 'OTHER', kind: 'CREDIT_CARD' }).options.invertSign).toBe(true)
+    expect(profileFor({ importProfile: null, statementPreset: 'alpha', kind: 'CREDIT_CARD' }).key).toBe('alpha-card')
+    expect(profileFor({ importProfile: null, statementPreset: 'eurobank', kind: 'CURRENT' }).key).toBe('eurobank-account')
+    expect(profileFor({ importProfile: 'alpha-account', statementPreset: null, kind: 'CURRENT' }).key).toBe('alpha-account')
+    expect(profileFor({ importProfile: null, statementPreset: null, kind: 'CREDIT_CARD' }).options.invertSign).toBe(true)
   })
 
   it('should find the header below a few lines about the account', () => {
@@ -286,8 +286,8 @@ describe('rules', () => {
 
 // Fixtures in the column layout of the real exports (processed_eurobank_alpha.py)
 describe('bank layouts', () => {
-  const read = (csv: string, institution: 'ALPHA' | 'EUROBANK', kind: 'CURRENT' | 'CREDIT_CARD') =>
-    readStatement(utf8(csv), { importProfile: null, importMapping: null, institution, kind })
+  const read = (csv: string, statementPreset: 'alpha' | 'eurobank', kind: 'CURRENT' | 'CREDIT_CARD') =>
+    readStatement(utf8(csv), { importProfile: null, importMapping: null, statementPreset, kind })
   const amounts = (result: ReturnType<typeof read>) => (result.ok ? result.rows.map(r => r.amountCents) : result.reason)
 
   it('should read an Alpha account file by position, with Π as money in, whatever the flag column is called', () => {
@@ -297,7 +297,7 @@ describe('bank layouts', () => {
       '1;01/10/2026;ΔΕΗ ΠΑΓΙΑ;;123;WEB;80,00;Χ;920,00',
       '2;02/10/2026;ΜΙΣΘΟΣ;;124;BRANCH;1.500,00;Π;2.420,00',
     ].join('\n')
-    const result = read(csv, 'ALPHA', 'CURRENT')
+    const result = read(csv, 'alpha', 'CURRENT')
     expect(amounts(result)).toEqual([-8000, 150000])
     expect(result).toMatchObject({ profile: 'alpha-account', rows: [{ description: 'ΔΕΗ ΠΑΓΙΑ', balanceAfterCents: 92000 }, {}] })
   })
@@ -309,7 +309,7 @@ describe('bank layouts', () => {
       '03/10/2026 14:22;SKLAVENITIS GERAK;ATHINA;GR;45,30',
       '05/10/2026;ΕΠΙΣΤΡΟΦΗ;ATHINA;GR;-10,00',
     ].join('\n')
-    expect(amounts(read(csv, 'ALPHA', 'CREDIT_CARD'))).toEqual([-4530, 1000])
+    expect(amounts(read(csv, 'alpha', 'CREDIT_CARD'))).toEqual([-4530, 1000])
   })
 
   it('should read Eurobank files with Excel-style text cells and dates with a time', () => {
@@ -318,20 +318,20 @@ describe('bank layouts', () => {
       '01/10/2026 09:15;="5123";="NETFLIX.COM";-13,99',
       '02/10/2026;="5123";="ΜΙΣΘΟΣ ΟΚΤ";1.234,56',
     ].join('\n')
-    const account = read(csv, 'EUROBANK', 'CURRENT')
+    const account = read(csv, 'eurobank', 'CURRENT')
     expect(amounts(account)).toEqual([-1399, 123456])
     expect(account).toMatchObject({ profile: 'eurobank-account', rows: [{ bookedAt: '2026-10-01', description: 'NETFLIX.COM' }, {}] })
-    expect(amounts(read(csv, 'EUROBANK', 'CREDIT_CARD'))).toEqual([1399, -123456])
+    expect(amounts(read(csv, 'eurobank', 'CREDIT_CARD'))).toEqual([1399, -123456])
   })
 
   it('should fall back to the header names when the columns moved', () => {
-    expect(amounts(read('Περιγραφή;Ποσό;Ημερομηνία\nLIDL;-12,50;01/10/2026', 'EUROBANK', 'CURRENT'))).toEqual([-1250])
-    expect(amounts(read('Α;Β;Γ;Δ\nx;y;z;w', 'EUROBANK', 'CURRENT'))).toBe('UNKNOWN_FORMAT')
+    expect(amounts(read('Περιγραφή;Ποσό;Ημερομηνία\nLIDL;-12,50;01/10/2026', 'eurobank', 'CURRENT'))).toEqual([-1250])
+    expect(amounts(read('Α;Β;Γ;Δ\nx;y;z;w', 'eurobank', 'CURRENT'))).toBe('UNKNOWN_FORMAT')
   })
 })
 
 describe('readStatement', () => {
-  const account = { importProfile: null, importMapping: null, institution: 'EUROBANK' as const, kind: 'CURRENT' as const }
+  const account = { importProfile: null, importMapping: null, statementPreset: 'eurobank', kind: 'CURRENT' as const }
 
   it('should read a whole file end to end', () => {
     const result = readStatement(utf8('Ημερομηνία;Περιγραφή;Ποσό\n01/10/2026;LIDL;-12,50'), account)

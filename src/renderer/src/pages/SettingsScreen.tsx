@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Field, ListCard, PageHeader, Segmented, Select } from '../components/ui'
 import { HouseholdSection } from '../components/members/HouseholdSection'
+import { BanksSection } from '../components/banks/BanksSection'
 import { useUiStore, type SidebarPosition, type ThemeMode } from '../store/ui'
 import { changeLanguage, changeSidebarPosition, changeTheme } from '../lib/ui-actions'
 import { DATE_FORMATS, formatDate, type DateFormat } from '../lib/date-format'
@@ -47,6 +48,8 @@ export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
       <PageHeader title={t('settings.title')} />
 
       <HouseholdSection />
+
+      <BanksSection />
 
       <Section title={t('settings.categories')}>
         <Field label={t('categories.title')} hint={t('settings.categories_hint')}>

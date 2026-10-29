@@ -114,6 +114,8 @@
     "tour_hint": "A short walk through the main places of the app.",
     "household": "Household",
     "household_intro": "The parents of the house. Every transaction records who entered it and who it was for.",
+    "banks": "Banks",
+    "banks_intro": "The banks and meal-card issuers offered when you add an account. Their order is the order of the Bank groups on Accounts.",
     "categories": "Categories",
     "categories_hint": "Rename, merge and archive categories, and fix the merchant rules that sort imports."
   },
@@ -303,7 +305,10 @@
     "CARD_DUPLICATE": "Two cards have the same last 4 digits.",
     "CARD_NOT_FOUND": "A card no longer exists. Close and reopen the account.",
     "CATEGORY_IN_USE": "Still in use: move or merge what uses it first.",
-    "BUDGET_SOURCE_EMPTY": "Last month has nothing to copy."
+    "BUDGET_SOURCE_EMPTY": "Last month has nothing to copy.",
+    "INSTITUTION_NOT_FOUND": "That bank no longer exists or is archived.",
+    "INSTITUTION_NAME_TAKEN": "There is already a bank with this name.",
+    "INSTITUTION_IN_USE": "Accounts use this bank, so its type can't change."
   },
   "categories": {
     "choose": "Choose a category…",
@@ -540,6 +545,36 @@
     "account_count_one": "holds {{count}} account",
     "account_count_other": "holds {{count}} accounts"
   },
+  "banks": {
+    "add": "Add bank",
+    "add_short": "Add",
+    "add_title": "New bank",
+    "edit_title": "Edit bank",
+    "save": "Save",
+    "manage": "Manage banks",
+    "name": "Name",
+    "name_hint": "As it should appear on your accounts, e.g. “Revolut”.",
+    "name_required": "Type a name.",
+    "kind_label": "Type",
+    "kind": {
+      "BANK": "Bank",
+      "VOUCHER_ISSUER": "Meal-card issuer"
+    },
+    "kind_hint": "A meal-card issuer (like Edenred) is offered only for meal-voucher cards.",
+    "kind_locked": "Accounts use it, so its type stays as it is.",
+    "empty": "No banks yet. Add the banks where you keep accounts.",
+    "account_count_one": "{{count}} account",
+    "account_count_other": "{{count}} accounts",
+    "move_up": "Move {{name}} up",
+    "move_down": "Move {{name}} down",
+    "edit": "Edit {{name}}",
+    "archive": "Archive {{name}}",
+    "archived_toggle": "Archived banks ({{count}})",
+    "restore": "Restore",
+    "archive_title": "Archive {{name}}?",
+    "archive_message": "It is no longer offered for new accounts. Accounts already at it keep it, and you can restore it.",
+    "archive_confirm": "Archive"
+  },
   "accounts": {
     "add": "Add account",
     "add_title": "Add account",
@@ -570,13 +605,12 @@
     },
     "institution_label": "Bank",
     "institution_label_voucher": "Issued by",
-    "institution": {
-      "ALPHA": "Alpha Bank",
-      "EUROBANK": "Eurobank",
-      "EDENRED": "Edenred",
-      "UP_HELLAS": "Up Hellas",
-      "OTHER": "Other / none"
-    },
+    "no_bank": "No bank",
+    "new_bank": "+ New bank…",
+    "new_issuer": "+ New issuer…",
+    "new_bank_label": "New bank",
+    "new_issuer_label": "New meal-card issuer",
+    "new_bank_hint": "As it should appear on your accounts, e.g. “Revolut”.",
     "opening_balance": "Opening balance",
     "opening_balance_hint": "What the account held on the opening date.",
     "opening_balance_card_hint": "What you owed on the card, as a negative amount (e.g. -350,00).",

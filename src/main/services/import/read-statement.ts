@@ -4,13 +4,14 @@ import { decodeStatement, type StatementEncoding } from './decode'
 import { parseCsv, sniffDelimiter, type Delimiter } from './csv'
 import { parseSavedMapping, profileFor, resolveColumns, resolveSavedMapping, type ProfileKey, type ResolvedMapping } from './profiles'
 import { parseRows, type ParsedRow } from './parse-rows'
-import type { AccountKind, Institution } from '../../../shared/ledger'
+import type { AccountKind } from '../../../shared/ledger'
 import type { ColumnMapping } from '../../../shared/statement-import'
 
 export interface StatementAccount {
   importProfile: string | null
   importMapping: unknown
-  institution: Institution
+  /** The bank's preset family; null = the generic preset */
+  statementPreset: string | null
   kind: AccountKind
 }
 

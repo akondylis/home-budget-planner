@@ -3,7 +3,7 @@
 
 import type { TFunction } from 'i18next'
 import { sumMoney } from '../../../shared/money'
-import { ACCOUNT_KINDS, INSTITUTIONS, type AccountKind, type AccountSummary, type Institution } from '../../../shared/ledger'
+import { ACCOUNT_KINDS, type AccountKind, type AccountSummary, type InstitutionSummary } from '../../../shared/ledger'
 import type { MemberColour, MemberSummary } from '../../../shared/members'
 
 export const ACCOUNT_GROUP_BYS = ['none', 'institution', 'holder', 'kind'] as const
@@ -12,10 +12,16 @@ export type AccountGroupBy = (typeof ACCOUNT_GROUP_BYS)[number]
 /** Holder value of a joint account (no holder) */
 export const JOINT = 'JOINT'
 
+/** Bank value of an account at no bank (cash, or a bank not listed) */
+export const NO_BANK = 'NO_BANK'
+
+const bankOf = (a: AccountSummary) => a.institutionId ?? NO_BANK
+
 /** Empty list = any value; values within a list are alternatives */
 export interface AccountFilter {
   kinds: AccountKind[]
-  institutions: Institution[]
+  /** Institution ids and/or `NO_BANK` */
+  institutions: string[]
   /** Member ids and/or `JOINT` */
   holders: string[]
 }
@@ -39,8 +45,10 @@ export interface HolderOption {
 }
 
 export interface AccountGroup {
-  /** A kind, an institution, a member id or `JOINT` */
+  /** A kind, an institution id, `NO_BANK`, a member id or `JOINT` */
   key: string
+  /** Set when grouped by bank (null for no bank) */
+  institutionName?: string | null
   /** Set when grouped by holder (null for joint) */
   holder?: HolderOption
   accounts: AccountSummary[]
@@ -58,7 +66,7 @@ function heldBy(a: AccountSummary, holder: string): boolean {
 export function filterAccounts(accounts: AccountSummary[], filter: AccountFilter): AccountSummary[] {
   return accounts.filter(a =>
     (filter.kinds.length === 0 || filter.kinds.includes(a.kind))
-    && (filter.institutions.length === 0 || filter.institutions.includes(a.institution))
+    && (filter.institutions.length === 0 || filter.institutions.includes(bankOf(a)))
     && (filter.holders.length === 0 || filter.holders.some(h => heldBy(a, h))),
   )
 }
@@ -70,16 +78,29 @@ function holderRank(members: MemberSummary[], id: string): number {
   return index === -1 ? members.length : index
 }
 
-/** Kinds and banks in their declared order ("Other" is last there), holders by member order with Joint last */
-export function groupAccounts(accounts: AccountSummary[], by: AccountGroupBy, members: MemberSummary[]): AccountGroup[] {
+/** Banks in the user's order (Settings → Banks), then banks no longer listed, then No bank */
+function bankRank(institutions: InstitutionSummary[], id: string): number {
+  if (id === NO_BANK) return Number.MAX_SAFE_INTEGER
+  const index = institutions.findIndex(i => i.id === id)
+  return index === -1 ? institutions.length : index
+}
+
+/** Kinds in their declared order, banks in the user's order with No bank last, holders by member order with Joint last */
+export function groupAccounts(
+  accounts: AccountSummary[],
+  by: AccountGroupBy,
+  members: MemberSummary[],
+  institutions: InstitutionSummary[] = [],
+): AccountGroup[] {
   if (by === 'none') return [{ key: 'all', accounts, totalCents: sumMoney(accounts.map(a => a.balanceCents)) }]
   const groups = new Map<string, AccountGroup>()
   for (const a of accounts) {
-    const key = by === 'kind' ? a.kind : by === 'institution' ? a.institution : a.holderMemberId ?? JOINT
+    const key = by === 'kind' ? a.kind : by === 'institution' ? bankOf(a) : a.holderMemberId ?? JOINT
     let group = groups.get(key)
     if (!group) {
       group = { key, accounts: [], totalCents: 0 }
       if (by === 'holder') group.holder = { id: key, name: a.holderName, colour: a.holderColour }
+      if (by === 'institution') group.institutionName = a.institutionName
       groups.set(key, group)
     }
     group.accounts.push(a)
@@ -87,7 +108,7 @@ export function groupAccounts(accounts: AccountSummary[], by: AccountGroupBy, me
   }
   const rank = (key: string) =>
     by === 'kind' ? ACCOUNT_KINDS.indexOf(key as AccountKind)
-      : by === 'institution' ? INSTITUTIONS.indexOf(key as Institution)
+      : by === 'institution' ? bankRank(institutions, key)
         : holderRank(members, key)
   return [...groups.values()].sort((x, y) => rank(x.key) - rank(y.key))
 }
@@ -98,14 +119,21 @@ export interface FilterValue<T> {
   count: number
 }
 
+/** A bank offered as a filter chip; `value` is its id or `NO_BANK` (name null) */
+export interface BankValue extends FilterValue<string> {
+  name: string | null
+}
+
 export interface PresentValues {
   kinds: FilterValue<AccountKind>[]
-  institutions: FilterValue<Institution>[]
+  institutions: BankValue[]
   holders: (HolderOption & { count: number })[]
 }
 
 /** The kinds, banks and holders (account or card) that occur, in group order; drives which filters are offered */
-export function presentValues(accounts: AccountSummary[], members: MemberSummary[]): PresentValues {
+export function presentValues(accounts: AccountSummary[], members: MemberSummary[], institutions: InstitutionSummary[] = []): PresentValues {
+  const banks = new Map<string, string | null>()
+  for (const a of accounts) if (!banks.has(bankOf(a))) banks.set(bankOf(a), a.institutionName)
   const holders = new Map<string, HolderOption>()
   for (const a of accounts) {
     const id = a.holderMemberId ?? JOINT
@@ -120,7 +148,9 @@ export function presentValues(accounts: AccountSummary[], members: MemberSummary
     all.map(value => ({ value, count: accounts.filter(a => of(a) === value).length })).filter(v => v.count > 0)
   return {
     kinds: present(ACCOUNT_KINDS, a => a.kind),
-    institutions: present(INSTITUTIONS, a => a.institution),
+    institutions: [...banks]
+      .sort(([x], [y]) => bankRank(institutions, x) - bankRank(institutions, y))
+      .map(([value, name]) => ({ value, name, count: accounts.filter(a => bankOf(a) === value).length })),
     holders: [...holders.values()]
       .sort((x, y) => holderRank(members, x.id) - holderRank(members, y.id))
       .map(h => ({ ...h, count: accounts.filter(a => heldBy(a, h.id)).length })),
@@ -157,7 +187,7 @@ export function describeAccountFilters(filter: AccountFilter, t: TFunction, valu
     })),
     ...filter.institutions.map(i => ({
       key: `bank-${i}`,
-      label: t(`accounts.institution.${i}`),
+      label: i === NO_BANK ? t('accounts.no_bank') : values.institutions.find(v => v.value === i)?.name ?? '?',
       clear: (f: AccountFilter) => ({ ...f, institutions: f.institutions.filter(x => x !== i) }),
     })),
     ...filter.holders.map(h => ({

@@ -4,14 +4,12 @@
 import type { IconName } from '../components/shell/icons'
 import { parseMoney } from '../../../shared/money'
 import { isDateOnly } from '../../../shared/date-only'
-import { VOUCHER_INSTITUTIONS } from '../../../shared/ledger'
 import type {
   AccountInput,
   AccountKind,
   AccountSummary,
   CategoryNode,
   CategoryType,
-  Institution,
   TransactionRow,
 } from '../../../shared/ledger'
 
@@ -35,13 +33,16 @@ export function canSendTransfer(kind: AccountKind): boolean {
   return kind !== 'MEAL_VOUCHER'
 }
 
-/** Accounts offered by Quick setup: both banks' account and card, plus cash. Names: `accounts.quick.<key>` */
-export const QUICK_SETUP: { key: string; kind: AccountKind; institution: Institution }[] = [
-  { key: 'alpha_account', kind: 'CURRENT', institution: 'ALPHA' },
-  { key: 'alpha_card', kind: 'CREDIT_CARD', institution: 'ALPHA' },
-  { key: 'eurobank_account', kind: 'CURRENT', institution: 'EUROBANK' },
-  { key: 'eurobank_card', kind: 'CREDIT_CARD', institution: 'EUROBANK' },
-  { key: 'cash', kind: 'CASH', institution: 'OTHER' },
+/**
+ * Accounts offered by Quick setup: both banks' account and card, plus cash. Names: `accounts.quick.<key>`.
+ * Banks by their starter-list id (migration 20261029120000_institutions_table); null = no bank.
+ */
+export const QUICK_SETUP: { key: string; kind: AccountKind; institutionId: string | null }[] = [
+  { key: 'alpha_account', kind: 'CURRENT', institutionId: 'inst_alpha' },
+  { key: 'alpha_card', kind: 'CREDIT_CARD', institutionId: 'inst_alpha' },
+  { key: 'eurobank_account', kind: 'CURRENT', institutionId: 'inst_eurobank' },
+  { key: 'eurobank_card', kind: 'CREDIT_CARD', institutionId: 'inst_eurobank' },
+  { key: 'cash', kind: 'CASH', institutionId: null },
 ]
 
 // ── Categories ───────────────────────────────────────────────────────────────
@@ -171,7 +172,8 @@ export interface CardDraft {
 export interface AccountDraft {
   name: string
   kind: AccountKind
-  institution: Institution
+  /** null = no bank */
+  institutionId: string | null
   openingBalance: string
   openingDate: string
   /** null = joint */
@@ -210,7 +212,7 @@ export function parseAccountDraft(draft: AccountDraft, requireHolder = false): {
     input: {
       name: draft.name.trim(),
       kind: draft.kind,
-      institution: draft.kind === 'MEAL_VOUCHER' && !VOUCHER_INSTITUTIONS.includes(draft.institution) ? 'OTHER' : draft.institution,
+      institutionId: draft.institutionId,
       openingBalanceCents: cents,
       openingDate: draft.openingDate,
       holderMemberId: draft.holderMemberId,

@@ -26,6 +26,7 @@ export type PaletteTarget =
   | { kind: 'language'; lang: AppLanguage }
   | { kind: 'member'; memberId: string }
   | { kind: 'household' }
+  | { kind: 'banks' }
   | { kind: 'categories'; tab: 'categories' | 'rules' }
   | { kind: 'budgetCopy' }
 
@@ -112,6 +113,7 @@ export function buildActions({ t, theme, lang, members = [], currentMemberId = n
     { id: 'worksheet', group: 'actions', title: t('palette.worksheet'), keywords: 'pdf print export budget worksheet εκτυπωση', icon: 'printer', target: { kind: 'worksheet' } },
     { id: 'tour', group: 'actions', title: t('palette.tour'), keywords: 'tour guide help ξεναγηση βοηθεια', icon: 'flag', target: { kind: 'tour' } },
     { id: 'household', group: 'actions', title: t('settings.household'), keywords: 'household members family parents νοικοκυριο μελη οικογενεια γονεις', icon: 'users', target: { kind: 'household' } },
+    { id: 'banks', group: 'actions', title: t('banks.manage'), keywords: 'banks bank revolut piraeus nbg edenred τραπεζες τραπεζα', icon: 'bank', target: { kind: 'banks' } },
     { id: 'categories', group: 'actions', title: t('categories.title'), keywords: 'categories groups rename merge archive κατηγοριες ομαδες μετονομασια συγχωνευση', icon: 'tag', target: { kind: 'categories', tab: 'categories' } },
     { id: 'rules', group: 'actions', title: t('categories.tab_rules'), keywords: 'merchant rules import sort κανονες εμποροι εισαγωγη', icon: 'filter', target: { kind: 'categories', tab: 'rules' } },
     { id: 'dataFolder', group: 'actions', title: t('settings.open_data_folder'), keywords: 'data folder backup database φακελος', icon: 'folder', target: { kind: 'dataFolder' } },

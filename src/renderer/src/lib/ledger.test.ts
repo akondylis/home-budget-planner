@@ -17,7 +17,7 @@ import { matchShortcut } from '../hooks/useShortcuts'
 import type { AccountSummary, CategoryNode, TransactionRow } from '../../../shared/ledger'
 
 const account = (id: string, kind: AccountSummary['kind'] = 'CURRENT', archived = false): AccountSummary => ({
-  id, name: id, kind, institution: 'OTHER', currency: 'EUR', openingBalanceCents: 0, openingDate: '2026-10-01',
+  id, name: id, kind, institutionId: null, institutionName: null, currency: 'EUR', openingBalanceCents: 0, openingDate: '2026-10-01',
   balanceCents: 0, transactionCount: 0, importedUntil: null, archived,
   holderMemberId: null, holderName: null, holderColour: null, cards: [],
 })
@@ -134,11 +134,11 @@ describe('meal-voucher cards', () => {
 })
 
 describe('parseAccountDraft', () => {
-  const base = { name: ' Alpha ', kind: 'CREDIT_CARD' as const, institution: 'ALPHA' as const, openingBalance: '-350,00', openingDate: '2026-10-01', holderMemberId: null, cards: [] }
+  const base = { name: ' Alpha ', kind: 'CREDIT_CARD' as const, institutionId: 'inst_alpha', openingBalance: '-350,00', openingDate: '2026-10-01', holderMemberId: null, cards: [] }
 
   it('should keep a negative card balance and treat an empty balance as zero', () => {
     expect(parseAccountDraft(base)).toEqual({
-      input: { name: 'Alpha', kind: 'CREDIT_CARD', institution: 'ALPHA', openingBalanceCents: -35000, openingDate: '2026-10-01', holderMemberId: null, cards: [] },
+      input: { name: 'Alpha', kind: 'CREDIT_CARD', institutionId: 'inst_alpha', openingBalanceCents: -35000, openingDate: '2026-10-01', holderMemberId: null, cards: [] },
     })
     expect(parseAccountDraft({ ...base, openingBalance: '' })).toMatchObject({ input: { openingBalanceCents: 0 } })
   })
@@ -159,11 +159,10 @@ describe('parseAccountDraft', () => {
     expect(parseAccountDraft({ ...base, cards })).toEqual({ errors: { cards: { a: 'card_last4', c: 'card_duplicate' } } })
   })
 
-  it('should ask whose a meal-voucher card is when parents exist, and keep only a voucher issuer', () => {
-    const voucher = { ...base, kind: 'MEAL_VOUCHER' as const, openingBalance: '120,00' }
+  it('should ask whose a meal-voucher card is when parents exist', () => {
+    const voucher = { ...base, kind: 'MEAL_VOUCHER' as const, institutionId: 'inst_up_hellas', openingBalance: '120,00' }
     expect(parseAccountDraft(voucher, true)).toEqual({ errors: { holder: 'holder_required' } })
-    expect(parseAccountDraft(voucher)).toMatchObject({ input: { institution: 'OTHER' } })
-    expect(parseAccountDraft({ ...voucher, institution: 'UP_HELLAS', holderMemberId: 'm1' }, true)).toMatchObject({ input: { institution: 'UP_HELLAS' } })
+    expect(parseAccountDraft({ ...voucher, holderMemberId: 'm1' }, true)).toMatchObject({ input: { institutionId: 'inst_up_hellas' } })
   })
 
   it('should drop the cards of an account that becomes cash', () => {

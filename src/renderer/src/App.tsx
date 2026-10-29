@@ -28,6 +28,7 @@ import { useImportStore } from './store/import'
 import { useBudgetStore } from './store/budget'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
 import { isImportable } from './lib/ledger'
+import { BANKS_SECTION_ID } from './components/banks/BanksSection'
 import type { PaletteTarget } from './lib/command-palette'
 import type { View } from './types'
 import type { CategoriesTab } from './lib/categories'
@@ -187,6 +188,11 @@ export default function App() {
       case 'language': void changeLanguage(target.lang); break
       case 'member': useUiStore.getState().setCurrentMember(target.memberId); break
       case 'household': setView('settings'); break
+      case 'banks':
+        setView('settings')
+        // Once Settings has rendered, bring the Banks section into view
+        requestAnimationFrame(() => document.getElementById(BANKS_SECTION_ID)?.scrollIntoView({ block: 'start' }))
+        break
       case 'categories': openCategories(target.tab); break
       case 'budgetCopy': copyLastMonthsPlan(); break
     }

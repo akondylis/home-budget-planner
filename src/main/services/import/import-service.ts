@@ -66,10 +66,10 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
   if (typeof accountId !== 'string') throw new Error('INVALID_INPUT')
   const userMapping = mapping === undefined || mapping === null ? null : parseSavedMapping(mapping)
   if (mapping && !userMapping) throw new Error('INVALID_INPUT')
-  const account = await prisma.account.findUnique({ where: { id: accountId } })
+  const account = await prisma.account.findUnique({ where: { id: accountId }, include: { institution: { select: { statementPreset: true } } } })
   if (!account || account.archivedAt) throw new Error('ACCOUNT_NOT_FOUND')
 
-  const read = readStatement(bytes, account, userMapping ?? undefined)
+  const read = readStatement(bytes, { ...account, statementPreset: account.institution?.statementPreset ?? null }, userMapping ?? undefined)
   if (!read.ok) return read
 
   const dates = read.rows.map(r => r.bookedAt).filter((d): d is string => d !== null).sort()

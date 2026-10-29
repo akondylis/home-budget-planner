@@ -4,7 +4,7 @@ import { FilterChip, FilterPopoverButton, FilterSection, Segmented } from '../ui
 import { Icon } from '../shell/icons'
 import { MemberDot } from '../members/MemberDot'
 import { useUiStore } from '../../store/ui'
-import { JOINT, countAccountFilters, toggleValue, type AccountFilter, type AccountGroupBy, type PresentValues } from '../../lib/account-groups'
+import { JOINT, NO_BANK, countAccountFilters, toggleValue, type AccountFilter, type AccountGroupBy, type PresentValues } from '../../lib/account-groups'
 
 export interface AccountsToolbarProps {
   /** As applied (a stored choice whose control is hidden reads as none) */
@@ -56,13 +56,13 @@ export function AccountsToolbar({ groupBy, filter, values, hasMembers }: Account
             {showBanks && (
               <FilterSection label={t('accounts.filter_bank')}>
                 <Chips>
-                  {values.institutions.map(({ value, count }) => (
+                  {values.institutions.map(({ value, name, count }) => (
                     <FilterChip
                       key={value}
                       active={filter.institutions.includes(value)}
                       onClick={() => setFilter({ institutions: toggleValue(filter.institutions, value) })}
                     >
-                      {t(`accounts.institution.${value}`)}
+                      {value === NO_BANK ? t('accounts.no_bank') : name}
                       <Count n={count} />
                     </FilterChip>
                   ))}

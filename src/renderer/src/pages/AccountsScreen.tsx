@@ -12,7 +12,7 @@ import { useImportStore } from '../store/import'
 import { useUiStore } from '../store/ui'
 import { ACCOUNT_KIND_ICON } from '../lib/ledger'
 import {
-  EMPTY_ACCOUNT_FILTER, JOINT, applicableFilter, describeAccountFilters, filterAccounts, groupAccounts, isAccountFilterActive, presentValues, type AccountGroup,
+  EMPTY_ACCOUNT_FILTER, JOINT, NO_BANK, applicableFilter, describeAccountFilters, filterAccounts, groupAccounts, isAccountFilterActive, presentValues, type AccountGroup,
 } from '../lib/account-groups'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { sumMoney } from '../../../shared/money'
@@ -28,6 +28,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   const accounts = useLedgerStore(s => s.accounts)
   const loaded = useLedgerStore(s => s.loaded)
   const members = useLedgerStore(s => s.members)
+  const institutions = useLedgerStore(s => s.institutions)
   const hasMembers = activeMembers(members).length > 0
   const openEntry = useLedgerStore(s => s.openEntry)
   // undefined = closed, null = a new account
@@ -43,12 +44,12 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   const archived = accounts.filter(a => a.archived)
   // The toolbar shows from two accounts on; a stored choice whose control is not shown is ignored
   const toolbar = open.length > 1
-  const values = presentValues(open, members)
+  const values = presentValues(open, members, institutions)
   const filter = toolbar ? applicableFilter(storedFilter, values, hasMembers) : EMPTY_ACCOUNT_FILTER
   const groupBy = !toolbar || (storedGroupBy === 'holder' && !hasMembers) ? 'none' : storedGroupBy
   const filtered = isAccountFilterActive(filter)
   const visible = filterAccounts(open, filter)
-  const groups = groupAccounts(visible, groupBy, members)
+  const groups = groupAccounts(visible, groupBy, members, institutions)
   // Meal-voucher balances buy only food, so they sit beside the total instead of inside it
   const total = sumMoney(visible.filter(a => isSpendable(a.kind)).map(a => a.balanceCents))
   const vouchers = visible.filter(a => !isSpendable(a.kind))
@@ -61,7 +62,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
 
   function groupTitle(group: AccountGroup): string {
     if (groupBy === 'kind') return t(`accounts.kind.${group.key}`)
-    if (groupBy === 'institution') return t(`accounts.institution.${group.key}`)
+    if (groupBy === 'institution') return group.key === NO_BANK ? t('accounts.no_bank') : group.institutionName ?? ''
     return group.key === JOINT ? t('accounts.holder_joint') : group.holder?.name ?? ''
   }
 

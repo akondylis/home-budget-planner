@@ -33,12 +33,10 @@ enum AccountKind {
   MEAL_VOUCHER
 }
 
-enum Institution {
-  ALPHA
-  EUROBANK
-  EDENRED
-  UP_HELLAS
-  OTHER
+/// What an institution issues: bank accounts and cards, or meal-voucher cards
+enum InstitutionKind {
+  BANK
+  VOUCHER_ISSUER
 }
 
 /// What a category is: drives budgets and stats. Set on the group, inherited by its categories.
@@ -79,7 +77,9 @@ model Account {
   id                  String        @id @default(cuid())
   name                String
   kind                AccountKind
-  institution         Institution   @default(OTHER)
+  /// null = no bank (cash, or a bank not listed)
+  institutionId       String?
+  institution         Institution?  @relation(fields: [institutionId], references: [id])
   currency            String        @default("EUR")
   openingBalanceCents Int           @default(0)
   openingDate         DateTime
@@ -98,6 +98,21 @@ model Account {
   importBatches       ImportBatch[]
   rules               CategoryRule[]
   cards               Card[]
+}
+
+/// A bank or meal-voucher issuer, edited by the user (Settings → Banks). Archived, never deleted.
+/// The starter list has fixed ids `inst_<name>` (migration 20261029120000_institutions_table).
+model Institution {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  kind            InstitutionKind @default(BANK)
+  /// Statement preset family, "alpha" | "eurobank"; null = the generic preset
+  statementPreset String?
+  sortOrder       Int             @default(0)
+  archivedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  accounts        Account[]
 }
 
 /// A plastic card on an account: a debit card on a current account, or a main or supplementary card on a credit card account

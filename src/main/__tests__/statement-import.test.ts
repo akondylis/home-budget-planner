@@ -30,9 +30,9 @@ const OCT_NOV = csv([
 async function setup() {
   await seedDefaults('el')
   const [bankId, cardId, cashId] = await createAccounts([
-    { name: 'Eurobank', kind: 'CURRENT', institution: 'EUROBANK', openingBalanceCents: 100_000, openingDate: '2026-09-30' },
-    { name: 'Alpha card', kind: 'CREDIT_CARD', institution: 'ALPHA', openingBalanceCents: 0, openingDate: '2026-09-30' },
-    { name: 'Cash', kind: 'CASH', institution: 'OTHER', openingBalanceCents: 0, openingDate: '2026-09-30' },
+    { name: 'Eurobank', kind: 'CURRENT', institutionId: 'inst_eurobank', openingBalanceCents: 100_000, openingDate: '2026-09-30' },
+    { name: 'Alpha card', kind: 'CREDIT_CARD', institutionId: 'inst_alpha', openingBalanceCents: 0, openingDate: '2026-09-30' },
+    { name: 'Cash', kind: 'CASH', institutionId: null, openingBalanceCents: 0, openingDate: '2026-09-30' },
   ])
   return { bankId, cardId, cashId }
 }

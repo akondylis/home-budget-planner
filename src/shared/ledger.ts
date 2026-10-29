@@ -7,11 +7,14 @@ import type { MemberColour } from './members'
 export const ACCOUNT_KINDS = ['CURRENT', 'SAVINGS', 'CASH', 'CREDIT_CARD', 'MEAL_VOUCHER'] as const
 export type AccountKind = (typeof ACCOUNT_KINDS)[number]
 
-export const INSTITUTIONS = ['ALPHA', 'EUROBANK', 'EDENRED', 'UP_HELLAS', 'OTHER'] as const
-export type Institution = (typeof INSTITUTIONS)[number]
+/** BANK: accounts and cards; VOUCHER_ISSUER: meal-voucher cards (Edenred, Up Hellas) */
+export const INSTITUTION_KINDS = ['BANK', 'VOUCHER_ISSUER'] as const
+export type InstitutionKind = (typeof INSTITUTION_KINDS)[number]
 
-/** Who issues a meal-voucher card; other kinds are offered every institution */
-export const VOUCHER_INSTITUTIONS: readonly Institution[] = ['EDENRED', 'UP_HELLAS', 'OTHER']
+/** The kind of institution an account of this kind is offered: meal-voucher cards come from voucher issuers */
+export function institutionKindFor(kind: AccountKind): InstitutionKind {
+  return kind === 'MEAL_VOUCHER' ? 'VOUCHER_ISSUER' : 'BANK'
+}
 
 /** Money that can pay for anything: every kind but a meal-voucher card (food only, never withdrawn) */
 export function isSpendable(kind: AccountKind): boolean {
@@ -22,13 +25,34 @@ export function isSpendable(kind: AccountKind): boolean {
 export const CATEGORY_TYPES = ['INCOME', 'BILL', 'SUBSCRIPTION', 'EXPENSE', 'DEBT', 'SAVINGS'] as const
 export type CategoryType = (typeof CATEGORY_TYPES)[number]
 
+// ── Banks ────────────────────────────────────────────────────────────────────
+
+/** A bank or meal-voucher issuer from the user's list */
+export interface InstitutionSummary {
+  id: string
+  name: string
+  kind: InstitutionKind
+  /** Statement preset family ("alpha" | "eurobank"); null = the generic preset */
+  statementPreset: string | null
+  archived: boolean
+  /** Active accounts at it */
+  accountCount: number
+}
+
+export interface InstitutionInput {
+  name: string
+  kind: InstitutionKind
+}
+
 // ── Accounts ─────────────────────────────────────────────────────────────────
 
 export interface AccountSummary {
   id: string
   name: string
   kind: AccountKind
-  institution: Institution
+  /** null = no bank */
+  institutionId: string | null
+  institutionName: string | null
   currency: string
   openingBalanceCents: number
   openingDate: string
@@ -65,7 +89,8 @@ export interface CardInput {
 export interface AccountInput {
   name: string
   kind: AccountKind
-  institution: Institution
+  /** null = no bank; a meal-voucher card names a voucher issuer or none */
+  institutionId: string | null
   currency?: string
   openingBalanceCents: number
   openingDate: string

@@ -12,7 +12,7 @@ import { createRule, deleteRule, listRules, updateRule } from '../services/rules
 async function setup() {
   await seedDefaults('el')
   const [bankId] = await createAccounts([
-    { name: 'Alpha', kind: 'CURRENT', institution: 'ALPHA', openingBalanceCents: 0, openingDate: '2026-09-30' },
+    { name: 'Alpha', kind: 'CURRENT', institutionId: 'inst_alpha', openingBalanceCents: 0, openingDate: '2026-09-30' },
   ])
   const category = (name: string) => prisma.category.findFirstOrThrow({ where: { name } })
   return { bankId, groceries: await category('Σούπερ μάρκετ'), eatingOut: await category('Φαγητό έξω') }
