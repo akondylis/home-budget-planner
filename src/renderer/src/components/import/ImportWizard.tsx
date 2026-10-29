@@ -180,6 +180,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
         onClose={onClose}
         closeDisabled={busy}
         size="page"
+        bodyClassName="flex flex-col p-6"
         footer={
           <>
             {back}
@@ -251,9 +252,6 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
       size="md"
       footer={
         <>
-          <Button variant="ghost" icon="undo" className="mr-auto" onClick={() => useImportStore.getState().openHistory(accountId)} disabled={busy}>
-            {t('import.history_title')}
-          </Button>
           {cancel}
           <Button variant="primary" icon="folder" onClick={() => void choose()} disabled={busy || !accountId}>
             {busy ? t('import.reading') : t('import.choose_file')}
@@ -281,6 +279,16 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
           </div>
         </div>
       )}
+      <Button
+        variant="ghost"
+        size="sm"
+        icon="undo"
+        className="-ml-2 mt-3"
+        onClick={() => useImportStore.getState().openHistory(accountId)}
+        disabled={busy}
+      >
+        {t('import.history_title')}
+      </Button>
     </Modal>
   )
 }

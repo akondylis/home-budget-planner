@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { Badge, FilterChip, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, cx, type BadgeTone, type SelectMenuOption } from '../ui'
+import { Badge, FilterChip, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SortHeader, cx, type BadgeTone, type SelectMenuOption } from '../ui'
 import { Icon, type IconName } from '../shell/icons'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { RulePrompt } from './RulePrompt'
@@ -17,8 +17,11 @@ import {
   needsCategory,
   offersRule,
   reviewCounts,
+  sortRows,
   type Choices,
   type ReviewFilter,
+  type ReviewSort,
+  type ReviewSortKey,
   type RowChoice,
 } from '../../lib/import-review'
 import { merchantText } from '../../../../shared/payee-key'
@@ -58,19 +61,27 @@ interface Prompt {
 
 /** Review: the summary line filters the table; tick rows, pick where each goes */
 export function ImportReview({ accountId, rows, summary, choices, onChoices }: ImportReviewProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
   const categories = useLedgerStore(s => s.categories)
   const [filter, setFilter] = useState<ReviewFilter>('ALL')
+  // null = statement order
+  const [sort, setSort] = useState<ReviewSort | null>(null)
   // Rows the user sorted by hand: a new rule does not overwrite them
   const [touched, setTouched] = useState<ReadonlySet<number>>(new Set())
   const [prompt, setPrompt] = useState<Prompt | null>(null)
 
   const cash = cashAccounts(accounts, accountId)
   const counts = reviewCounts(rows, choices)
-  const visible = filterRows(rows, choices, filter)
+  const visible = sortRows(filterRows(rows, choices, filter), sort, i18n.language)
   const tickable = visible.filter(r => SELECTABLE.has(r.status))
   const allTicked = tickable.length > 0 && tickable.every(r => choices[r.line].include)
+
+  /** A new column starts ascending; the sorted one flips */
+  function sortBy(key: ReviewSortKey) {
+    setSort(sort?.key === key ? { key, direction: sort.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' })
+  }
+  const direction = (key: ReviewSortKey) => (sort?.key === key ? sort.direction : null)
 
   function update(line: number, choice: RowChoice) {
     onChoices({ ...choices, [line]: choice })
@@ -120,7 +131,8 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
   ]
 
   return (
-    <>
+    // Only the table scrolls, so its header and the chips above stay in view
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label={t('import.summary_label')}>
         <FilterChip active={filter === 'ALL'} onClick={() => setFilter('ALL')}>{t('import.filter_all', { count: rows.length })}</FilterChip>
         {chips.map(c => (
@@ -142,6 +154,7 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
         />
       )}
 
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-xl">
       <ListCard>
         <ListHeader cols={COLS}>
           <input
@@ -152,10 +165,10 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
             disabled={tickable.length === 0}
             onChange={() => onChoices({ ...choices, ...Object.fromEntries(tickable.map(r => [r.line, { ...choices[r.line], include: !allTicked }])) })}
           />
-          <div>{t('log.col_date')}</div>
-          <div>{t('log.col_description')}</div>
+          <SortHeader direction={direction('date')} onSort={() => sortBy('date')}>{t('log.col_date')}</SortHeader>
+          <SortHeader direction={direction('description')} onSort={() => sortBy('description')}>{t('log.col_description')}</SortHeader>
           <div>{t('import.col_goes_to')}</div>
-          <div className="text-right">{t('log.col_amount')}</div>
+          <SortHeader direction={direction('amount')} onSort={() => sortBy('amount')} align="right">{t('log.col_amount')}</SortHeader>
           <div>{t('import.col_status')}</div>
         </ListHeader>
         {visible.map(row => {
@@ -206,7 +219,8 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
         })}
         {visible.length === 0 && <p className="px-4 py-6 text-center text-sm text-fg-muted">{t('import.filter_empty')}</p>}
       </ListCard>
-    </>
+      </div>
+    </div>
   )
 }
 

@@ -101,6 +101,39 @@ export function filterRows(rows: PreviewRow[], choices: Choices, filter: ReviewF
   return rows.filter(r => r.status === filter)
 }
 
+/** Clickable review columns */
+export type ReviewSortKey = 'date' | 'description' | 'amount'
+export interface ReviewSort {
+  key: ReviewSortKey
+  direction: 'asc' | 'desc'
+}
+
+/**
+ * Rows in the chosen column order; null keeps the statement's order.
+ * Rows with no date or amount go last either way; ties keep statement order.
+ */
+export function sortRows(rows: PreviewRow[], sort: ReviewSort | null, locale: string): PreviewRow[] {
+  if (!sort) return rows
+  const sign = sort.direction === 'asc' ? 1 : -1
+  const collator = new Intl.Collator(locale, { sensitivity: 'base', numeric: true })
+  const value = (r: PreviewRow): string | number | null =>
+    sort.key === 'date' ? r.bookedAt : sort.key === 'amount' ? r.amountCents : r.description.trim()
+  return [...rows].sort((a, b) => {
+    const va = value(a)
+    const vb = value(b)
+    if (va === null || va === '' || vb === null || vb === '') {
+      const missing = Number(va === null || va === '') - Number(vb === null || vb === '')
+      if (missing !== 0) return missing
+    } else {
+      const order = typeof va === 'number' && typeof vb === 'number'
+        ? va - vb
+        : collator.compare(String(va), String(vb))
+      if (order !== 0) return sign * order
+    }
+    return a.line - b.line
+  })
+}
+
 /**
  * After "Always put X in Y": the other ticked rows of the same merchant that the
  * user has not sorted by hand take the category too. Returns the new choices and how many changed.

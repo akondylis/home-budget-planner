@@ -8,6 +8,7 @@ import {
   missingFields,
   offersRule,
   reviewCounts,
+  sortRows,
   toColumnMapping,
   toDecisions,
   type MappingForm,
@@ -135,5 +136,32 @@ describe('column mapping', () => {
       columns: { date: 'When', description: 'What', debit: 'Out', balance: 'Balance' },
       dateOrder: 'DMY', decimalSeparator: ',', amountMode: 'DEBIT_CREDIT_COLUMNS', invertSign: false, debitFlags: [],
     })
+  })
+})
+
+describe('sortRows', () => {
+  const a = row({ bookedAt: '2026-10-03', description: 'ΣΚΛΑΒΕΝΙΤΗΣ 12', amountCents: -500 })
+  const b = row({ bookedAt: null, description: 'Αβ Βασιλόπουλος', amountCents: null })
+  const c = row({ bookedAt: '2026-10-01', description: 'Σκλαβενίτης 12', amountCents: 2000 })
+  const rows = [a, b, c]
+  const lines = (list: PreviewRow[]) => list.map(r => r.line)
+
+  it('keeps statement order without a sort', () => {
+    expect(sortRows(rows, null, 'el')).toBe(rows)
+  })
+
+  it('sorts by date both ways, rows without a date last', () => {
+    expect(lines(sortRows(rows, { key: 'date', direction: 'asc' }, 'el'))).toEqual(lines([c, a, b]))
+    expect(lines(sortRows(rows, { key: 'date', direction: 'desc' }, 'el'))).toEqual(lines([a, c, b]))
+  })
+
+  it('sorts descriptions ignoring Greek case and accents, ties in statement order', () => {
+    expect(lines(sortRows(rows, { key: 'description', direction: 'asc' }, 'el'))).toEqual(lines([b, a, c]))
+    expect(lines(sortRows(rows, { key: 'description', direction: 'desc' }, 'el'))).toEqual(lines([a, c, b]))
+  })
+
+  it('sorts by amount both ways, rows without an amount last', () => {
+    expect(lines(sortRows(rows, { key: 'amount', direction: 'asc' }, 'el'))).toEqual(lines([a, c, b]))
+    expect(lines(sortRows(rows, { key: 'amount', direction: 'desc' }, 'el'))).toEqual(lines([c, a, b]))
   })
 })
