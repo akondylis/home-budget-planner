@@ -154,11 +154,26 @@ describe('seed', () => {
     expect(await seedDefaults('en')).toBe(true)
     expect(await seedDefaults('en')).toBe(false)
     const tree = await listCategories()
-    expect(tree.map(g => g.type)).toEqual(['INCOME', 'BILL', 'SUBSCRIPTION', 'EXPENSE', 'DEBT', 'SAVINGS'])
+    expect(tree.map(g => g.type)).toEqual(SEED_GROUPS.map(g => g.type))
+    expect(tree.filter(g => g.type === 'EXPENSE').map(g => g.name)).toEqual(['Food', 'Home', 'Transport', 'Health', 'Personal care', 'Leisure', 'Family & other'])
     expect(tree.flatMap(g => g.children).length).toBe(SEED_GROUPS.flatMap(g => g.categories).length)
     const rules = await prisma.categoryRule.findMany({ include: { category: true }, orderBy: { priority: 'desc' } })
     expect(rules).toHaveLength(SEED_RULES.length)
     expect(rules[0]).toMatchObject({ pattern: 'dei', match: 'STARTS_WITH', category: { name: 'Electricity' } })
+  })
+
+  it('should have unique keys and names and no empty group in the starter list', () => {
+    const keys = SEED_GROUPS.flatMap(g => g.categories.map(c => c.key))
+    expect(new Set(keys).size).toBe(keys.length)
+    for (const lang of ['el', 'en'] as const) {
+      const groupNames = SEED_GROUPS.map(g => g.name[lang])
+      expect(new Set(groupNames).size).toBe(groupNames.length)
+      for (const g of SEED_GROUPS) {
+        expect(g.categories.length).toBeGreaterThan(0)
+        const names = g.categories.map(c => c.name[lang])
+        expect(new Set(names).size).toBe(names.length)
+      }
+    }
   })
 })
 

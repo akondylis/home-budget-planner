@@ -46,17 +46,82 @@ export const SEED_GROUPS: SeedGroup[] = [
       { key: 'software', name: { el: 'Λογισμικό', en: 'Software' } },
     ],
   },
+  // Spending is split by area so the picker and the budget stay easy to scan
   {
     type: 'EXPENSE',
-    name: { el: 'Έξοδα', en: 'Spending' },
+    name: { el: 'Διατροφή', en: 'Food' },
     categories: [
       { key: 'groceries', name: { el: 'Σούπερ μάρκετ', en: 'Supermarket' } },
-      { key: 'fuel', name: { el: 'Καύσιμα', en: 'Fuel' } },
+      { key: 'butcher_fish', name: { el: 'Κρεοπωλείο & ιχθυοπωλείο', en: 'Butcher & fishmonger' } },
       { key: 'eating_out', name: { el: 'Φαγητό έξω', en: 'Eating out' } },
+      { key: 'delivery', name: { el: 'Delivery', en: 'Delivery' } },
+      { key: 'coffee', name: { el: 'Καφές', en: 'Coffee' } },
+    ],
+  },
+  {
+    type: 'EXPENSE',
+    name: { el: 'Σπίτι', en: 'Home' },
+    categories: [
+      { key: 'household_supplies', name: { el: 'Είδη σπιτιού', en: 'Household supplies' } },
+      { key: 'home_maintenance', name: { el: 'Γενική συντήρηση', en: 'Home maintenance' } },
+      { key: 'home_services', name: { el: 'Υπηρεσίες σπιτιού', en: 'Home services' } },
+      { key: 'garden', name: { el: 'Κήπος', en: 'Garden' } },
+    ],
+  },
+  {
+    type: 'EXPENSE',
+    name: { el: 'Μετακινήσεις', en: 'Transport' },
+    categories: [
+      { key: 'fuel', name: { el: 'Καύσιμα', en: 'Fuel' } },
+      { key: 'car_repairs', name: { el: 'Επισκευές & σέρβις', en: 'Repairs & service' } },
+      { key: 'tolls', name: { el: 'Διόδια', en: 'Tolls' } },
+      { key: 'tickets', name: { el: 'Εισιτήρια', en: 'Tickets' } },
+      { key: 'transport_other', name: { el: 'Λοιπά μεταφορικά', en: 'Other transport' } },
+    ],
+  },
+  {
+    type: 'EXPENSE',
+    name: { el: 'Υγεία', en: 'Health' },
+    categories: [
+      { key: 'doctors', name: { el: 'Γιατροί', en: 'Doctors' } },
+      { key: 'medical_tests', name: { el: 'Ιατρικές εξετάσεις', en: 'Medical tests' } },
+      { key: 'pharmacy', name: { el: 'Φαρμακείο', en: 'Pharmacy' } },
+    ],
+  },
+  {
+    type: 'EXPENSE',
+    name: { el: 'Προσωπική φροντίδα', en: 'Personal care' },
+    categories: [
+      { key: 'hairdresser', name: { el: 'Κομμωτήριο', en: 'Hairdresser' } },
+      { key: 'nails', name: { el: 'Νύχια', en: 'Nails' } },
+      { key: 'massage', name: { el: 'Μασάζ', en: 'Massage' } },
+      { key: 'clothing', name: { el: 'Ρούχα & ψώνια', en: 'Clothing & shopping' } },
+    ],
+  },
+  {
+    type: 'EXPENSE',
+    name: { el: 'Ψυχαγωγία', en: 'Leisure' },
+    categories: [
+      { key: 'cinema', name: { el: 'Σινεμά', en: 'Cinema' } },
+      { key: 'concerts', name: { el: 'Συναυλίες', en: 'Concerts' } },
+      { key: 'sports_events', name: { el: 'Αθλητικά γεγονότα', en: 'Sports events' } },
+      { key: 'dates', name: { el: 'Ραντεβού', en: 'Dates' } },
+      { key: 'hobbies', name: { el: 'Χόμπι', en: 'Hobbies' } },
+      { key: 'chess', name: { el: 'Σκάκι', en: 'Chess' } },
+    ],
+  },
+  {
+    type: 'EXPENSE',
+    name: { el: 'Οικογένεια & λοιπά', en: 'Family & other' },
+    categories: [
       { key: 'kids', name: { el: 'Παιδιά', en: 'Kids' } },
-      { key: 'health', name: { el: 'Υγεία', en: 'Health' } },
-      { key: 'clothing', name: { el: 'Ρούχα', en: 'Clothing' } },
+      { key: 'pets', name: { el: 'Κατοικίδια', en: 'Pets' } },
+      { key: 'education', name: { el: 'Εκπαίδευση', en: 'Education' } },
+      { key: 'gifts', name: { el: 'Δώρα', en: 'Gifts' } },
+      { key: 'christmas_gifts', name: { el: 'Χριστουγεννιάτικα δώρα', en: 'Christmas gifts' } },
+      { key: 'charity', name: { el: 'Φιλανθρωπία', en: 'Charity' } },
       { key: 'cash_unitemised', name: { el: 'Μετρητά (χωρίς ανάλυση)', en: 'Cash (not itemised)' } },
+      { key: 'other_spending', name: { el: 'Λοιπά έξοδα', en: 'Other spending' } },
     ],
   },
   {

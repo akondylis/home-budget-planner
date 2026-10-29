@@ -57,7 +57,8 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
   rules to B (a rule B already has is dropped) and archives the empty A; only a category no row uses can be
   deleted (its rules and budget lines go with it), and only an empty group; a merge adds A's budget lines to B's
   (same month → summed). Feature doc: [features/categories.md](features/categories.md).
-- **Starting data**: an empty database gets the category groups (one per type) and common Greek merchant rules, in
+- **Starting data**: an empty database gets the starter category groups (one per type; spending is split into Food,
+  Home, Transport, Health, Personal care, Leisure and Family & other) and common Greek merchant rules, in
   the app language of that moment (`src/main/services/seed.ts`). After that they are the household's own data.
 
 ## Derived views (no tables)

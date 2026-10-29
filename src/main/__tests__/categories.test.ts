@@ -29,7 +29,7 @@ async function setup() {
     bankId,
     groceries: await category('Σούπερ μάρκετ'),
     eatingOut: await category('Φαγητό έξω'),
-    spending: await category('Έξοδα'),
+    food: await category('Διατροφή'),
     bills: await category('Λογαριασμοί'),
   }
 }
@@ -61,10 +61,10 @@ describe('category management', () => {
   })
 
   it('should refuse a move onto a name the group already has, and moving a group', async () => {
-    const { eatingOut, bills, spending } = await setup()
+    const { eatingOut, bills, food } = await setup()
     await createCategory({ name: 'Φαγητό έξω', parentId: bills.id })
     await expect(moveCategory(eatingOut.id, bills.id)).rejects.toThrow('CATEGORY_EXISTS')
-    await expect(moveCategory(spending.id, bills.id)).rejects.toThrow('INVALID_INPUT')
+    await expect(moveCategory(food.id, bills.id)).rejects.toThrow('INVALID_INPUT')
   })
 
   it('should take a name over from an archived category nothing uses', async () => {
@@ -76,13 +76,13 @@ describe('category management', () => {
   })
 
   it('should save a new order for a group\'s categories', async () => {
-    const { spending } = await setup()
-    const ids = (await prisma.category.findMany({ where: { parentId: spending.id }, orderBy: { sortOrder: 'asc' } })).map(c => c.id)
+    const { food } = await setup()
+    const ids = (await prisma.category.findMany({ where: { parentId: food.id }, orderBy: { sortOrder: 'asc' } })).map(c => c.id)
     const reversed = [...ids].reverse()
-    await reorderCategories(spending.id, reversed)
-    const after = (await prisma.category.findMany({ where: { parentId: spending.id }, orderBy: { sortOrder: 'asc' } })).map(c => c.id)
+    await reorderCategories(food.id, reversed)
+    const after = (await prisma.category.findMany({ where: { parentId: food.id }, orderBy: { sortOrder: 'asc' } })).map(c => c.id)
     expect(after).toEqual(reversed)
-    await expect(reorderCategories(spending.id, [ids[0], ids[0]])).rejects.toThrow('INVALID_INPUT')
+    await expect(reorderCategories(food.id, [ids[0], ids[0]])).rejects.toThrow('INVALID_INPUT')
   })
 
   it('should merge rows and rules into the target, drop a duplicate rule and archive the source', async () => {
@@ -104,17 +104,17 @@ describe('category management', () => {
   })
 
   it('should refuse to merge a category into itself or into a group', async () => {
-    const { groceries, spending } = await setup()
+    const { groceries, food } = await setup()
     await expect(mergeCategory(groceries.id, groceries.id)).rejects.toThrow('INVALID_INPUT')
-    await expect(mergeCategory(groceries.id, spending.id)).rejects.toThrow('INVALID_INPUT')
+    await expect(mergeCategory(groceries.id, food.id)).rejects.toThrow('INVALID_INPUT')
   })
 
   it('should restore a category together with its archived group', async () => {
-    const { spending, groceries } = await setup()
-    await archiveCategory(spending.id)
+    const { food, groceries } = await setup()
+    await archiveCategory(food.id)
     await archiveCategory(groceries.id, false)
     const [group, child] = await Promise.all([
-      prisma.category.findUniqueOrThrow({ where: { id: spending.id } }),
+      prisma.category.findUniqueOrThrow({ where: { id: food.id } }),
       prisma.category.findUniqueOrThrow({ where: { id: groceries.id } }),
     ])
     expect(group.archivedAt).toBeNull()
@@ -122,20 +122,20 @@ describe('category management', () => {
   })
 
   it('should bring back the categories archived with a group, but not one archived before', async () => {
-    const { spending, groceries, eatingOut } = await setup()
+    const { food, groceries, eatingOut } = await setup()
     await archiveCategory(eatingOut.id)
     await new Promise(r => setTimeout(r, 5))
-    await archiveCategory(spending.id)
-    await archiveCategory(spending.id, false)
+    await archiveCategory(food.id)
+    await archiveCategory(food.id, false)
     expect((await prisma.category.findUniqueOrThrow({ where: { id: groceries.id } })).archivedAt).toBeNull()
     expect((await prisma.category.findUniqueOrThrow({ where: { id: eatingOut.id } })).archivedAt).not.toBeNull()
   })
 
   it('should refuse a rename onto an archived name that still holds rows', async () => {
-    const { bankId, eatingOut, spending } = await setup()
+    const { bankId, eatingOut, food } = await setup()
     await spend(bankId, eatingOut.id)
     await archiveCategory(eatingOut.id)
-    const other = await createCategory({ name: 'Καφέδες', parentId: spending.id })
+    const other = await createCategory({ name: 'Καφέδες', parentId: food.id })
     await expect(updateCategory(other, { name: 'Φαγητό έξω' })).rejects.toThrow('CATEGORY_EXISTS')
   })
 
@@ -151,7 +151,7 @@ describe('category management', () => {
   })
 
   it('should refuse to delete a group that still has categories', async () => {
-    const { spending } = await setup()
-    await expect(deleteCategory(spending.id)).rejects.toThrow('CATEGORY_IN_USE')
+    const { food } = await setup()
+    await expect(deleteCategory(food.id)).rejects.toThrow('CATEGORY_IN_USE')
   })
 })
