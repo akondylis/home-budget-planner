@@ -3,16 +3,19 @@ import { useTranslation } from 'react-i18next'
 import { Banner, Button, ConfirmDialog, DateInput, Field, Input, Modal, Money, Segmented, Select } from '../ui'
 import { CategoryPicker } from './CategoryPicker'
 import { MemberDot } from '../members/MemberDot'
+import { Icon } from '../shell/icons'
 import { activeAccounts, useLedgerStore, type EntryRequest } from '../../store/ledger'
 import { useTransactionsStore } from '../../store/transactions'
 import { useUiStore } from '../../store/ui'
 import {
+  canSendTransfer,
   defaultAccountId,
   defaultToAccountId,
   draftFromRow,
   findCategory,
   groupsFor,
   validateEntry,
+  voucherShortfall,
   type EntryDraft,
   type FormKind,
 } from '../../lib/ledger'
@@ -70,6 +73,9 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
   const err = (key?: string) => (key ? t(`entry.errors.${key}`) : undefined)
   const transfer = draft.kind === 'TRANSFER'
   const open = activeAccounts(accounts)
+  // A meal-voucher card is never the source of a transfer
+  const senders = open.filter(a => canSendTransfer(a.kind))
+  const shortfall = voucherShortfall(accounts, draft, editing)
   const changedBankValues = imported && (draft.amount !== original.amount || draft.bookedAt !== original.bookedAt)
   // Household, then each parent; an archived parent stays listed on a row that is already theirs
   const forMembers = members.filter(m => !m.archived || m.id === original.memberId)
@@ -86,8 +92,9 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
   function changeKind(kind: FormKind) {
     setDraft(d => {
       const next = { ...d, kind }
-      if (kind === 'TRANSFER' && (!d.toAccountId || d.toAccountId === d.accountId)) {
-        next.toAccountId = defaultToAccountId(accounts, d.accountId)
+      if (kind === 'TRANSFER' && !senders.some(a => a.id === d.accountId)) next.accountId = senders[0]?.id ?? ''
+      if (kind === 'TRANSFER' && (!next.toAccountId || next.toAccountId === next.accountId)) {
+        next.toAccountId = defaultToAccountId(accounts, next.accountId)
       }
       // A category of the other side (salary on an expense) no longer fits
       const category = findCategory(categories, d.categoryId)
@@ -268,7 +275,7 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('entry.from')} htmlFor={ids.account} required error={err(errors.accountId)}>
                 <Select id={ids.account} value={draft.accountId} onChange={e => update({ accountId: e.target.value })} className="w-full">
-                  {open.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  {senders.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </Select>
               </Field>
               <Field label={t('entry.to')} htmlFor={ids.to} required error={err(errors.toAccountId)}>
@@ -326,7 +333,19 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
               <DateInput id={ids.date} value={draft.bookedAt} onChange={bookedAt => update({ bookedAt })} invalid={!!errors.bookedAt} />
             </Field>
             {!transfer && (
-              <Field label={t('entry.account')} htmlFor={ids.account} required error={err(errors.accountId)}>
+              <Field
+                label={t('entry.account')}
+                htmlFor={ids.account}
+                required
+                error={err(errors.accountId)}
+                hint={shortfall !== null && (
+                  // A warning, not a block: the opening balance or a top-up may simply be missing
+                  <span role="status" className="flex items-start gap-1 text-amber-700">
+                    <Icon name="alert-triangle" size={12} className="mt-0.5 shrink-0" />
+                    <span>{t('entry.voucher_overdraw')} <Money cents={shortfall} /></span>
+                  </span>
+                )}
+              >
                 <Select id={ids.account} value={draft.accountId} onChange={e => update({ accountId: e.target.value })} className="w-full">
                   {open.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </Select>

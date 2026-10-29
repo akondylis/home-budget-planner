@@ -9,7 +9,7 @@ import { activeMembers } from '../../lib/members'
 import { centsToInput, parseAccountDraft, type AccountDraft } from '../../lib/ledger'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
 import { todayDateOnly } from '../../../../shared/date-only'
-import { ACCOUNT_KINDS, INSTITUTIONS, type AccountSummary } from '../../../../shared/ledger'
+import { ACCOUNT_KINDS, INSTITUTIONS, VOUCHER_INSTITUTIONS, type AccountKind, type AccountSummary } from '../../../../shared/ledger'
 
 export interface AccountFormProps {
   /** null = a new account */
@@ -39,7 +39,12 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const [serverError, setServerError] = useState<string | null>(null)
   const [confirmArchive, setConfirmArchive] = useState(false)
 
-  const parsed = parseAccountDraft(draft)
+  // Joint, then each parent; an archived parent stays listed when the account is already theirs
+  const showMembers = activeMembers(members).length > 0
+  const holderMembers = members.filter(m => !m.archived || m.id === account?.holderMemberId || draft.cards.some(c => c.holderMemberId === m.id))
+  const voucher = draft.kind === 'MEAL_VOUCHER'
+
+  const parsed = parseAccountDraft(draft, showMembers)
   const errors = submitted && 'errors' in parsed ? parsed.errors : {}
   const err = (key?: string) => (key ? t(`accounts.errors.${key}`) : undefined)
   const update = (patch: Partial<AccountDraft>) => {
@@ -47,9 +52,16 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     setServerError(null)
   }
 
-  // Joint, then each parent; an archived parent stays listed when the account is already theirs
-  const showMembers = activeMembers(members).length > 0
-  const holderMembers = members.filter(m => !m.archived || m.id === account?.holderMemberId || draft.cards.some(c => c.holderMemberId === m.id))
+  /** A meal-voucher card comes from Edenred or Up Hellas, and from one parent's employer (no joint) */
+  function changeKind(kind: AccountKind) {
+    if (kind !== 'MEAL_VOUCHER') return update({ kind })
+    update({
+      kind,
+      // "Other" is the new-account default, so only a voucher company already chosen is kept
+      institution: draft.institution === 'EDENRED' || draft.institution === 'UP_HELLAS' ? draft.institution : 'EDENRED',
+      holderMemberId: draft.holderMemberId ?? (showMembers ? useUiStore.getState().currentMemberId : null),
+    })
+  }
 
   async function run(action: () => Promise<unknown>) {
     setSaving(true)
@@ -99,24 +111,24 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('accounts.kind_label')} htmlFor={ids.kind}>
-              <Select id={ids.kind} value={draft.kind} onChange={e => update({ kind: e.target.value as AccountDraft['kind'] })} className="w-full">
+              <Select id={ids.kind} value={draft.kind} onChange={e => changeKind(e.target.value as AccountKind)} className="w-full">
                 {ACCOUNT_KINDS.map(k => <option key={k} value={k}>{t(`accounts.kind.${k}`)}</option>)}
               </Select>
             </Field>
-            <Field label={t('accounts.institution_label')} htmlFor={ids.institution}>
+            <Field label={t(voucher ? 'accounts.institution_label_voucher' : 'accounts.institution_label')} htmlFor={ids.institution}>
               <Select id={ids.institution} value={draft.institution} onChange={e => update({ institution: e.target.value as AccountDraft['institution'] })} className="w-full">
-                {INSTITUTIONS.map(i => <option key={i} value={i}>{t(`accounts.institution.${i}`)}</option>)}
+                {(voucher ? VOUCHER_INSTITUTIONS : INSTITUTIONS).map(i => <option key={i} value={i}>{t(`accounts.institution.${i}`)}</option>)}
               </Select>
             </Field>
           </div>
           {showMembers && (
-            <Field label={t('accounts.holder')} hint={t('accounts.holder_hint')}>
+            <Field label={t('accounts.holder')} required={voucher} hint={t(voucher ? 'accounts.holder_hint_voucher' : 'accounts.holder_hint')} error={err(errors.holder)}>
               <Segmented<string>
                 label={t('accounts.holder')}
                 value={draft.holderMemberId ?? ''}
                 onChange={v => update({ holderMemberId: v || null })}
                 options={[
-                  { value: '', label: t('accounts.holder_joint'), icon: 'users' },
+                  ...(voucher ? [] : [{ value: '', label: t('accounts.holder_joint'), icon: 'users' as const }]),
                   ...holderMembers
                     .filter(m => !m.archived || m.id === draft.holderMemberId)
                     .map(m => ({ value: m.id, label: m.name, leading: <MemberDot colour={m.colour} size="md" /> })),
@@ -129,7 +141,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               label={t('accounts.opening_balance')}
               htmlFor={ids.balance}
               error={err(errors.openingBalance)}
-              hint={draft.kind === 'CREDIT_CARD' ? t('accounts.opening_balance_card_hint') : t('accounts.opening_balance_hint')}
+              hint={t(draft.kind === 'CREDIT_CARD' ? 'accounts.opening_balance_card_hint' : voucher ? 'accounts.opening_balance_voucher_hint' : 'accounts.opening_balance_hint')}
             >
               <Input id={ids.balance} inputMode="decimal" placeholder="0,00" value={draft.openingBalance} onChange={e => update({ openingBalance: e.target.value })} className="w-full tabular-nums" />
             </Field>
@@ -138,7 +150,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
             </Field>
           </div>
           {draft.kind !== 'CASH' && (
-            <Field label={t('accounts.cards')} hint={t(draft.kind === 'CREDIT_CARD' ? 'accounts.cards_hint_credit' : 'accounts.cards_hint_debit')}>
+            <Field label={t('accounts.cards')} hint={t(draft.kind === 'CREDIT_CARD' ? 'accounts.cards_hint_credit' : voucher ? 'accounts.cards_hint_voucher' : 'accounts.cards_hint_debit')}>
               <CardListEditor
                 cards={draft.cards}
                 onChange={cards => update({ cards })}

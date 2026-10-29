@@ -69,9 +69,10 @@ function assertAmount(cents: number): void {
 }
 
 /** Throws: 'ACCOUNT_NOT_FOUND' (missing or archived) */
-async function assertAccount(id: string): Promise<void> {
-  const account = await prisma.account.findUnique({ where: { id }, select: { archivedAt: true } })
+async function assertAccount(id: string): Promise<{ kind: string }> {
+  const account = await prisma.account.findUnique({ where: { id }, select: { archivedAt: true, kind: true } })
   if (!account || account.archivedAt) throw new Error('ACCOUNT_NOT_FOUND')
+  return account
 }
 
 /** Income and expense need a category. Throws: 'CATEGORY_REQUIRED', 'CATEGORY_NOT_FOUND' */
@@ -276,12 +277,15 @@ export async function setMember(ids: unknown, memberId: unknown): Promise<number
 
 // ── Transfers ────────────────────────────────────────────────────────────────
 
-/** Throws: 'INVALID_INPUT', 'INVALID_AMOUNT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND' */
+/**
+ * Money on a meal-voucher card can only be spent on food, never moved out.
+ * Throws: 'INVALID_INPUT', 'INVALID_AMOUNT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND', 'VOUCHER_NO_TRANSFER_OUT'
+ */
 async function parseTransfer(input: unknown) {
   const data = parse(transferInput, input)
   assertAmount(data.amountCents)
   if (data.fromAccountId === data.toAccountId) throw new Error('SAME_ACCOUNT')
-  await assertAccount(data.fromAccountId)
+  if ((await assertAccount(data.fromAccountId)).kind === 'MEAL_VOUCHER') throw new Error('VOUCHER_NO_TRANSFER_OUT')
   await assertAccount(data.toAccountId)
   await assertMembers(null, data.createdByMemberId)
   return data
@@ -327,7 +331,7 @@ export async function updateTransfer(transferId: unknown, input: unknown): Promi
 /**
  * Pairs two existing rows as one transfer (e.g. a card payment seen in both the
  * account and the card statement). Their categories are cleared.
- * Throws: 'TRANSACTION_NOT_FOUND', 'TRANSFER_MISMATCH'
+ * Throws: 'TRANSACTION_NOT_FOUND', 'TRANSFER_MISMATCH', 'VOUCHER_NO_TRANSFER_OUT'
  */
 export async function linkTransfer(idA: unknown, idB: unknown): Promise<string> {
   if (typeof idA !== 'string' || typeof idB !== 'string' || idA === idB) throw new Error('INVALID_INPUT')
@@ -339,6 +343,8 @@ export async function linkTransfer(idA: unknown, idB: unknown): Promise<string> 
   if (a.accountId === b.accountId || a.amountCents + b.amountCents !== 0 || a.amountCents === 0 || a.transferId || b.transferId) {
     throw new Error('TRANSFER_MISMATCH')
   }
+  const source = await prisma.account.findUnique({ where: { id: (a.amountCents < 0 ? a : b).accountId }, select: { kind: true } })
+  if (source?.kind === 'MEAL_VOUCHER') throw new Error('VOUCHER_NO_TRANSFER_OUT')
   const transferId = randomUUID()
   await prisma.transaction.updateMany({ where: { id: { in: [a.id, b.id] } }, data: { transferId, categoryId: null } })
   return transferId

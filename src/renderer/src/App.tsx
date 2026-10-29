@@ -27,6 +27,7 @@ import { EMPTY_FILTER, currentMonth, useTransactionsStore } from './store/transa
 import { useImportStore } from './store/import'
 import { useBudgetStore } from './store/budget'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
+import { isImportable } from './lib/ledger'
 import type { PaletteTarget } from './lib/command-palette'
 import type { View } from './types'
 import type { CategoriesTab } from './lib/categories'
@@ -125,7 +126,7 @@ export default function App() {
 
   // Statements need an account to go into: Accounts (Quick setup) comes first
   function importStatement(accountId?: string) {
-    if (activeAccounts(useLedgerStore.getState().accounts).every(a => a.kind === 'CASH')) setView('accounts')
+    if (activeAccounts(useLedgerStore.getState().accounts).every(a => !isImportable(a.kind))) setView('accounts')
     else useImportStore.getState().openWizard(accountId)
   }
 

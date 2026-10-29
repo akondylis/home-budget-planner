@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma'
+import type { Prisma } from '../../../prisma/generated/client/client'
 import { normalise } from '../../shared/search-normalise'
 import type { CategoryType } from '../../shared/ledger'
 import type { AppLanguage } from './settings'
@@ -21,6 +22,7 @@ export const SEED_GROUPS: SeedGroup[] = [
     categories: [
       { key: 'salary', name: { el: 'Μισθός', en: 'Salary' } },
       { key: 'benefits', name: { el: 'Επιδόματα', en: 'Benefits' } },
+      { key: 'meal_vouchers', name: { el: 'Κουπόνια σίτισης', en: 'Meal vouchers' } },
       { key: 'other_income', name: { el: 'Άλλα έσοδα', en: 'Other income' } },
     ],
   },
@@ -131,4 +133,28 @@ export async function seedDefaults(lang: AppLanguage): Promise<boolean> {
     })
   })
   return true
+}
+
+/** Where a meal-voucher card's monthly top-up is booked */
+export const VOUCHER_CATEGORY = SEED_GROUPS[0].categories.find(c => c.key === 'meal_vouchers')!.name
+
+/**
+ * Makes sure an income category for meal-voucher top-ups exists (in either
+ * language), for databases seeded before it was a starter category. Adds it
+ * to the first income group, or brings back an archived one of that name.
+ */
+export async function ensureVoucherCategory(tx: Prisma.TransactionClient, lang: AppLanguage): Promise<void> {
+  const names = Object.values(VOUCHER_CATEGORY)
+  const found = await tx.category.findFirst({ where: { type: 'INCOME', parentId: { not: null }, name: { in: names } }, orderBy: { archivedAt: 'asc' } })
+  if (found) {
+    if (found.archivedAt) await tx.category.update({ where: { id: found.id }, data: { archivedAt: null } })
+    return
+  }
+  let group = await tx.category.findFirst({ where: { type: 'INCOME', parentId: null, archivedAt: null }, orderBy: { sortOrder: 'asc' } })
+  if (!group) {
+    const last = await tx.category.aggregate({ where: { parentId: null }, _max: { sortOrder: true } })
+    group = await tx.category.create({ data: { name: SEED_GROUPS[0].name[lang], type: 'INCOME', sortOrder: (last._max.sortOrder ?? -1) + 1 } })
+  }
+  const last = await tx.category.aggregate({ where: { parentId: group.id }, _max: { sortOrder: true } })
+  await tx.category.create({ data: { name: VOUCHER_CATEGORY[lang], type: 'INCOME', parentId: group.id, sortOrder: (last._max.sortOrder ?? -1) + 1 } })
 }

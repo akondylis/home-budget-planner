@@ -4,11 +4,19 @@ import type { MemberColour } from './members'
 // and the renderer (window.api types). Dates are 'yyyy-MM-dd' strings
 // (src/shared/date-only.ts); amounts are integer cents.
 
-export const ACCOUNT_KINDS = ['CURRENT', 'SAVINGS', 'CASH', 'CREDIT_CARD'] as const
+export const ACCOUNT_KINDS = ['CURRENT', 'SAVINGS', 'CASH', 'CREDIT_CARD', 'MEAL_VOUCHER'] as const
 export type AccountKind = (typeof ACCOUNT_KINDS)[number]
 
-export const INSTITUTIONS = ['ALPHA', 'EUROBANK', 'OTHER'] as const
+export const INSTITUTIONS = ['ALPHA', 'EUROBANK', 'EDENRED', 'UP_HELLAS', 'OTHER'] as const
 export type Institution = (typeof INSTITUTIONS)[number]
+
+/** Who issues a meal-voucher card; other kinds are offered every institution */
+export const VOUCHER_INSTITUTIONS: readonly Institution[] = ['EDENRED', 'UP_HELLAS', 'OTHER']
+
+/** Money that can pay for anything: every kind but a meal-voucher card (food only, never withdrawn) */
+export function isSpendable(kind: AccountKind): boolean {
+  return kind !== 'MEAL_VOUCHER'
+}
 
 /** Display and picker order */
 export const CATEGORY_TYPES = ['INCOME', 'BILL', 'SUBSCRIPTION', 'EXPENSE', 'DEBT', 'SAVINGS'] as const

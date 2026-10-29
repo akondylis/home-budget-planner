@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { Button, IconButton, ListCard, MetaLine, Money } from '../ui'
+import { Badge, Button, IconButton, ListCard, MetaLine, Money } from '../ui'
 import { MemberDot } from '../members/MemberDot'
 import { Icon } from '../shell/icons'
-import { ACCOUNT_KIND_ICON } from '../../lib/ledger'
+import { ACCOUNT_KIND_ICON, isImportable } from '../../lib/ledger'
 import type { AccountGroupBy } from '../../lib/account-groups'
 import { formatDate } from '../../lib/date-format'
 import type { AccountSummary } from '../../../../shared/ledger'
@@ -30,8 +30,11 @@ export function AccountCard({
   // Under a group header the name is one level down
   const Heading = groupedBy === 'none' ? 'h2' : 'h3'
   const holderLine = showHolder && groupedBy !== 'holder'
-  const cash = account.kind === 'CASH'
-  const source = cash ? t('accounts.source_cash') : account.importedUntil ? null : t('accounts.not_imported')
+  const voucher = account.kind === 'MEAL_VOUCHER'
+  // Cash and meal-voucher cards are entered by hand; the rest come from statements
+  const importable = isImportable(account.kind)
+  const source = !importable ? t('accounts.source_cash') : account.importedUntil ? null : t('accounts.not_imported')
+  const balanceLabel = account.kind === 'CREDIT_CARD' ? t('accounts.balance_card') : voucher ? t('accounts.balance_voucher') : t('accounts.balance')
 
   return (
     <ListCard className="flex flex-col p-4">
@@ -75,10 +78,16 @@ export function AccountCard({
       </div>
 
       <div className="mt-3">
-        <div className="text-xs text-fg-muted">{account.kind === 'CREDIT_CARD' ? t('accounts.balance_card') : t('accounts.balance')}</div>
-        <div className="text-2xl font-semibold text-fg"><Money cents={account.balanceCents} currency={account.currency} /></div>
+        <div className="text-xs text-fg-muted">{balanceLabel}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-2xl font-semibold text-fg"><Money cents={account.balanceCents} currency={account.currency} /></span>
+          {voucher && <Badge icon="utensils" title={t('accounts.food_only_hint')}>{t('accounts.food_only')}</Badge>}
+          {voucher && account.balanceCents < 0 && (
+            <Badge tone="warning" icon="alert-triangle" title={t('accounts.voucher_negative_hint')}>{t('accounts.voucher_negative')}</Badge>
+          )}
+        </div>
         <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-          {account.importedUntil && !cash && <>
+          {account.importedUntil && importable && <>
             {/* Where the imports are, with Undo */}
             <button type="button" onClick={onHistory} title={t('import.history_title')} className="shrink-0 underline decoration-dotted underline-offset-2 hover:text-fg">
               {t('accounts.imported_until', { date: formatDate(account.importedUntil) })}
@@ -90,8 +99,8 @@ export function AccountCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {!cash && <Button size="sm" icon="download" onClick={onImport}>{t('import.command')}</Button>}
-        <Button size="sm" variant={cash ? 'secondary' : 'ghost'} icon="plus" onClick={onAddTransaction}>{t('log.add')}</Button>
+        {importable && <Button size="sm" icon="download" onClick={onImport}>{t('import.command')}</Button>}
+        <Button size="sm" variant={importable ? 'ghost' : 'secondary'} icon="plus" onClick={onAddTransaction}>{t('log.add')}</Button>
       </div>
     </ListCard>
   )

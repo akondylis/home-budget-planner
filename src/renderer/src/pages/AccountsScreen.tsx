@@ -16,7 +16,7 @@ import {
 } from '../lib/account-groups'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { sumMoney } from '../../../shared/money'
-import type { AccountSummary } from '../../../shared/ledger'
+import { isSpendable, type AccountSummary } from '../../../shared/ledger'
 
 export interface AccountsScreenProps {
   onOpenTransactions: (accountId: string) => void
@@ -49,7 +49,10 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   const filtered = isAccountFilterActive(filter)
   const visible = filterAccounts(open, filter)
   const groups = groupAccounts(visible, groupBy, members)
-  const total = sumMoney(visible.map(a => a.balanceCents))
+  // Meal-voucher balances buy only food, so they sit beside the total instead of inside it
+  const total = sumMoney(visible.filter(a => isSpendable(a.kind)).map(a => a.balanceCents))
+  const vouchers = visible.filter(a => !isSpendable(a.kind))
+  const voucherPart = vouchers.length > 0 && <> • {t('accounts.vouchers_total')}: <Money cents={sumMoney(vouchers.map(a => a.balanceCents))} /></>
   const pills = describeAccountFilters(filter, t, values).map(pill => ({
     key: pill.key,
     label: pill.label,
@@ -68,8 +71,8 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   }
 
   const subtitle = open.length === 0 ? undefined : filtered
-    ? <>{t('accounts.total_shown')}: <Money cents={total} /> • {t('accounts.shown_of', { count: visible.length, total: open.length })}</>
-    : <>{t('accounts.total')}: <Money cents={total} /></>
+    ? <>{t('accounts.total_shown')}: <Money cents={total} />{voucherPart} • {t('accounts.shown_of', { count: visible.length, total: open.length })}</>
+    : <>{t('accounts.total')}: <Money cents={total} />{voucherPart}</>
 
   const grid = (list: typeof open) => (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">

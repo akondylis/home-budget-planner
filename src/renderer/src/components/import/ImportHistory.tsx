@@ -6,6 +6,7 @@ import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { useImportStore } from '../../store/import'
 import { formatDate, formatDateTime } from '../../lib/date-format'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
+import { isImportable } from '../../lib/ledger'
 import type { ImportHistoryItem } from '../../../../shared/statement-import'
 
 export interface ImportHistoryProps {
@@ -52,7 +53,7 @@ export function ImportHistory({ accountId: initialAccountId, onClose, onShowRows
     }
   }
 
-  const imported = accounts.filter(a => a.kind !== 'CASH' && (!a.archived || a.id === accountId))
+  const imported = accounts.filter(a => isImportable(a.kind) && (!a.archived || a.id === accountId))
 
   return (
     <Modal
@@ -67,7 +68,7 @@ export function ImportHistory({ accountId: initialAccountId, onClose, onShowRows
             variant="primary"
             icon="download"
             onClick={() => useImportStore.getState().openWizard(accountId)}
-            disabled={busy || activeAccounts(accounts).every(a => a.kind === 'CASH')}
+            disabled={busy || activeAccounts(accounts).every(a => !isImportable(a.kind))}
           >
             {t('import.command')}
           </Button>

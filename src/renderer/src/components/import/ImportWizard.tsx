@@ -9,6 +9,7 @@ import { useImportStore } from '../../store/import'
 import { useUiStore } from '../../store/ui'
 import { formatDate, formatDateTime } from '../../lib/date-format'
 import { ipcErrorCode, ipcErrorMessage } from '../../lib/ipc-errors'
+import { isImportable } from '../../lib/ledger'
 import {
   cashAccounts,
   guessHeaderRow,
@@ -39,8 +40,8 @@ const EMPTY_MAPPING = (account: AccountSummary | undefined): MappingForm => ({
   invertSign: account?.kind === 'CREDIT_CARD',
 })
 
-/** Accounts with a bank statement (cash has none) */
-const importable = (accounts: AccountSummary[]) => activeAccounts(accounts).filter(a => a.kind !== 'CASH')
+/** Accounts with a bank statement (cash and meal-voucher cards have none) */
+const importable = (accounts: AccountSummary[]) => activeAccounts(accounts).filter(a => isImportable(a.kind))
 
 export interface ImportWizardProps {
   /** Pre-selected from the entry point (an account card) */

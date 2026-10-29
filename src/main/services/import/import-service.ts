@@ -91,7 +91,8 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     }),
     prisma.transaction.findMany({
       where: {
-        accountId: { not: accountId }, transferId: null, account: { archivedAt: null },
+        // Meal-voucher cards never send or get money from a bank
+        accountId: { not: accountId }, transferId: null, account: { archivedAt: null, kind: { not: 'MEAL_VOUCHER' } },
         bookedAt: { gte: shift(from, -TRANSFER_WINDOW_DAYS), lte: shift(to, TRANSFER_WINDOW_DAYS) },
       },
       select: { id: true, accountId: true, bookedAt: true, amountCents: true, account: { select: { name: true } } },

@@ -4,6 +4,7 @@
 import type { IconName } from '../components/shell/icons'
 import { parseMoney } from '../../../shared/money'
 import { isDateOnly } from '../../../shared/date-only'
+import { VOUCHER_INSTITUTIONS } from '../../../shared/ledger'
 import type {
   AccountInput,
   AccountKind,
@@ -21,6 +22,17 @@ export const ACCOUNT_KIND_ICON: Record<AccountKind, IconName> = {
   SAVINGS: 'target',
   CASH: 'wallet',
   CREDIT_CARD: 'credit-card',
+  MEAL_VOUCHER: 'utensils',
+}
+
+/** Kinds with a bank statement to import: not cash, not a meal-voucher card (entered by hand) */
+export function isImportable(kind: AccountKind): boolean {
+  return kind !== 'CASH' && kind !== 'MEAL_VOUCHER'
+}
+
+/** Money can move out of it: a meal-voucher card is never the source of a transfer */
+export function canSendTransfer(kind: AccountKind): boolean {
+  return kind !== 'MEAL_VOUCHER'
 }
 
 /** Accounts offered by Quick setup: both banks' account and card, plus cash. Names: `accounts.quick.<key>` */
@@ -83,10 +95,25 @@ export function defaultAccountId(
   return pick ?? active[0]?.id ?? ''
 }
 
-/** For a transfer: Cash when it is not the source (ATM withdrawals), else the first other account */
+/** For a transfer: Cash when it is not the source (ATM withdrawals), else the first other account that is not a meal-voucher card */
 export function defaultToAccountId(accounts: AccountSummary[], fromId: string): string {
-  const others = accounts.filter(a => !a.archived && a.id !== fromId)
+  const others = accounts.filter(a => !a.archived && a.id !== fromId && a.kind !== 'MEAL_VOUCHER')
   return (others.find(a => a.kind === 'CASH') ?? others[0])?.id ?? ''
+}
+
+/**
+ * What a meal-voucher card would hold after this expense, when that is below zero;
+ * null otherwise (another kind, not an expense, no amount yet, or it still fits).
+ * An edited row's old amount is already in the balance, so it is taken back out first.
+ */
+export function voucherShortfall(accounts: AccountSummary[], draft: EntryDraft, editing: TransactionRow | null): number | null {
+  const account = accounts.find(a => a.id === draft.accountId)
+  if (account?.kind !== 'MEAL_VOUCHER' || draft.kind !== 'EXPENSE') return null
+  const cents = parseMoney(draft.amount)
+  if (cents === null || cents <= 0) return null
+  const before = account.balanceCents - (editing && editing.transferId === null && editing.accountId === account.id ? editing.amountCents : 0)
+  const after = before - cents
+  return after < 0 ? after : null
 }
 
 /** Cents as an editable amount without sign or grouping, e.g. 123450 → "1234,50" */
@@ -152,14 +179,18 @@ export interface AccountDraft {
   cards: CardDraft[]
 }
 
-export type AccountDraftErrors = Partial<Record<'name' | 'openingBalance' | 'openingDate', string>> & {
+export type AccountDraftErrors = Partial<Record<'name' | 'openingBalance' | 'openingDate' | 'holder', string>> & {
   /** Per card key */
   cards?: Record<string, string>
 }
 
-/** The input to save, or the i18n keys (under `accounts.errors`) of what is wrong */
-export function parseAccountDraft(draft: AccountDraft): { input: AccountInput } | { errors: AccountDraftErrors } {
+/**
+ * The input to save, or the i18n keys (under `accounts.errors`) of what is wrong.
+ * `requireHolder`: members exist, so a meal-voucher card must name its parent.
+ */
+export function parseAccountDraft(draft: AccountDraft, requireHolder = false): { input: AccountInput } | { errors: AccountDraftErrors } {
   const errors: AccountDraftErrors = {}
+  if (requireHolder && draft.kind === 'MEAL_VOUCHER' && !draft.holderMemberId) errors.holder = 'holder_required'
   const cents = draft.openingBalance.trim() === '' ? 0 : parseMoney(draft.openingBalance)
   if (!draft.name.trim()) errors.name = 'name_required'
   if (cents === null) errors.openingBalance = 'amount_invalid'
@@ -179,7 +210,7 @@ export function parseAccountDraft(draft: AccountDraft): { input: AccountInput } 
     input: {
       name: draft.name.trim(),
       kind: draft.kind,
-      institution: draft.institution,
+      institution: draft.kind === 'MEAL_VOUCHER' && !VOUCHER_INSTITUTIONS.includes(draft.institution) ? 'OTHER' : draft.institution,
       openingBalanceCents: cents,
       openingDate: draft.openingDate,
       holderMemberId: draft.holderMemberId,

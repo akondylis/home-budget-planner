@@ -314,3 +314,47 @@ describe('transfers', () => {
     expect(await prisma.transaction.findUnique({ where: { id: imported.id } })).toMatchObject({ transferId: null })
   })
 })
+
+describe('meal-voucher cards', () => {
+  const voucher: AccountInput = { name: 'Edenred', kind: 'MEAL_VOUCHER', institution: 'EDENRED', openingBalanceCents: 12_000, openingDate: '2026-10-01' }
+  const voucherCategories = () => prisma.category.findMany({ where: { type: 'INCOME', name: { in: ['Κουπόνια σίτισης', 'Meal vouchers'] } } })
+
+  it('should accept only a voucher issuer, and need a holder once parents exist', async () => {
+    await expect(createAccount({ ...voucher, institution: 'ALPHA' })).rejects.toThrow('INVALID_INPUT')
+    expect(await createAccount(voucher)).toBeTruthy()
+    const parent = await createMember({ name: 'Ανδρέας', colour: 'blue' })
+    await expect(createAccount({ ...voucher, name: 'Up' })).rejects.toThrow('HOLDER_REQUIRED')
+    await expect(createAccounts([{ ...voucher, name: 'Up' }])).rejects.toThrow('HOLDER_REQUIRED')
+    expect(await createAccount({ ...voucher, name: 'Up', institution: 'UP_HELLAS', holderMemberId: parent })).toBeTruthy()
+  })
+
+  it('should add the top-up income category with the first card, once, under the income group', async () => {
+    const { salaryId } = await setup()
+    await createAccount(voucher)
+    await createAccounts([{ ...voucher, name: 'Up', institution: 'UP_HELLAS' }])
+    const [category, ...rest] = await voucherCategories()
+    expect(rest).toEqual([])
+    const salary = await prisma.category.findUniqueOrThrow({ where: { id: salaryId } })
+    expect(category).toMatchObject({ parentId: salary.parentId, archivedAt: null })
+  })
+
+  it('should bring back an archived top-up category instead of adding another', async () => {
+    await seedDefaults('el')
+    const [seeded] = await voucherCategories()
+    await prisma.category.update({ where: { id: seeded.id }, data: { archivedAt: new Date() } })
+    await createAccount(voucher)
+    expect(await voucherCategories()).toEqual([expect.objectContaining({ id: seeded.id, archivedAt: null })])
+  })
+
+  it('should never send money out of a card, but take a transfer in', async () => {
+    const { bankId } = await setup()
+    const cardId = await createAccount(voucher)
+    const move = { amountCents: 500, bookedAt: '2026-10-05' }
+    await expect(createTransfer({ ...move, fromAccountId: cardId, toAccountId: bankId })).rejects.toThrow('VOUCHER_NO_TRANSFER_OUT')
+    const transferId = await createTransfer({ ...move, fromAccountId: bankId, toAccountId: cardId })
+    await expect(updateTransfer(transferId, { ...move, fromAccountId: cardId, toAccountId: bankId })).rejects.toThrow('VOUCHER_NO_TRANSFER_OUT')
+    const out = await prisma.transaction.create({ data: { accountId: cardId, bookedAt: new Date(), amountCents: -300 } })
+    const into = await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date(), amountCents: 300 } })
+    await expect(linkTransfer(out.id, into.id)).rejects.toThrow('VOUCHER_NO_TRANSFER_OUT')
+  })
+})

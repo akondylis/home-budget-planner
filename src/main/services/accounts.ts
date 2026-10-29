@@ -2,8 +2,10 @@ import { z } from 'zod'
 import { prisma } from '../db/prisma'
 import type { Prisma } from '../../../prisma/generated/client/client'
 import { assertMember } from './members'
+import { ensureVoucherCategory } from './seed'
+import { getSettings } from './settings'
 import { dateOnlyToDate, dateToDateOnly, isDateOnly } from '../../shared/date-only'
-import { ACCOUNT_KINDS, INSTITUTIONS, type AccountSummary } from '../../shared/ledger'
+import { ACCOUNT_KINDS, INSTITUTIONS, VOUCHER_INSTITUTIONS, type AccountSummary } from '../../shared/ledger'
 import type { MemberColour } from '../../shared/members'
 
 const cardInput = z.object({
@@ -27,12 +29,13 @@ const accountInput = z.object({
 
 type CardRow = z.infer<typeof cardInput>
 
-/** Throws: 'INVALID_INPUT', 'CARD_DUPLICATE' */
+/** A meal-voucher card is issued by a voucher company. Throws: 'INVALID_INPUT', 'CARD_DUPLICATE' */
 function parseAccountInput(input: unknown) {
   const parsed = accountInput.safeParse(input)
   if (!parsed.success) throw new Error('INVALID_INPUT')
   const { openingDate, cards, ...rest } = parsed.data
   if (cards && new Set(cards.map(c => c.last4)).size !== cards.length) throw new Error('CARD_DUPLICATE')
+  if (rest.kind === 'MEAL_VOUCHER' && !VOUCHER_INSTITUTIONS.includes(rest.institution)) throw new Error('INVALID_INPUT')
   return { data: { ...rest, openingDate: dateOnlyToDate(openingDate) }, cards }
 }
 
@@ -44,6 +47,15 @@ function parseAccountInput(input: unknown) {
 async function assertHolders(ids: (string | null)[], stored: (string | null)[] = []): Promise<void> {
   const keep = new Set(stored)
   for (const id of new Set(ids)) if (id && !keep.has(id)) await assertMember(id)
+}
+
+/**
+ * A meal-voucher card comes from one parent's employer, so once members exist it names its holder.
+ * Throws: 'HOLDER_REQUIRED'
+ */
+async function assertVoucherHolders(rows: { kind: string; holderMemberId: string | null }[]): Promise<void> {
+  if (!rows.some(r => r.kind === 'MEAL_VOUCHER' && !r.holderMemberId)) return
+  if ((await prisma.member.count({ where: { archivedAt: null } })) > 0) throw new Error('HOLDER_REQUIRED')
 }
 
 /**
@@ -74,6 +86,13 @@ export async function balanceOn(accountId: string, date: string): Promise<number
     prisma.transaction.aggregate({ where: { accountId, bookedAt: { lte: dateOnlyToDate(date) } }, _sum: { amountCents: true } }),
   ])
   return account.openingBalanceCents + (sum._sum.amountCents ?? 0)
+}
+
+/** A meal-voucher account gets its top-up category with it */
+async function voucherCategoryFor(tx: Prisma.TransactionClient, kinds: string[]): Promise<void> {
+  if (!kinds.includes('MEAL_VOUCHER')) return
+  const settings = await getSettings()
+  await ensureVoucherCategory(tx, settings?.language === 'en' ? 'en' : 'el')
 }
 
 const holderSelect = { select: { name: true, colour: true } } as const
@@ -123,35 +142,40 @@ export async function listAccounts(opts: { includeArchived?: boolean } = {}): Pr
   })
 }
 
-/** Throws: 'INVALID_INPUT', 'MEMBER_NOT_FOUND', 'CARD_DUPLICATE' */
+/** Throws: 'INVALID_INPUT', 'MEMBER_NOT_FOUND', 'CARD_DUPLICATE', 'HOLDER_REQUIRED' */
 export async function createAccount(input: unknown): Promise<string> {
   const { data, cards } = parseAccountInput(input)
   if (cards?.some(c => c.id)) throw new Error('INVALID_INPUT')
   await assertHolders([data.holderMemberId, ...(cards ?? []).map(c => c.holderMemberId)])
+  await assertVoucherHolders([data])
   const last = await prisma.account.aggregate({ _max: { sortOrder: true } })
   return prisma.$transaction(async tx => {
     const account = await tx.account.create({ data: { ...data, sortOrder: (last._max.sortOrder ?? -1) + 1 } })
     if (cards) await syncCards(tx, account.id, cards)
+    await voucherCategoryFor(tx, [data.kind])
     return account.id
   })
 }
 
-/** Several accounts at once (Quick setup), in the given order. Throws: 'INVALID_INPUT', 'MEMBER_NOT_FOUND' */
+/** Several accounts at once (Quick setup), in the given order. Throws: 'INVALID_INPUT', 'MEMBER_NOT_FOUND', 'HOLDER_REQUIRED' */
 export async function createAccounts(inputs: unknown): Promise<string[]> {
   if (!Array.isArray(inputs) || inputs.length === 0) throw new Error('INVALID_INPUT')
   const rows = inputs.map(i => parseAccountInput(i).data)
   await assertHolders(rows.map(r => r.holderMemberId))
+  await assertVoucherHolders(rows)
   const last = await prisma.account.aggregate({ _max: { sortOrder: true } })
   const start = (last._max.sortOrder ?? -1) + 1
-  const created = await prisma.$transaction(
-    rows.map((data, i) => prisma.account.create({ data: { ...data, sortOrder: start + i } })),
-  )
-  return created.map(a => a.id)
+  return prisma.$transaction(async tx => {
+    const ids: string[] = []
+    for (const [i, data] of rows.entries()) ids.push((await tx.account.create({ data: { ...data, sortOrder: start + i } })).id)
+    await voucherCategoryFor(tx, rows.map(r => r.kind))
+    return ids
+  })
 }
 
 /**
  * Saves the account, and its card list when one is given, in one write.
- * Throws: 'INVALID_INPUT', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND', 'CARD_DUPLICATE', 'CARD_NOT_FOUND'
+ * Throws: 'INVALID_INPUT', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND', 'CARD_DUPLICATE', 'CARD_NOT_FOUND', 'HOLDER_REQUIRED'
  */
 export async function updateAccount(id: unknown, input: unknown): Promise<void> {
   if (typeof id !== 'string') throw new Error('INVALID_INPUT')
@@ -162,9 +186,11 @@ export async function updateAccount(id: unknown, input: unknown): Promise<void> 
     [data.holderMemberId, ...(cards ?? []).map(c => c.holderMemberId)],
     [found.holderMemberId, ...found.cards.map(c => c.holderMemberId)],
   )
+  await assertVoucherHolders([data])
   await prisma.$transaction(async tx => {
     await tx.account.update({ where: { id }, data })
     if (cards) await syncCards(tx, id, cards)
+    await voucherCategoryFor(tx, [data.kind])
   })
 }
 

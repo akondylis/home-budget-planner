@@ -60,6 +60,7 @@ export type IconName =
   | 'folder'
   | 'wallet'
   | 'credit-card'
+  | 'utensils'
   | 'bank'
   | 'repeat'
   | 'trending-up'
@@ -87,6 +88,8 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M2.5 10h19M6.5 15h3" />
     </>
   ),
+  // Fork and knife: a meal-voucher card
+  utensils: <path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17 21V3c-2 1.5-3 4-3 7s1 3.5 3 3.5" />,
   bank: <path d="M3 9.5L12 4l9 5.5M4.5 9.5h15M6 10v7.5M10 10v7.5M14 10v7.5M18 10v7.5M3.5 20h17" />,
   repeat: <path d="M17 2.5l3 3-3 3M4 11.5v-1a5 5 0 0 1 5-5h11M7 21.5l-3-3 3-3M20 12.5v1a5 5 0 0 1-5 5H4" />,
   'trending-up': <path d="M3 17l6-6 4 4 8-8M15 7h6v6" />,

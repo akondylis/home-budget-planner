@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canSendTransfer,
   centsToInput,
   defaultAccountId,
   defaultToAccountId,
   draftFromRow,
   findCategory,
   groupsFor,
+  isImportable,
   parseAccountDraft,
   validateEntry,
+  voucherShortfall,
   type EntryDraft,
 } from './ledger'
 import { matchShortcut } from '../hooks/useShortcuts'
@@ -62,6 +65,10 @@ describe('entry defaults', () => {
     expect(defaultToAccountId(accounts, 'bank')).toBe('cash')
     expect(defaultToAccountId(accounts, 'cash')).toBe('bank')
   })
+
+  it('should never pick a meal-voucher card as where a transfer goes', () => {
+    expect(defaultToAccountId([account('bank'), account('edenred', 'MEAL_VOUCHER'), account('savings', 'SAVINGS')], 'bank')).toBe('savings')
+  })
 })
 
 describe('validateEntry', () => {
@@ -106,6 +113,26 @@ describe('draftFromRow', () => {
   })
 })
 
+describe('meal-voucher cards', () => {
+  it('should be entered by hand and never be the source of a transfer', () => {
+    expect(['CURRENT', 'CREDIT_CARD', 'CASH', 'MEAL_VOUCHER'].map(k => isImportable(k as AccountSummary['kind']))).toEqual([true, true, false, false])
+    expect(canSendTransfer('MEAL_VOUCHER')).toBe(false)
+    expect(canSendTransfer('CASH')).toBe(true)
+  })
+
+  it('should warn when an expense takes the card below zero, counting an edited row only once', () => {
+    const card = { ...account('card', 'MEAL_VOUCHER'), balanceCents: 1_000 }
+    const accounts = [card, account('bank')]
+    expect(voucherShortfall(accounts, draft({ accountId: 'card', amount: '10,00' }), null)).toBeNull()
+    expect(voucherShortfall(accounts, draft({ accountId: 'card', amount: '12,50' }), null)).toBe(-250)
+    expect(voucherShortfall(accounts, draft({ accountId: 'card', amount: '12,50', kind: 'INCOME' }), null)).toBeNull()
+    expect(voucherShortfall(accounts, draft({ accountId: 'bank', amount: '99,00' }), null)).toBeNull()
+    // The card already shows the edited row's -5,00; raising it to 12,50 leaves 15,00 - 12,50
+    const edited = { id: 'r', accountId: 'card', amountCents: -500, transferId: null } as TransactionRow
+    expect(voucherShortfall(accounts, draft({ accountId: 'card', amount: '12,50' }), edited)).toBeNull()
+  })
+})
+
 describe('parseAccountDraft', () => {
   const base = { name: ' Alpha ', kind: 'CREDIT_CARD' as const, institution: 'ALPHA' as const, openingBalance: '-350,00', openingDate: '2026-10-01', holderMemberId: null, cards: [] }
 
@@ -130,6 +157,13 @@ describe('parseAccountDraft', () => {
   it('should flag card digits that are not 4 digits, and a card listed twice', () => {
     const cards = [{ key: 'a', last4: '12a4', holderMemberId: null }, { key: 'b', last4: '5678', holderMemberId: null }, { key: 'c', last4: '5678', holderMemberId: null }]
     expect(parseAccountDraft({ ...base, cards })).toEqual({ errors: { cards: { a: 'card_last4', c: 'card_duplicate' } } })
+  })
+
+  it('should ask whose a meal-voucher card is when parents exist, and keep only a voucher issuer', () => {
+    const voucher = { ...base, kind: 'MEAL_VOUCHER' as const, openingBalance: '120,00' }
+    expect(parseAccountDraft(voucher, true)).toEqual({ errors: { holder: 'holder_required' } })
+    expect(parseAccountDraft(voucher)).toMatchObject({ input: { institution: 'OTHER' } })
+    expect(parseAccountDraft({ ...voucher, institution: 'UP_HELLAS', holderMemberId: 'm1' }, true)).toMatchObject({ input: { institution: 'UP_HELLAS' } })
   })
 
   it('should drop the cards of an account that becomes cash', () => {

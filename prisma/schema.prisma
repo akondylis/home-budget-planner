@@ -29,11 +29,15 @@ enum AccountKind {
   SAVINGS
   CASH
   CREDIT_CARD
+  /// Employer meal card (Edenred, Up Hellas): food only, never a transfer source
+  MEAL_VOUCHER
 }
 
 enum Institution {
   ALPHA
   EUROBANK
+  EDENRED
+  UP_HELLAS
   OTHER
 }
 
