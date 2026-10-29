@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_ACCOUNT_FILTER, JOINT, applicableFilter, filterAccounts, groupAccounts, isAccountFilterActive, presentValues } from './account-groups'
+import i18next from 'i18next'
+import {
+  EMPTY_ACCOUNT_FILTER, JOINT, applicableFilter, countAccountFilters, describeAccountFilters, filterAccounts, groupAccounts,
+  isAccountFilterActive, presentValues, toggleValue,
+} from './account-groups'
 import type { AccountSummary } from '../../../shared/ledger'
 import type { MemberSummary } from '../../../shared/members'
 
@@ -41,18 +45,26 @@ describe('filterAccounts', () => {
     expect(isAccountFilterActive(EMPTY_ACCOUNT_FILTER)).toBe(false)
   })
 
-  it('should match every set field', () => {
-    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, institution: 'ALPHA' }))).toEqual(['alpha-joint', 'alpha-mum'])
-    expect(ids(filterAccounts(accounts, { kind: 'SAVINGS', institution: 'ALPHA', holder: null }))).toEqual(['alpha-mum'])
-    expect(filterAccounts(accounts, { kind: 'CASH', institution: 'ALPHA', holder: null })).toEqual([])
+  it('should take any value within a section and every section with a choice', () => {
+    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, institutions: ['ALPHA'] }))).toEqual(['alpha-joint', 'alpha-mum'])
+    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, institutions: ['EUROBANK', 'OTHER'] }))).toEqual(['cash', 'euro-card'])
+    expect(ids(filterAccounts(accounts, { kinds: ['SAVINGS', 'CASH'], institutions: ['ALPHA'], holders: [] }))).toEqual(['alpha-mum'])
+    expect(filterAccounts(accounts, { kinds: ['CASH'], institutions: ['ALPHA'], holders: [] })).toEqual([])
   })
 
-  it('should count a card of theirs on a joint account as the holder\'s', () => {
-    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, holder: 'dad' }))).toEqual(['euro-card', 'alpha-joint'])
+  it('should count a parent\'s card on a joint account as theirs', () => {
+    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, holders: ['dad'] }))).toEqual(['euro-card', 'alpha-joint'])
   })
 
   it('should match joint accounts by the missing holder', () => {
-    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, holder: JOINT }))).toEqual(['cash', 'alpha-joint'])
+    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, holders: [JOINT] }))).toEqual(['cash', 'alpha-joint'])
+    expect(ids(filterAccounts(accounts, { ...EMPTY_ACCOUNT_FILTER, holders: [JOINT, 'mum'] }))).toEqual(['cash', 'alpha-joint', 'alpha-mum'])
+  })
+
+  it('should count every chosen value and toggle one', () => {
+    expect(countAccountFilters({ kinds: ['CASH'], institutions: ['ALPHA', 'EUROBANK'], holders: [] })).toBe(3)
+    expect(toggleValue(['a', 'b'], 'a')).toEqual(['b'])
+    expect(toggleValue(['b'], 'a')).toEqual(['b', 'a'])
   })
 })
 
@@ -87,26 +99,44 @@ describe('groupAccounts', () => {
 })
 
 describe('presentValues', () => {
-  it('should offer only what occurs, holders from cards included', () => {
+  it('should offer only what occurs with its count, holders from cards included', () => {
     const values = presentValues(accounts.slice(1, 3), members)
-    expect(values.kinds).toEqual(['CURRENT', 'CREDIT_CARD'])
-    expect(values.institutions).toEqual(['ALPHA', 'EUROBANK'])
-    expect(values.holders.map(h => h.id)).toEqual(['dad', JOINT])
+    expect(values.kinds).toEqual([{ value: 'CURRENT', count: 1 }, { value: 'CREDIT_CARD', count: 1 }])
+    expect(values.institutions.map(v => v.value)).toEqual(['ALPHA', 'EUROBANK'])
+    expect(values.holders.map(h => [h.id, h.count])).toEqual([['dad', 2], [JOINT, 1]])
   })
 })
 
 describe('applicableFilter', () => {
   const values = presentValues(accounts, members)
 
-  it('should keep a choice that is offered', () => {
-    const filter = { kind: 'CASH' as const, institution: 'ALPHA' as const, holder: 'dad' }
+  it('should keep choices that are offered', () => {
+    const filter = { kinds: ['CASH' as const], institutions: ['ALPHA' as const, 'EUROBANK' as const], holders: ['dad', JOINT] }
     expect(applicableFilter(filter, values, true)).toEqual(filter)
   })
 
-  it('should drop a choice whose value is gone or whose control is hidden', () => {
-    expect(applicableFilter({ ...EMPTY_ACCOUNT_FILTER, holder: 'gone' }, values, true).holder).toBeNull()
-    expect(applicableFilter({ ...EMPTY_ACCOUNT_FILTER, holder: 'dad' }, values, false).holder).toBeNull()
+  it('should drop values that are gone and sections that are hidden', () => {
+    expect(applicableFilter({ ...EMPTY_ACCOUNT_FILTER, holders: ['gone', 'dad'] }, values, true).holders).toEqual(['dad'])
+    expect(applicableFilter({ ...EMPTY_ACCOUNT_FILTER, holders: ['dad'] }, values, false).holders).toEqual([])
     const oneBank = presentValues([accounts[2], accounts[3]], members)
-    expect(applicableFilter({ ...EMPTY_ACCOUNT_FILTER, institution: 'ALPHA' }, oneBank, true).institution).toBeNull()
+    expect(applicableFilter({ ...EMPTY_ACCOUNT_FILTER, institutions: ['ALPHA'] }, oneBank, true).institutions).toEqual([])
+  })
+})
+
+describe('describeAccountFilters', () => {
+  const t = i18next.t.bind(i18next)
+  const values = presentValues(accounts, members)
+  const filter = { kinds: ['CASH' as const], institutions: ['ALPHA' as const], holders: ['dad', JOINT] }
+
+  it('should give one pill per chosen value, in section order', () => {
+    const pills = describeAccountFilters(filter, t, values)
+    expect(pills.map(p => p.key)).toEqual(['kind-CASH', 'bank-ALPHA', 'holder-dad', `holder-${JOINT}`])
+    expect(pills[2].label).toBe('dad')
+  })
+
+  it('should clear only its own value', () => {
+    const [, bank, dad] = describeAccountFilters(filter, t, values)
+    expect(bank.clear(filter)).toEqual({ ...filter, institutions: [] })
+    expect(dad.clear(filter).holders).toEqual([JOINT])
   })
 })

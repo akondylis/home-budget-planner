@@ -581,9 +581,9 @@
       "holder": "Κάτοχος",
       "kind": "Είδος"
     },
-    "all_kinds": "Όλα τα είδη",
-    "all_banks": "Όλες οι τράπεζες",
-    "all_holders": "Όλοι οι κάτοχοι",
+    "filter_kind": "Είδος",
+    "filter_bank": "Τράπεζα",
+    "filter_holder": "Κάτοχος",
     "total_shown": "Σύνολο εμφανιζόμενων",
     "shown_of": "{{count}} από {{total}} λογαριασμούς",
     "count_one": "{{count}} λογαριασμός",

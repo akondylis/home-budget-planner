@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, EmptyCard, ListCard, Money, PageHeader, RowTitle, SectionHeader, Spinner } from '../components/ui'
+import { ActiveFilterPills, Button, EmptyCard, ListCard, Money, PageHeader, RowTitle, SectionHeader, Spinner } from '../components/ui'
 import { AccountCard } from '../components/accounts/AccountCard'
 import { AccountsToolbar } from '../components/accounts/AccountsToolbar'
 import { MemberDot } from '../components/members/MemberDot'
@@ -12,7 +12,7 @@ import { useImportStore } from '../store/import'
 import { useUiStore } from '../store/ui'
 import { ACCOUNT_KIND_ICON } from '../lib/ledger'
 import {
-  EMPTY_ACCOUNT_FILTER, JOINT, applicableFilter, filterAccounts, groupAccounts, isAccountFilterActive, presentValues, type AccountGroup,
+  EMPTY_ACCOUNT_FILTER, JOINT, applicableFilter, describeAccountFilters, filterAccounts, groupAccounts, isAccountFilterActive, presentValues, type AccountGroup,
 } from '../lib/account-groups'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { sumMoney } from '../../../shared/money'
@@ -37,6 +37,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   const storedGroupBy = useUiStore(s => s.accountsGroupBy)
   const storedFilter = useUiStore(s => s.accountsFilter)
   const clearFilter = useUiStore(s => s.clearAccountsFilter)
+  const setFilter = useUiStore(s => s.setAccountsFilter)
 
   const open = activeAccounts(accounts)
   const archived = accounts.filter(a => a.archived)
@@ -49,6 +50,11 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
   const visible = filterAccounts(open, filter)
   const groups = groupAccounts(visible, groupBy, members)
   const total = sumMoney(visible.map(a => a.balanceCents))
+  const pills = describeAccountFilters(filter, t, values).map(pill => ({
+    key: pill.key,
+    label: pill.label,
+    onRemove: () => setFilter(pill.clear(filter)),
+  }))
 
   function groupTitle(group: AccountGroup): string {
     if (groupBy === 'kind') return t(`accounts.kind.${group.key}`)
@@ -112,6 +118,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
       ) : (
         <>
           {toolbar && <AccountsToolbar groupBy={groupBy} filter={filter} values={values} hasMembers={hasMembers} />}
+          <ActiveFilterPills pills={pills} onClearAll={clearFilter} />
           {visible.length === 0 ? (
             <EmptyCard icon="filter" title={t('accounts.no_match_title')} body={t('accounts.no_match_body')}>
               <Button icon="close" onClick={clearFilter}>{t('ui.filter_clear_all')}</Button>

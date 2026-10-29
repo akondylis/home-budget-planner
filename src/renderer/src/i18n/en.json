@@ -581,9 +581,9 @@
       "holder": "Holder",
       "kind": "Type"
     },
-    "all_kinds": "All types",
-    "all_banks": "All banks",
-    "all_holders": "All holders",
+    "filter_kind": "Type",
+    "filter_bank": "Bank",
+    "filter_holder": "Holder",
     "total_shown": "Total shown",
     "shown_of": "{{count}} of {{total}} accounts",
     "count_one": "{{count}} account",

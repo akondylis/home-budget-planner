@@ -1,6 +1,7 @@
 // Grouping and filtering of the Accounts screen: by bank, holder or type, each
 // group with its subtotal. Pure, so the order and the totals can be unit-tested.
 
+import type { TFunction } from 'i18next'
 import { sumMoney } from '../../../shared/money'
 import { ACCOUNT_KINDS, INSTITUTIONS, type AccountKind, type AccountSummary, type Institution } from '../../../shared/ledger'
 import type { MemberColour, MemberSummary } from '../../../shared/members'
@@ -11,16 +12,24 @@ export type AccountGroupBy = (typeof ACCOUNT_GROUP_BYS)[number]
 /** Holder value of a joint account (no holder) */
 export const JOINT = 'JOINT'
 
+/** Empty list = any value; values within a list are alternatives */
 export interface AccountFilter {
-  kind: AccountKind | null
-  institution: Institution | null
-  /** A member id or `JOINT`; null = anyone */
-  holder: string | null
+  kinds: AccountKind[]
+  institutions: Institution[]
+  /** Member ids and/or `JOINT` */
+  holders: string[]
 }
 
-export const EMPTY_ACCOUNT_FILTER: AccountFilter = { kind: null, institution: null, holder: null }
+export const EMPTY_ACCOUNT_FILTER: AccountFilter = { kinds: [], institutions: [], holders: [] }
 
-export const isAccountFilterActive = (f: AccountFilter) => f.kind !== null || f.institution !== null || f.holder !== null
+/** Selected values in all sections: the "(n)" on the Filters button */
+export const countAccountFilters = (f: AccountFilter) => f.kinds.length + f.institutions.length + f.holders.length
+
+export const isAccountFilterActive = (f: AccountFilter) => countAccountFilters(f) > 0
+
+export function toggleValue<T>(list: T[], value: T): T[] {
+  return list.includes(value) ? list.filter(v => v !== value) : [...list, value]
+}
 
 export interface HolderOption {
   /** A member id or `JOINT` */
@@ -38,14 +47,19 @@ export interface AccountGroup {
   totalCents: number
 }
 
-/** Every set field must match; a holder matches the account's holder or the holder of one of its cards */
+/** The account's holder, or the holder of one of its cards (a parent's card on a joint account counts as theirs) */
+function heldBy(a: AccountSummary, holder: string): boolean {
+  return holder === JOINT
+    ? a.holderMemberId === null
+    : a.holderMemberId === holder || a.cards.some(c => c.holderMemberId === holder)
+}
+
+/** Any of the chosen values within a section, every section with a choice */
 export function filterAccounts(accounts: AccountSummary[], filter: AccountFilter): AccountSummary[] {
   return accounts.filter(a =>
-    (filter.kind === null || a.kind === filter.kind)
-    && (filter.institution === null || a.institution === filter.institution)
-    && (filter.holder === null || (filter.holder === JOINT
-      ? a.holderMemberId === null
-      : a.holderMemberId === filter.holder || a.cards.some(c => c.holderMemberId === filter.holder))),
+    (filter.kinds.length === 0 || filter.kinds.includes(a.kind))
+    && (filter.institutions.length === 0 || filter.institutions.includes(a.institution))
+    && (filter.holders.length === 0 || filter.holders.some(h => heldBy(a, h))),
   )
 }
 
@@ -78,10 +92,16 @@ export function groupAccounts(accounts: AccountSummary[], by: AccountGroupBy, me
   return [...groups.values()].sort((x, y) => rank(x.key) - rank(y.key))
 }
 
+/** A value offered as a filter chip, with how many accounts it alone would show */
+export interface FilterValue<T> {
+  value: T
+  count: number
+}
+
 export interface PresentValues {
-  kinds: AccountKind[]
-  institutions: Institution[]
-  holders: HolderOption[]
+  kinds: FilterValue<AccountKind>[]
+  institutions: FilterValue<Institution>[]
+  holders: (HolderOption & { count: number })[]
 }
 
 /** The kinds, banks and holders (account or card) that occur, in group order; drives which filters are offered */
@@ -96,22 +116,54 @@ export function presentValues(accounts: AccountSummary[], members: MemberSummary
       }
     }
   }
+  const present = <T>(all: readonly T[], of: (a: AccountSummary) => T): FilterValue<T>[] =>
+    all.map(value => ({ value, count: accounts.filter(a => of(a) === value).length })).filter(v => v.count > 0)
   return {
-    kinds: ACCOUNT_KINDS.filter(k => accounts.some(a => a.kind === k)),
-    institutions: INSTITUTIONS.filter(i => accounts.some(a => a.institution === i)),
-    holders: [...holders.values()].sort((x, y) => holderRank(members, x.id) - holderRank(members, y.id)),
+    kinds: present(ACCOUNT_KINDS, a => a.kind),
+    institutions: present(INSTITUTIONS, a => a.institution),
+    holders: [...holders.values()]
+      .sort((x, y) => holderRank(members, x.id) - holderRank(members, y.id))
+      .map(h => ({ ...h, count: accounts.filter(a => heldBy(a, h.id)).length })),
   }
 }
 
 /**
- * The filter as applied: a field counts only while its dropdown is offered (two or more values, holders only
- * with members) and its value still occurs, so a stored choice never hides accounts behind a missing control.
+ * The filter as applied: a section counts only while it is offered (two or more values, holders only with members)
+ * and keeps only values that still occur, so a stored choice never hides accounts behind a missing control.
  */
 export function applicableFilter(stored: AccountFilter, values: PresentValues, hasMembers: boolean): AccountFilter {
-  const offered = <T>(list: T[], value: T | null) => (list.length > 1 && value !== null && list.includes(value) ? value : null)
+  const offered = <T>(present: T[], chosen: T[]) => (present.length > 1 ? chosen.filter(v => present.includes(v)) : [])
   return {
-    kind: offered(values.kinds, stored.kind),
-    institution: offered(values.institutions, stored.institution),
-    holder: hasMembers ? offered(values.holders.map(h => h.id), stored.holder) : null,
+    kinds: offered(values.kinds.map(v => v.value), stored.kinds),
+    institutions: offered(values.institutions.map(v => v.value), stored.institutions),
+    holders: hasMembers ? offered(values.holders.map(h => h.id), stored.holders) : [],
   }
+}
+
+export interface AccountFilterPill {
+  key: string
+  label: string
+  /** The filter without this one value */
+  clear: (f: AccountFilter) => AccountFilter
+}
+
+/** One removable pill per chosen value, in section order */
+export function describeAccountFilters(filter: AccountFilter, t: TFunction, values: PresentValues): AccountFilterPill[] {
+  return [
+    ...filter.kinds.map(k => ({
+      key: `kind-${k}`,
+      label: t(`accounts.kind.${k}`),
+      clear: (f: AccountFilter) => ({ ...f, kinds: f.kinds.filter(x => x !== k) }),
+    })),
+    ...filter.institutions.map(i => ({
+      key: `bank-${i}`,
+      label: t(`accounts.institution.${i}`),
+      clear: (f: AccountFilter) => ({ ...f, institutions: f.institutions.filter(x => x !== i) }),
+    })),
+    ...filter.holders.map(h => ({
+      key: `holder-${h}`,
+      label: h === JOINT ? t('accounts.holder_joint') : values.holders.find(v => v.id === h)?.name ?? '?',
+      clear: (f: AccountFilter) => ({ ...f, holders: f.holders.filter(x => x !== h) }),
+    })),
+  ]
 }
