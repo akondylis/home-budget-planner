@@ -153,7 +153,7 @@ export default function App() {
 
   function openCategories(tab: CategoriesTab = 'categories') {
     setCategoriesTab(tab)
-    if (view !== 'categories') setCategoriesFrom(view === 'settings' || view === 'budget' ? view : 'transactions')
+    if (view !== 'categories') setCategoriesFrom(view === 'settings' || view === 'budget' || view === 'overview' ? view : 'transactions')
     setView('categories')
   }
 
@@ -165,6 +165,16 @@ export default function App() {
   function showBudgetTransactions(month: string, categoryId: string) {
     useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month, categoryId })
     setView('transactions')
+  }
+
+  function showMonth(month: string) {
+    useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month })
+    setView('transactions')
+  }
+
+  function openBudget(month: string) {
+    useBudgetStore.getState().setMonth(month)
+    setView('budget')
   }
 
   function showUncategorised(month: string) {
@@ -216,7 +226,17 @@ export default function App() {
 
   function renderView() {
     switch (view) {
-      case 'overview': return <OverviewScreen onPrintWorksheet={() => setWorksheetOpen(true)} onGoTo={setView} />
+      case 'overview':
+        return (
+          <OverviewScreen
+            onPrintWorksheet={() => setWorksheetOpen(true)}
+            onGoTo={setView}
+            onShowMonth={showMonth}
+            onShowUncategorised={showUncategorised}
+            onOpenBudget={openBudget}
+            onManageCategories={() => openCategories()}
+          />
+        )
       case 'accounts': return <AccountsScreen onOpenTransactions={openAccountTransactions} onImport={importStatement} />
       case 'transactions': return <TransactionsScreen onGoToAccounts={() => setView('accounts')} onImport={() => importStatement()} onManageCategories={() => openCategories()} />
       case 'budget':

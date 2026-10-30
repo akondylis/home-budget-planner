@@ -72,6 +72,8 @@ interface Window {
     copyBudget:        (input: { from: string; to: string; source: import('../../shared/budget').CopySource }) => Promise<number>
     clearBudget:       (month: string) => Promise<void>
 
+    getOverview:       (month: string) => Promise<import('../../shared/overview').OverviewMonth>
+
     exportPdf:    (report: import('../../shared/report-document').ReportDocument, fileName: string, dialogTitle: string) =>
                      Promise<{ success: false } | { success: true; filePath: string }>
     openFile:      (filePath: string) => Promise<void>

@@ -78,6 +78,9 @@ contextBridge.exposeInMainWorld('api', {
   copyBudget:        (input: unknown)                 => ipcRenderer.invoke('budget:copy', input),
   clearBudget:       (month: string)                  => ipcRenderer.invoke('budget:clear', month),
 
+  // ── Overview ────────────────────────────────────────────────────────────────
+  getOverview:       (month: string)                  => ipcRenderer.invoke('overview:get', month),
+
   // ── PDF ─────────────────────────────────────────────────────────────────────
   exportPdf:     (report: unknown, fileName: string, dialogTitle: string) => ipcRenderer.invoke('pdf:export', report, fileName, dialogTitle),
   openFile:      (filePath: string) => ipcRenderer.invoke('shell:openFile', filePath),
