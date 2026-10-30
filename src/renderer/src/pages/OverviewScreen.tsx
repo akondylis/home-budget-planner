@@ -37,7 +37,6 @@ export function OverviewScreen({ onPrintWorksheet, onGoTo, onShowMonth, onShowUn
   const revision = useLedgerStore(s => s.revision)
   const accounts = useLedgerStore(s => s.accounts)
   const hasMembers = useLedgerStore(s => activeMembers(s.members).length > 0)
-  const hasCategories = useLedgerStore(s => s.categories.some(g => g.children.length > 0))
   const totals = useMemo(() => accountTotals(accounts), [accounts])
   const [data, setData] = useState<OverviewMonth | null>(null)
   const [error, setError] = useState<unknown>(null)
@@ -55,7 +54,7 @@ export function OverviewScreen({ onPrintWorksheet, onGoTo, onShowMonth, onShowUn
   const done: Record<SetupKey, boolean> = {
     members: hasMembers,
     accounts: totals.count > 0,
-    categories: hasCategories,
+    categories: (data?.ownCategoryCount ?? 0) > 0,
     budget: (data?.budget.exists || data?.budget.previousHasPlan) ?? false,
   }
   const goTo: Record<SetupKey, () => void> = {

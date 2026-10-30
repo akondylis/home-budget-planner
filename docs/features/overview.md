@@ -24,7 +24,9 @@ parents next. It is the default page (**Overview** in the sidebar, `Ctrl+K`) and
     category).
 - **Setup checklist:** members, accounts, categories and budget, each ticked from real data and each with a link
   (Household, Accounts, Categories, Budget). The card hides once every step is done, so the page then belongs to
-  the month.
+  the month. The categories step ticks once the household has created a category of its own: the starter list is
+  written in one go on first run, so anything created more than a minute after the first category counts
+  (`countOwnCategories()`, the meal-voucher category the app adds to older databases left out).
 - **Upcoming bills:** a quiet card that says bills and subscriptions will show there once **Subscriptions & bills**
   (roadmap #7) arrives. It has no numbers and no action until then.
 - **States:** "…" in the tiles while loading. A load error shows a warning banner with **Try again**. The page
@@ -59,7 +61,7 @@ parents next. It is the default page (**Overview** in the sidebar, `Ctrl+K`) and
 ## Tests
 
 - `src/shared/overview.test.ts`: over-budget order, income ignored, account totals (vouchers apart, archived out).
-- `src/main/__tests__/overview-services.test.ts`: uncategorised rows counted, transfers left out, an empty month is 0
+- `src/main/__tests__/overview-services.test.ts`: uncategorised rows counted, transfers left out, an empty month is 0; own categories counted, the starter list and the voucher category left out
   and not −0, the plan comes along, and a bad month is rejected.
 
 ## Later

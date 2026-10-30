@@ -13,6 +13,8 @@ export interface OverviewMonth {
   /** Every expense row of the month, positive; refunds are income, not netted */
   spentCents: number
   budget: BudgetMonth
+  /** Categories the household created itself (the starter list left out); ticks the setup step */
+  ownCategoryCount: number
 }
 
 /** Outgoing categories spent past what was available, the furthest over first */

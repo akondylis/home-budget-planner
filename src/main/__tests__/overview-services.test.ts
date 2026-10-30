@@ -8,7 +8,7 @@ import { createAccounts } from '../services/accounts'
 import { createCategory } from '../services/categories'
 import { createTransaction, createTransfer } from '../services/transactions'
 import { setPlanned } from '../services/budgets'
-import { getOverview } from '../services/overview'
+import { countOwnCategories, getOverview } from '../services/overview'
 
 async function setup() {
   const [bankId, savingsId] = await createAccounts([
@@ -59,5 +59,25 @@ describe('getOverview', () => {
 
   it('should reject a malformed month', async () => {
     await expect(getOverview('2026-13')).rejects.toThrow('INVALID_INPUT')
+  })
+})
+
+describe('countOwnCategories', () => {
+  it('should leave out the starter list and count only categories created after it', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(new Date('2026-10-01T09:00:00Z'))
+      const groupId = await createCategory({ name: 'Έξοδα', type: 'EXPENSE' })
+      await createCategory({ name: 'Σούπερ μάρκετ', parentId: groupId })
+      expect(await countOwnCategories()).toBe(0)
+
+      vi.setSystemTime(new Date('2026-10-05T18:00:00Z'))
+      await createCategory({ name: 'Κουπόνια σίτισης', type: 'INCOME' })
+      expect(await countOwnCategories()).toBe(0)
+      await createCategory({ name: 'Μαθήματα πιάνου', parentId: groupId })
+      expect(await countOwnCategories()).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
