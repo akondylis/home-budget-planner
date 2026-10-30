@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-30 | Yearly budget | **Month \| Year** on the Budget page: 12-month plan grid edited in place with what was spent and over marks per month, fills for empty months (from a month's plan, the bills or one amount; never overwrite, decided 2026-10-30); **vs last year** compares actual spending over the same dates (decided 2026-10-30); printable landscape sheet. Pay-period budgeting moved to #20 (decided 2026-10-30) · [budget](features/budget.md) |
 | 2026-10-30 | Debts & loans | Bank loans with interest (monthly schedule, interest before payment) and interest-free card instalments (decided 2026-10-30), plus money owed by or to relatives (both ways, decided 2026-10-30); what is left, payoff date and schedule; instalments are bill rules, so imported rows tick them off and the bell says **Instalment due** (decided 2026-10-30); balance from a statement, extra payments; **Snowball / Avalanche** plan with an extra monthly amount · [debts & loans](features/debts.md) |
 | 2026-10-30 | Notifications | Sidebar bell for bills due and overdue (remind N days before, household-wide in Settings or per bill, decided 2026-10-30), income not come in, planned categories over budget, rows to categorise and accounts not imported for 30 days; one click to **Mark as paid**, **Open budget**, **Categorise** or **Import**; Windows toasts for what is due today or late while the app is open, on/off in Settings (decided 2026-10-30). Instalment due added with Debts & loans · [notifications](features/notifications.md) |
 | 2026-10-30 | Subscriptions & bills | Weekly, monthly, yearly and every-N rules (quarterly, every 2 weeks) for bills, subscriptions and income; a typed or imported row that matches marks the date paid on its own, **Mark as paid** picks a row or adds a cash one, **Skip** for a missed one (no auto-created rows, decided 2026-10-30); fixed costs per month; yearly charges offered as a monthly plan line in the budget with Carry over (decided 2026-10-30); **Track it** turns a subscription hint into a rule; fills the Overview's **Upcoming bills** · [subscriptions & bills](features/subscriptions-bills.md) |
@@ -54,8 +55,8 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
 | 17 | Payment calendar *(new)* | M | Amounts due by date with paid marks, pay days across the year; week starts Monday or Sunday | #7 | — |
-| 10 | Yearly budget | S–M | 12-month plan view, year vs last year; budgeting per pay period as an option | Monthly budget | — |
 | 11 | Projections | M | Balance forecast per month from rules, instalments and planned income | #7, #9 | Horizon (6/12/24 months) |
+| 20 | Pay-period budgeting *(new)* | M–L | Months that start on pay day (e.g. the 25th) for the budget, carry, Overview and notifications | Yearly budget | Which day; per household or per income? |
 
 ### Insight & data
 

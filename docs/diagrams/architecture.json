@@ -394,12 +394,13 @@
       "id": "budget",
       "title": "Budget",
       "screen": [
-        "Budget page",
+        "Budget page, Month | Year",
         "(sidebar, Ctrl+K)"
       ],
       "handler": "ipc/budget.ts",
       "service": [
         "services/budgets.ts",
+        "services/budget-year.ts",
         "shared/budget.ts (maths)"
       ],
       "store": "SQLite · Budget, BudgetLine",
@@ -419,6 +420,14 @@
         {
           "api": "clearBudget",
           "channel": "budget:clear"
+        },
+        {
+          "api": "getBudgetYear",
+          "channel": "budget:getYear"
+        },
+        {
+          "api": "fillBudgetYear",
+          "channel": "budget:fillYear"
         }
       ]
     },
