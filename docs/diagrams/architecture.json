@@ -307,6 +307,26 @@
       ]
     },
     {
+      "id": "overview",
+      "title": "Overview",
+      "screen": [
+        "Overview page",
+        "(start page)"
+      ],
+      "handler": "ipc/overview.ts",
+      "service": [
+        "services/overview.ts",
+        "shared/overview.ts (sums)"
+      ],
+      "store": "SQLite · Transaction, Budget",
+      "calls": [
+        {
+          "api": "getOverview",
+          "channel": "overview:get"
+        }
+      ]
+    },
+    {
       "id": "category",
       "title": "Categories",
       "screen": [

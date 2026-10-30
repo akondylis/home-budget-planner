@@ -50,7 +50,7 @@ src/renderer/
     components/shell/        TitleBar, Sidebar, icons
     hooks/                   useThemeSync, useSidebarResize
     lib/                     nav-items, ui-actions, transitions, date-format, ipc-errors
-    pages/                   OverviewScreen, SettingsScreen, PlannedScreen (placeholder for unbuilt areas)
+    pages/                   OverviewScreen (live month: tiles, banners, setup), SettingsScreen, PlannedScreen (placeholder for unbuilt areas)
     store/ui.ts              Theme, sidebar, folded cards, tour seen (persisted); palette, tour step (session)
     i18n/                    el.json, en.json
 prisma/
