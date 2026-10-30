@@ -335,6 +335,62 @@
       ]
     },
     {
+      "id": "debt",
+      "title": "Debts & loans",
+      "screen": [
+        "Debts & loans page,",
+        "bell, bills page"
+      ],
+      "handler": "ipc/debt.ts",
+      "service": [
+        "services/debts.ts",
+        "shared/debt.ts"
+      ],
+      "store": "SQLite · Debt, RecurringRule",
+      "calls": [
+        {
+          "api": "listDebts",
+          "channel": "debt:list"
+        },
+        {
+          "api": "getDebt",
+          "channel": "debt:get"
+        },
+        {
+          "api": "createDebt",
+          "channel": "debt:create"
+        },
+        {
+          "api": "updateDebt",
+          "channel": "debt:update"
+        },
+        {
+          "api": "setDebtBalance",
+          "channel": "debt:setBalance"
+        },
+        {
+          "api": "setDebtArchived",
+          "channel": "debt:setArchived"
+        },
+        {
+          "api": "debtPaymentCandidates",
+          "channel": "debt:paymentCandidates"
+        },
+        {
+          "api": "linkDebtPayment",
+          "channel": "debt:linkPayment"
+        },
+        {
+          "api": "unlinkDebtPayment",
+          "channel": "debt:unlinkPayment"
+        },
+        {
+          "api": "recordDebtCash",
+          "channel": "debt:recordCash"
+        }
+      ]
+    },
+    {
       "id": "budget",
       "title": "Budget",
       "screen": [
