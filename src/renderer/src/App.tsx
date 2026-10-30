@@ -13,6 +13,9 @@ import { SettingsScreen } from './pages/SettingsScreen'
 import { CategoriesScreen } from './pages/CategoriesScreen'
 import { BudgetScreen } from './pages/BudgetScreen'
 import { RecurringScreen } from './pages/RecurringScreen'
+import { DebtsScreen } from './pages/DebtsScreen'
+import { DebtForm } from './components/debts/DebtForm'
+import { DebtDetail } from './components/debts/DebtDetail'
 import { BillForm } from './components/recurring/BillForm'
 import { MarkPaidDialog } from './components/recurring/MarkPaidDialog'
 import { CommandPalette } from './components/CommandPalette'
@@ -30,6 +33,7 @@ import { EMPTY_FILTER, currentMonth, useTransactionsStore } from './store/transa
 import { useImportStore } from './store/import'
 import { useBudgetStore } from './store/budget'
 import { useRecurringStore } from './store/recurring'
+import { useDebtsStore } from './store/debts'
 import { useNotificationsStore } from './store/notifications'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
 import { isImportable } from './lib/ledger'
@@ -71,6 +75,8 @@ export default function App() {
   const shortcutsOpen = useUiStore(s => s.shortcutsOpen)
   const entry = useLedgerStore(s => s.entry)
   const billForm = useRecurringStore(s => s.form)
+  const debtForm = useDebtsStore(s => s.form)
+  const debtDetail = useDebtsStore(s => s.detailId)
   const importWizard = useImportStore(s => s.wizard)
   const importHistory = useImportStore(s => s.history)
   const ledgerRevision = useLedgerStore(s => s.revision)
@@ -234,6 +240,10 @@ export default function App() {
         }
         break
       case 'openBills': setView('recurring'); break
+      case 'openDebt':
+        setView('debts')
+        useDebtsStore.getState().openDetail(action.debtId)
+        break
       case 'openBudget': openBudget(action.month); break
       case 'openInbox': openInbox(); break
       case 'importStatement': importStatement(action.accountId); break
@@ -272,6 +282,7 @@ export default function App() {
       case 'categories': openCategories(target.tab); break
       case 'budgetCopy': copyLastMonthsPlan(); break
       case 'billAdd': useRecurringStore.getState().openForm(); break
+      case 'debtAdd': useDebtsStore.getState().openForm(); break
       case 'notifications': {
         const store = useNotificationsStore.getState()
         void store.refresh()
@@ -313,6 +324,7 @@ export default function App() {
           />
         )
       case 'recurring': return <RecurringScreen />
+      case 'debts': return <DebtsScreen />
       case 'settings': return <SettingsScreen onManageCategories={() => openCategories()} />
       case 'categories':
         return (
@@ -369,6 +381,8 @@ export default function App() {
       )}
       {markingBill && <MarkPaidDialog bill={markingBill} onClose={() => setMarkingBill(null)} />}
       {billForm && <BillForm request={billForm} onClose={() => useRecurringStore.getState().closeForm()} />}
+      {debtDetail && <DebtDetail id={debtDetail} onClose={() => useDebtsStore.getState().closeDetail()} />}
+      {debtForm && <DebtForm request={debtForm} onClose={() => useDebtsStore.getState().closeForm()} />}
       {entry && <TransactionForm request={entry} onClose={() => useLedgerStore.getState().closeEntry()} />}
       <AppTour />
     </div>

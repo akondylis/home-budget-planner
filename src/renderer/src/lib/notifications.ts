@@ -14,6 +14,7 @@ export const ACTION_ICONS: Record<NotificationAction['kind'], IconName> = {
   markPaid: 'check',
   skip: 'minus',
   openBills: 'repeat',
+  openDebt: 'credit-card',
   openBudget: 'target',
   openInbox: 'tag',
   importStatement: 'download',
@@ -22,6 +23,8 @@ export const ACTION_ICONS: Record<NotificationAction['kind'], IconName> = {
 export const KIND_ICONS: Record<NotificationKind, IconName> = {
   'bill-due': 'calendar',
   'bill-overdue': 'alert-triangle',
+  'instalment-due': 'credit-card',
+  'instalment-overdue': 'alert-triangle',
   'income-late': 'alert-triangle',
   'over-budget': 'target',
   'to-categorise': 'tag',

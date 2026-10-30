@@ -85,6 +85,17 @@ interface Window {
     skipBill:          (input: { ruleId: string; dueDate: string }) => Promise<void>
     unmarkBill:        (input: { ruleId: string; dueDate: string }) => Promise<void>
 
+    listDebts:             () => Promise<import('../../shared/debt').DebtRow[]>
+    getDebt:               (id: string) => Promise<import('../../shared/debt').DebtDetail>
+    createDebt:            (input: import('../../shared/debt').DebtInput) => Promise<string>
+    updateDebt:            (id: string, input: import('../../shared/debt').DebtInput) => Promise<void>
+    setDebtBalance:        (input: { debtId: string; balanceCents: number | null; date: string }) => Promise<void>
+    setDebtArchived:       (id: string, archived: boolean) => Promise<void>
+    debtPaymentCandidates: (id: string) => Promise<import('../../shared/recurrence').CandidateRow[]>
+    linkDebtPayment:       (input: { debtId: string; transactionId: string }) => Promise<void>
+    unlinkDebtPayment:     (transactionId: string) => Promise<void>
+    recordDebtCash:        (input: { debtId: string; accountId: string; bookedAt: string; amountCents: number; createdByMemberId?: string | null }) => Promise<string>
+
     getOverview:       (month: string) => Promise<import('../../shared/overview').OverviewMonth>
 
     listNotifications:        () => Promise<import('../../shared/notifications').AppNotification[]>

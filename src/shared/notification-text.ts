@@ -28,9 +28,13 @@ export function notificationText(n: NotificationDraft, today: string, t: Transla
   switch (n.kind) {
     case 'bill-due':
     case 'bill-overdue':
+    case 'instalment-due':
+    case 'instalment-overdue':
     case 'income-late': {
       const values = {
         name: String(p.name),
+        n: Number(p.n ?? 0),
+        of: Number(p.of ?? 0),
         amount: amountText(Number(p.amountCents), p.amountVaries === 1, t),
         date: formatDate(String(p.dueDate)),
         when: whenText(n.date, today, t),

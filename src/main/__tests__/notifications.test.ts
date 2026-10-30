@@ -171,7 +171,7 @@ describe('computeBillNotifications', () => {
   const bill = (over: Partial<UpcomingBill>): UpcomingBill => ({
     ruleId: 'r', name: 'ΔΕΗ', categoryId: 'c', categoryType: 'BILL', frequency: 'MONTH', interval: 1, dueDate: '2026-10-25',
     amountCents: -8_000, amountVaries: false, remindDays: null, status: 'UPCOMING', transactionId: null, paidBy: null,
-    transactionText: null, transactionDate: null, ...over,
+    transactionText: null, transactionDate: null, debtId: null, instalment: null, ...over,
   })
 
   it('should use the rule reminder when set, else the household one, and skip paid or skipped dates', () => {

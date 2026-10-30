@@ -30,6 +30,7 @@ export type PaletteTarget =
   | { kind: 'categories'; tab: 'categories' | 'rules' }
   | { kind: 'budgetCopy' }
   | { kind: 'billAdd' }
+  | { kind: 'debtAdd' }
   | { kind: 'notifications' }
 
 export type PaletteGroup = 'actions'
@@ -114,6 +115,7 @@ export function buildActions({ t, theme, lang, members = [], currentMemberId = n
     { id: 'importHistory', group: 'actions', title: t('import.history_title'), keywords: 'import history undo statement ιστορικο εισαγωγες αναιρεση', icon: 'undo', target: { kind: 'importHistory' } },
     { id: 'budgetCopy', group: 'actions', title: t('palette.budget_copy'), keywords: 'budget plan copy last month προυπολογισμος πλανο αντιγραφη προηγουμενος μηνας', icon: 'copy', target: { kind: 'budgetCopy' } },
     { id: 'billAdd', group: 'actions', title: t('recurring.palette_add'), keywords: 'bill subscription recurring rent insurance add new λογαριασμος συνδρομη παγιο ενοικιο ασφαλεια νεος', icon: 'repeat', target: { kind: 'billAdd' } },
+    { id: 'debtAdd', group: 'actions', title: t('debts.palette_add'), keywords: 'debt loan instalments owed borrow lend add new δανειο δοσεις οφειλη χρεος δανεικα νεο', icon: 'credit-card', target: { kind: 'debtAdd' } },
     { id: 'notifications', group: 'actions', title: t('notifications.palette'), keywords: 'notifications bell reminders due overdue alerts ειδοποιησεις καμπανακι υπενθυμισεις ληξη', icon: 'bell', target: { kind: 'notifications' } },
     { id: 'worksheet', group: 'actions', title: t('palette.worksheet'), keywords: 'pdf print export budget worksheet εκτυπωση', icon: 'printer', target: { kind: 'worksheet' } },
     { id: 'tour', group: 'actions', title: t('palette.tour'), keywords: 'tour guide help ξεναγηση βοηθεια', icon: 'flag', target: { kind: 'tour' } },

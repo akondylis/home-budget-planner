@@ -6,6 +6,7 @@ import { MarkPaidDialog } from '../components/recurring/MarkPaidDialog'
 import { SubscriptionHints } from '../components/subscriptions/SubscriptionHints'
 import { useLedgerStore } from '../store/ledger'
 import { useRecurringStore } from '../store/recurring'
+import { useDebtsStore } from '../store/debts'
 import { formatDate } from '../lib/date-format'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { groupRules, groupUpcoming, monthlyTotals, scheduleLabel } from '../lib/recurring'
@@ -43,12 +44,15 @@ export function RecurringScreen() {
 
   const openHints = hints.filter(h => !dismissed.includes(h.key))
   const groups = useMemo(() => groupUpcoming(bills, today), [bills, today])
-  const ruleGroups = useMemo(() => groupRules(rules), [rules])
+  // A debt's instalments are edited on the Debts page; they still count in the monthly total and the due dates
+  const ownRules = useMemo(() => rules.filter(r => !r.debtId), [rules])
+  const ruleGroups = useMemo(() => groupRules(ownRules), [ownRules])
   const totals = monthlyTotals(rules)
   const tileEnd = addDays(today, TILE_DAYS)
   const dueSoon = bills.filter(b => (b.status === 'DUE' || b.status === 'UPCOMING') && b.dueDate <= tileEnd)
   const overdue = bills.filter(b => b.status === 'OVERDUE')
-  const activeCount = rules.filter(r => !r.archived).length
+  const activeCount = ownRules.filter(r => !r.archived).length
+  const debtRuleCount = rules.filter(r => r.debtId && !r.archived).length
 
   async function run(action: () => Promise<unknown>) {
     setActionError(null)
@@ -71,7 +75,12 @@ export function RecurringScreen() {
     } else if (bill.paidBy !== 'AUTO') {
       items.push({ id: 'unmark', label: t('recurring.unmark'), icon: 'undo', onSelect: () => void run(() => window.api.unmarkBill(due)) })
     }
-    if (rule) items.push({ id: 'edit', label: t('recurring.edit'), icon: 'pencil', onSelect: () => openForm({ mode: 'edit', rule }) })
+    if (bill.debtId) {
+      const debtId = bill.debtId
+      items.push({ id: 'debt', label: t('debts.open_debt'), icon: 'credit-card', onSelect: () => useDebtsStore.getState().openDetail(debtId) })
+    } else if (rule) {
+      items.push({ id: 'edit', label: t('recurring.edit'), icon: 'pencil', onSelect: () => openForm({ mode: 'edit', rule }) })
+    }
     return items
   }
 
@@ -99,7 +108,7 @@ export function RecurringScreen() {
 
       {!loaded ? (
         <div className="flex justify-center py-12"><Spinner /></div>
-      ) : activeCount === 0 && ruleGroups.archived.length === 0 ? (
+      ) : rules.length === 0 ? (
         <EmptyCard icon="repeat" title={t('recurring.empty_title')} body={t('recurring.empty_body')}>
           <Button variant="primary" icon="plus" onClick={() => openForm()}>{t('recurring.add')}</Button>
           {hintsLink}
@@ -111,7 +120,7 @@ export function RecurringScreen() {
               icon="repeat"
               label={t('recurring.tile_monthly')}
               value={<Money cents={totals.outCents} />}
-              hint={totals.inCents > 0 ? <>{t('recurring.tile_income')} <Money cents={totals.inCents} /></> : t('recurring.tile_monthly_hint', { count: activeCount })}
+              hint={totals.inCents > 0 ? <>{t('recurring.tile_income')} <Money cents={totals.inCents} /></> : t('recurring.tile_monthly_hint', { count: rules.filter(r => !r.archived).length })}
             />
             <StatTile
               icon="calendar"
@@ -186,6 +195,7 @@ export function RecurringScreen() {
                   </ListCard>
                 </section>
               ))}
+              {debtRuleCount > 0 && <p className="text-sm text-fg-muted">{t('recurring.debt_rules_note', { count: debtRuleCount })}</p>}
               {ruleGroups.archived.length > 0 && (
                 <div>
                   <Button variant="ghost" size="sm" icon="chevron-down" onClick={() => setShowArchived(s => !s)} aria-expanded={showArchived}>

@@ -19,10 +19,10 @@ export function registerRecurringHandlers(): void {
   /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND' */
   ipcMain.handle('recurring:create', (_e, input: unknown) => createRule(input))
 
-  /** Throws: as recurring:create, plus 'RULE_NOT_FOUND' */
+  /** Throws: as recurring:create, plus 'RULE_NOT_FOUND', 'DEBT_OWNED_RULE' */
   ipcMain.handle('recurring:update', (_e, id: unknown, input: unknown) => updateRule(id, input))
 
-  /** Throws: 'INVALID_INPUT', 'RULE_NOT_FOUND' */
+  /** Throws: 'INVALID_INPUT', 'RULE_NOT_FOUND', 'DEBT_OWNED_RULE' */
   ipcMain.handle('recurring:setArchived', (_e, id: unknown, archived: unknown) => setRuleArchived(id, archived))
 
   /** Throws: 'INVALID_INPUT' */

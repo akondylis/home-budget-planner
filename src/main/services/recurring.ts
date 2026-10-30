@@ -29,7 +29,7 @@ import { assertMember } from './members'
 import { createTransaction } from './transactions'
 
 /** Due dates older than this before a rule was created are history, not overdue bills */
-const HISTORY_GRACE_DAYS = 31
+export const HISTORY_GRACE_DAYS = 31
 /** Widest match window of any frequency (see matchWindowDays) */
 const MAX_WINDOW_DAYS = 7
 /** How far either side of a due date "Mark as paid" looks for rows */
@@ -67,6 +67,7 @@ function parse<S extends z.ZodTypeAny>(schema: S, input: unknown): z.infer<S> {
 const RULE_INCLUDE = {
   category: { select: { name: true, type: true, parentId: true } },
   account: { select: { name: true } },
+  debt: { select: { id: true, termMonths: true } },
 } satisfies Prisma.RecurringRuleInclude
 
 type FullRule = Prisma.RecurringRuleGetPayload<{ include: typeof RULE_INCLUDE }>
@@ -105,13 +106,14 @@ function toRow(r: FullRule, today: string): RecurringRuleRow {
     matchText: r.matchText,
     remindDays: r.remindDays,
     archived: r.archivedAt !== null,
+    debtId: r.debt?.id ?? null,
     monthlyCents: monthlyEquivalentCents(r.amountCents, r.frequency, r.interval),
     nextDue: nextDue(s, today),
   }
 }
 
 /** Throws: 'CATEGORY_NOT_FOUND' (a group, archived or missing), 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND' */
-async function assertRefs(data: z.infer<typeof ruleInput>): Promise<void> {
+export async function assertRuleRefs(data: { categoryId: string; accountId: string | null; memberId: string | null }): Promise<void> {
   const category = await prisma.category.findUnique({ where: { id: data.categoryId }, select: { parentId: true, archivedAt: true } })
   if (!category || category.parentId === null || category.archivedAt) throw new Error('CATEGORY_NOT_FOUND')
   if (data.accountId) {
@@ -135,6 +137,19 @@ async function findRule(id: string): Promise<FullRule> {
   return rule
 }
 
+/** A debt's instalments are edited through the debt. Throws: 'DEBT_OWNED_RULE' */
+function assertNotDebt(rule: FullRule): void {
+  if (rule.debt) throw new Error('DEBT_OWNED_RULE')
+}
+
+/** Instalment number of a due date of a debt's monthly rule, counted from its anchor */
+function instalmentOf(rule: FullRule, due: string): { n: number; of: number } | null {
+  if (!rule.debt?.termMonths) return null
+  const [ay, am] = dateToDateOnly(rule.anchorDate).split('-').map(Number)
+  const [y, m] = due.split('-').map(Number)
+  return { n: (y - ay) * 12 + (m - am) + 1, of: rule.debt.termMonths }
+}
+
 /** Throws: 'INVALID_DATE' when the date is not one of the rule's due dates */
 function assertDueDate(rule: FullRule, dueDate: string): void {
   if (occurrencesBetween(schedule(rule), dueDate, dueDate).length !== 1) throw new Error('INVALID_DATE')
@@ -151,24 +166,24 @@ export async function listRules(today: string = todayDateOnly()): Promise<Recurr
 /** Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND' */
 export async function createRule(input: unknown): Promise<string> {
   const data = parse(ruleInput, input)
-  await assertRefs(data)
+  await assertRuleRefs(data)
   const created = await prisma.recurringRule.create({ data: ruleData(data) })
   return created.id
 }
 
-/** Throws: as createRule, plus 'RULE_NOT_FOUND' */
+/** Throws: as createRule, plus 'RULE_NOT_FOUND', 'DEBT_OWNED_RULE' */
 export async function updateRule(id: unknown, input: unknown): Promise<void> {
   if (typeof id !== 'string') throw new Error('INVALID_INPUT')
   const data = parse(ruleInput, input)
-  await findRule(id)
-  await assertRefs(data)
+  assertNotDebt(await findRule(id))
+  await assertRuleRefs(data)
   await prisma.recurringRule.update({ where: { id }, data: ruleData(data) })
 }
 
-/** Archived rules drop out of every list but the archive; their marks are kept. Throws: 'INVALID_INPUT', 'RULE_NOT_FOUND' */
+/** Archived rules drop out of every list but the archive; their marks are kept. Throws: 'INVALID_INPUT', 'RULE_NOT_FOUND', 'DEBT_OWNED_RULE' */
 export async function setRuleArchived(id: unknown, archived: unknown): Promise<void> {
   if (typeof id !== 'string' || typeof archived !== 'boolean') throw new Error('INVALID_INPUT')
-  await findRule(id)
+  assertNotDebt(await findRule(id))
   await prisma.recurringRule.update({ where: { id }, data: { archivedAt: archived ? new Date() : null } })
 }
 
@@ -177,7 +192,7 @@ export async function setRuleArchived(id: unknown, archived: unknown): Promise<v
 /** Rows that might pay a rule between two dates: same direction, never a transfer */
 async function candidateRows(from: string, to: string, where: Prisma.TransactionWhereInput = {}): Promise<Array<PaymentCandidate & { accountName: string }>> {
   const rows = await prisma.transaction.findMany({
-    where: { ...where, transferId: null, bookedAt: { gte: dateOnlyToDate(from), lte: dateOnlyToDate(to) } },
+    where: { ...where, transferId: null, debtId: null, bookedAt: { gte: dateOnlyToDate(from), lte: dateOnlyToDate(to) } },
     select: { id: true, bookedAt: true, amountCents: true, accountId: true, description: true, payee: true, account: { select: { name: true } } },
   })
   return rows.map(r => ({
@@ -193,12 +208,13 @@ async function candidateRows(from: string, to: string, where: Prisma.Transaction
 
 /**
  * Every due date of the active rules in [from, to] with its status, oldest first.
+ * `ruleIds` limits it to those rules, archived ones included (a debt's history).
  * Throws: 'INVALID_INPUT'
  */
-export async function listOccurrences(input: unknown, today: string = todayDateOnly()): Promise<UpcomingBill[]> {
+export async function listOccurrences(input: unknown, today: string = todayDateOnly(), opts: { ruleIds?: string[] } = {}): Promise<UpcomingBill[]> {
   const { from, to } = parse(rangeInput, input)
   const rules = await prisma.recurringRule.findMany({
-    where: { archivedAt: null },
+    where: opts.ruleIds ? { id: { in: opts.ruleIds } } : { archivedAt: null },
     include: { ...RULE_INCLUDE, occurrences: { include: { transaction: { select: { description: true, payee: true, bookedAt: true } } } } },
   })
   if (rules.length === 0) return []
@@ -228,6 +244,8 @@ export async function listOccurrences(input: unknown, today: string = todayDateO
         amountCents: ruleAmount(rule.amountCents, rule.category.type),
         amountVaries: rule.amountVaries,
         remindDays: rule.remindDays,
+        debtId: rule.debt?.id ?? null,
+        instalment: instalmentOf(rule, due),
         status: occurrenceStatus(due, today, mark?.status ?? (auto ? 'PAID' : null)),
         transactionId: mark?.transactionId ?? auto?.id ?? null,
         paidBy: mark?.status === 'PAID' ? 'HAND' : auto ? 'AUTO' : null,

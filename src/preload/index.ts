@@ -92,6 +92,18 @@ contextBridge.exposeInMainWorld('api', {
   skipBill:          (input: unknown)                 => ipcRenderer.invoke('recurring:skip', input),
   unmarkBill:        (input: unknown)                 => ipcRenderer.invoke('recurring:unmark', input),
 
+  // ── Debts & loans ───────────────────────────────────────────────────────────
+  listDebts:             ()                               => ipcRenderer.invoke('debt:list'),
+  getDebt:               (id: string)                     => ipcRenderer.invoke('debt:get', id),
+  createDebt:            (input: unknown)                 => ipcRenderer.invoke('debt:create', input),
+  updateDebt:            (id: string, input: unknown)     => ipcRenderer.invoke('debt:update', id, input),
+  setDebtBalance:        (input: unknown)                 => ipcRenderer.invoke('debt:setBalance', input),
+  setDebtArchived:       (id: string, archived: boolean)  => ipcRenderer.invoke('debt:setArchived', id, archived),
+  debtPaymentCandidates: (id: string)                     => ipcRenderer.invoke('debt:paymentCandidates', id),
+  linkDebtPayment:       (input: unknown)                 => ipcRenderer.invoke('debt:linkPayment', input),
+  unlinkDebtPayment:     (transactionId: string)          => ipcRenderer.invoke('debt:unlinkPayment', transactionId),
+  recordDebtCash:        (input: unknown)                 => ipcRenderer.invoke('debt:recordCash', input),
+
   // ── Overview ────────────────────────────────────────────────────────────────
   getOverview:       (month: string)                  => ipcRenderer.invoke('overview:get', month),
 

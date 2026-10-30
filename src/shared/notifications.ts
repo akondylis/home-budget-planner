@@ -8,15 +8,18 @@ import { DUE_SOON_DAYS } from './recurrence'
 
 export type NotificationSeverity = 'urgent' | 'warning' | 'info'
 
-export type NotificationKind = 'bill-due' | 'bill-overdue' | 'income-late' | 'over-budget' | 'to-categorise' | 'import-stale'
+export type NotificationKind =
+  | 'bill-due' | 'bill-overdue' | 'instalment-due' | 'instalment-overdue' | 'income-late'
+  | 'over-budget' | 'to-categorise' | 'import-stale'
 
 /** Kinds about a due date; the rest are about the month or the data and group apart */
-const DATED_KINDS: NotificationKind[] = ['bill-due', 'bill-overdue', 'income-late']
+const DATED_KINDS: NotificationKind[] = ['bill-due', 'bill-overdue', 'instalment-due', 'instalment-overdue', 'income-late']
 
 export type NotificationAction =
   | { kind: 'markPaid'; ruleId: string; dueDate: string }
   | { kind: 'skip'; ruleId: string; dueDate: string }
   | { kind: 'openBills' }
+  | { kind: 'openDebt'; debtId: string }
   | { kind: 'openBudget'; month: string }
   | { kind: 'openInbox' }
   | { kind: 'importStatement'; accountId: string }

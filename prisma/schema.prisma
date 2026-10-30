@@ -8,22 +8,21 @@ generator client {
 }
 
 // Money rule: every amount is an Int of minor units (cents), never Float.
-// Domain models not built yet (Debt) are
-// drafted in docs/domain-model.md and added per feature.
+// Domain models are drafted in docs/domain-model.md and added per feature.
 
 // ── Models ───────────────────────────────────────────────────────────────────
 
 model AppSettings {
-  id         Int      @id
-  language   String   @default("el")
-  dateFormat String   @default("dd/MM/yyyy")
-  currency   String   @default("EUR")
+  id             Int      @id
+  language       String   @default("el")
+  dateFormat     String   @default("dd/MM/yyyy")
+  currency       String   @default("EUR")
   /// Notifications: remind this many days before a bill falls due (a rule can override it)
-  notifyLeadDays Int     @default(3)
+  notifyLeadDays Int      @default(3)
   /// Notifications: Windows toasts while the app is open
-  notifyToasts   Boolean @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  notifyToasts   Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // ── Ledger: accounts, categories, transactions, statement import ─────────────
@@ -61,32 +60,33 @@ enum RuleMatch {
 
 /// A parent of the household (children are not tracked). Archived, never deleted.
 model Member {
-  id                  String        @id @default(cuid())
+  id                  String          @id @default(cuid())
   name                String
   /// Palette key from MEMBER_COLOURS (src/shared/members.ts), never a hex value
   colour              String
-  sortOrder           Int           @default(0)
+  sortOrder           Int             @default(0)
   archivedAt          DateTime?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  transactionsFor     Transaction[] @relation("TransactionMember")
-  transactionsEntered Transaction[] @relation("TransactionCreatedBy")
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  transactionsFor     Transaction[]   @relation("TransactionMember")
+  transactionsEntered Transaction[]   @relation("TransactionCreatedBy")
   importBatches       ImportBatch[]
   recurringRules      RecurringRule[]
-  accountsHeld        Account[]     @relation("AccountHolder")
-  cardsHeld           Card[]        @relation("CardHolder")
+  accountsHeld        Account[]       @relation("AccountHolder")
+  cardsHeld           Card[]          @relation("CardHolder")
+  debts               Debt[]
 }
 
 /// One statement source = one account (a credit card is an account of kind CREDIT_CARD)
 model Account {
-  id                  String        @id @default(cuid())
+  id                  String          @id @default(cuid())
   name                String
   kind                AccountKind
   /// null = no bank (cash, or a bank not listed)
   institutionId       String?
-  institution         Institution?  @relation(fields: [institutionId], references: [id])
-  currency            String        @default("EUR")
-  openingBalanceCents Int           @default(0)
+  institution         Institution?    @relation(fields: [institutionId], references: [id])
+  currency            String          @default("EUR")
+  openingBalanceCents Int             @default(0)
   openingDate         DateTime
   /// Statement preset key, e.g. "alpha-account"
   importProfile       String?
@@ -94,16 +94,17 @@ model Account {
   importMapping       Json?
   /// The parent whose account it is; null = joint
   holderMemberId      String?
-  holder              Member?       @relation("AccountHolder", fields: [holderMemberId], references: [id])
-  sortOrder           Int           @default(0)
+  holder              Member?         @relation("AccountHolder", fields: [holderMemberId], references: [id])
+  sortOrder           Int             @default(0)
   archivedAt          DateTime?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
   transactions        Transaction[]
   importBatches       ImportBatch[]
   rules               CategoryRule[]
   cards               Card[]
   recurringRules      RecurringRule[]
+  debts               Debt[]
 }
 
 /// A bank or meal-voucher issuer, edited by the user (Settings → Banks). Archived, never deleted.
@@ -119,6 +120,7 @@ model Institution {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   accounts        Account[]
+  debts           Debt[]
 }
 
 /// A plastic card on an account: a debit card on a current account, or a main or supplementary card on a credit card account
@@ -140,22 +142,22 @@ model Card {
 
 /// Two levels: a group (parentId null) holds categories; `type` lives on both and follows the group
 model Category {
-  id           String         @id @default(cuid())
-  name         String
-  parentId     String?
-  parent       Category?      @relation("CategoryTree", fields: [parentId], references: [id])
-  children     Category[]     @relation("CategoryTree")
-  type         CategoryType
-  icon         String?
-  sortOrder    Int            @default(0)
+  id             String          @id @default(cuid())
+  name           String
+  parentId       String?
+  parent         Category?       @relation("CategoryTree", fields: [parentId], references: [id])
+  children       Category[]      @relation("CategoryTree")
+  type           CategoryType
+  icon           String?
+  sortOrder      Int             @default(0)
   /// Unspent money of a month carries into the next (overspending never does)
-  carryOver    Boolean        @default(false)
-  archivedAt   DateTime?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  transactions Transaction[]
-  rules        CategoryRule[]
-  budgetLines  BudgetLine[]
+  carryOver      Boolean         @default(false)
+  archivedAt     DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  transactions   Transaction[]
+  rules          CategoryRule[]
+  budgetLines    BudgetLine[]
   recurringRules RecurringRule[]
 
   @@unique([parentId, name])
@@ -163,30 +165,30 @@ model Category {
 
 /// A booked movement: income > 0, expense < 0. A transfer is two rows sharing transferId.
 model Transaction {
-  id                String       @id @default(cuid())
+  id                String               @id @default(cuid())
   accountId         String
-  account           Account      @relation(fields: [accountId], references: [id])
+  account           Account              @relation(fields: [accountId], references: [id])
   /// Date only, stored at 12:00 UTC so it reads as the same day in every time zone
   bookedAt          DateTime
   valueDate         DateTime?
   amountCents       Int
   /// Bank text as exported (trimmed, spaces collapsed); for hand-entered rows the payee or note
-  description       String       @default("")
+  description       String               @default("")
   /// Cleaned name, from a rule or typed by hand
   payee             String?
   categoryId        String?
-  category          Category?    @relation(fields: [categoryId], references: [id])
+  category          Category?            @relation(fields: [categoryId], references: [id])
   note              String?
   /// Who the row was for; null = the household (shared)
   memberId          String?
-  member            Member?      @relation("TransactionMember", fields: [memberId], references: [id])
+  member            Member?              @relation("TransactionMember", fields: [memberId], references: [id])
   /// Who entered or imported it; set once at creation
   createdByMemberId String?
-  createdBy         Member?      @relation("TransactionCreatedBy", fields: [createdByMemberId], references: [id])
+  createdBy         Member?              @relation("TransactionCreatedBy", fields: [createdByMemberId], references: [id])
   transferId        String?
   /// null = entered by hand
   importBatchId     String?
-  importBatch       ImportBatch? @relation(fields: [importBatchId], references: [id])
+  importBatch       ImportBatch?         @relation(fields: [importBatchId], references: [id])
   /// sha256 of account, date, amount, description and occurrence (see docs/domain-model.md)
   fingerprint       String?
   /// Not unique alone: a bank can give the interest and its tax one reference (dedupe keys on reference + amount)
@@ -194,8 +196,11 @@ model Transaction {
   balanceAfterCents Int?
   /// The due date this row was marked as paying (by hand); matches found on read are not stored
   occurrence        RecurringOccurrence?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  /// An extra payment on a loan, or a payment of a personal debt with no schedule
+  debtId            String?
+  debt              Debt?                @relation(fields: [debtId], references: [id], onDelete: SetNull)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
   @@unique([accountId, fingerprint])
   @@index([accountId, bankReference])
@@ -205,28 +210,29 @@ model Transaction {
   @@index([transferId])
   @@index([importBatchId])
   @@index([memberId])
+  @@index([debtId])
 }
 
 model ImportBatch {
-  id            String        @id @default(cuid())
-  accountId     String
-  account       Account       @relation(fields: [accountId], references: [id])
-  fileName      String
-  fileHash      String
-  dateFrom      DateTime
-  dateTo        DateTime
-  rowCount      Int
-  importedCount Int
-  skippedCount  Int
+  id                    String        @id @default(cuid())
+  accountId             String
+  account               Account       @relation(fields: [accountId], references: [id])
+  fileName              String
+  fileHash              String
+  dateFrom              DateTime
+  dateTo                DateTime
+  rowCount              Int
+  importedCount         Int
+  skippedCount          Int
   /// Closing balance printed in the statement (account sign: a card's debt is negative); null when the file has no balance column
   statementBalanceCents Int?
   /// The day that balance belongs to
   statementBalanceDate  DateTime?
-  createdByMemberId String?
-  createdBy     Member?       @relation(fields: [createdByMemberId], references: [id])
-  importedAt    DateTime      @default(now())
-  undoneAt      DateTime?
-  transactions  Transaction[]
+  createdByMemberId     String?
+  createdBy             Member?       @relation(fields: [createdByMemberId], references: [id])
+  importedAt            DateTime      @default(now())
+  undoneAt              DateTime?
+  transactions          Transaction[]
 
   @@index([accountId, fileHash])
 }
@@ -323,6 +329,8 @@ model RecurringRule {
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
   occurrences  RecurringOccurrence[]
+  /// Set when a debt owns the rule (its instalments); edited through the debt only
+  debt         Debt?
 
   @@index([categoryId])
 }
@@ -339,6 +347,58 @@ model RecurringOccurrence {
   createdAt     DateTime         @default(now())
 
   @@unique([ruleId, dueDate])
+}
+
+// ── Debts ─────────────────────────────────────────────────────────────────────
+
+enum DebtKind {
+  LOAN
+  INSTALMENTS
+  PERSONAL
+}
+
+enum DebtDirection {
+  WE_OWE
+  OWED_TO_US
+}
+
+/// A loan, interest-free card instalments or money owed to/by someone. Its monthly instalments are an owned
+/// RecurringRule, so matching, Mark as paid and the bell come from the bills feature. The balance is computed.
+model Debt {
+  id                   String         @id @default(cuid())
+  name                 String
+  kind                 DebtKind
+  /// OWED_TO_US only for PERSONAL
+  direction            DebtDirection  @default(WE_OWE)
+  /// The person (PERSONAL) or a lender not in the Banks list
+  counterparty         String?
+  /// The lender (LOAN)
+  institutionId        String?
+  institution          Institution?   @relation(fields: [institutionId], references: [id])
+  /// Amount borrowed, or what is left when the household is already paying it
+  principalCents       Int
+  /// Annual nominal rate in basis points (525 = 5.25 %); 0 = interest-free
+  rateBp               Int            @default(0)
+  /// Number of monthly instalments; null = no schedule (personal)
+  termMonths           Int?
+  instalmentCents      Int?
+  /// The first instalment (date only, 12:00 UTC); for a personal debt the day it was lent
+  startDate            DateTime
+  /// Paid from (the card for INSTALMENTS)
+  accountId            String?
+  account              Account?       @relation(fields: [accountId], references: [id])
+  memberId             String?
+  member               Member?        @relation(fields: [memberId], references: [id])
+  ruleId               String?        @unique
+  rule                 RecurringRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  /// Balance read from a bank statement; payments after its date are applied on top
+  balanceOverrideCents Int?
+  balanceOverrideAt    DateTime?
+  note                 String?
+  archivedAt           DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  payments             Transaction[]
 }
 
 // ── Notifications ─────────────────────────────────────────────────────────────

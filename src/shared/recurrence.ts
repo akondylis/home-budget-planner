@@ -59,6 +59,8 @@ export interface RecurringRuleRow extends RecurringRuleInput {
   categoryType: CategoryType
   accountName: string | null
   archived: boolean
+  /** Set when a debt owns the rule (its instalments); edited through the debt */
+  debtId: string | null
   /** What the rule costs (or brings) per month on average, positive */
   monthlyCents: number
   /** Next due date from today, 'yyyy-MM-dd'; null when it has ended */
@@ -80,6 +82,10 @@ export interface UpcomingBill {
   amountVaries: boolean
   /** The rule's own reminder; null = the household setting */
   remindDays: number | null
+  /** Set for a debt's instalment */
+  debtId: string | null
+  /** "Instalment n of N" for a debt with a term */
+  instalment: { n: number; of: number } | null
   status: PaymentStatus
   /** The row that paid it, matched or picked by hand */
   transactionId: string | null

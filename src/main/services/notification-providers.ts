@@ -1,4 +1,4 @@
-// What the bell shows (roadmap #8): bills due and overdue, late income, categories over
+// What the bell shows (roadmap #8): bills and debt instalments due and overdue, late income, categories over
 // their plan, rows waiting for a category and accounts not imported for a while. Each
 // `compute*` is pure; the providers below only load what it needs.
 
@@ -40,6 +40,18 @@ export function computeBillNotifications(bills: UpcomingBill[], today: string, l
       continue
     }
     if (!late && days > (b.remindDays ?? leadDays)) continue
+    if (b.debtId) {
+      // A debt's instalment: same key and actions as a bill, worded as "instalment n of N"
+      out.push({
+        key: `bill:${b.ruleId}:${b.dueDate}`,
+        kind: late ? 'instalment-overdue' : 'instalment-due',
+        severity: late || days === 0 ? 'urgent' : 'warning',
+        date: b.dueDate,
+        params: { ...params, n: b.instalment?.n ?? null, of: b.instalment?.of ?? null },
+        actions: [{ kind: 'markPaid', ...pay }, { kind: 'skip', ...pay }, { kind: 'openDebt', debtId: b.debtId }],
+      })
+      continue
+    }
     out.push({
       key: `bill:${b.ruleId}:${b.dueDate}`,
       kind: late ? 'bill-overdue' : 'bill-due',

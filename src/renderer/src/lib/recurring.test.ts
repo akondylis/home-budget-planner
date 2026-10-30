@@ -18,13 +18,13 @@ const TODAY = '2026-10-20'
 
 const bill = (dueDate: string, status: PaymentStatus, name = 'Netflix'): UpcomingBill => ({
   ruleId: name, name, categoryId: 'c', categoryType: 'SUBSCRIPTION', frequency: 'MONTH', interval: 1, dueDate,
-  amountCents: -1_299, amountVaries: false, remindDays: null, status, transactionId: null, paidBy: null, transactionText: null, transactionDate: null,
+  amountCents: -1_299, amountVaries: false, remindDays: null, status, transactionId: null, paidBy: null, transactionText: null, transactionDate: null, debtId: null, instalment: null,
 })
 
 const rule = (over: Partial<RecurringRuleRow>): RecurringRuleRow => ({
   id: 'r', name: 'Rent', amountCents: 50_000, amountVaries: false, categoryId: 'c', categoryName: 'Rent', categoryType: 'BILL',
   accountId: null, accountName: null, memberId: null, frequency: 'MONTH', interval: 1, anchorDate: '2026-01-01', endsAt: null, remindDays: null,
-  matchText: null, archived: false, monthlyCents: 50_000, nextDue: '2026-11-01', ...over,
+  matchText: null, archived: false, debtId: null, monthlyCents: 50_000, nextDue: '2026-11-01', ...over,
 })
 
 describe('schedule presets and labels', () => {

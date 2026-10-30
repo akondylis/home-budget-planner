@@ -32,7 +32,9 @@ export function BillRow({ bill, today, actions, onOpen, compact = false }: BillR
   const settled = paid || bill.status === 'SKIPPED'
   const status = <StatusBadge status={bill.status} />
   const when = relativeDue(bill.dueDate, today, t)
-  const title = <RowTitle title={bill.name} meta={compact ? [when] : [t(schedule.key, { count: schedule.count })]} />
+  // A debt's instalment says which one it is; a bill says how often it comes
+  const what = bill.instalment ? t('debts.instalment_n', { n: bill.instalment.n, of: bill.instalment.of }) : t(schedule.key, { count: schedule.count })
+  const title = <RowTitle title={bill.name} meta={compact ? [when] : [what]} />
 
   if (compact) {
     return (
