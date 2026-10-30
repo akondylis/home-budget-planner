@@ -12,11 +12,11 @@ export function setMoneyLanguage(lang: string | null | undefined): void {
 
 const formatters = new Map<string, Intl.NumberFormat>()
 
-function formatterFor(currency: string, signDisplay: 'auto' | 'always' | 'exceptZero'): Intl.NumberFormat {
-  const key = `${currentLocale}|${currency}|${signDisplay}`
+function formatterFor(currency: string, signDisplay: 'auto' | 'always' | 'exceptZero', whole = false): Intl.NumberFormat {
+  const key = `${currentLocale}|${currency}|${signDisplay}|${whole}`
   let fmt = formatters.get(key)
   if (!fmt) {
-    fmt = new Intl.NumberFormat(currentLocale, { style: 'currency', currency, signDisplay })
+    fmt = new Intl.NumberFormat(currentLocale, { style: 'currency', currency, signDisplay, ...(whole && { maximumFractionDigits: 0, minimumFractionDigits: 0 }) })
     formatters.set(key, fmt)
   }
   return fmt
@@ -31,13 +31,15 @@ export interface FormatMoneyOptions {
   currency?: string
   /** 'always' shows +/− (cash-flow columns); 'auto' only − */
   sign?: 'auto' | 'always' | 'exceptZero'
+  /** Rounded to whole units, no decimals ("1.235 €"): dense printed tables only, never for exact amounts */
+  whole?: boolean
 }
 
 /** Integer cents → display text in the app language, e.g. 123456 → "1.234,56 €". '' for missing input. */
 export function formatMoney(cents: number | null | undefined, opts: FormatMoneyOptions = {}): string {
   if (cents === null || cents === undefined || !Number.isFinite(cents)) return ''
   const currency = opts.currency ?? DEFAULT_CURRENCY
-  return formatterFor(currency, opts.sign ?? 'auto').format(cents / 10 ** minorDigits(currency))
+  return formatterFor(currency, opts.sign ?? 'auto', opts.whole).format(cents / 10 ** minorDigits(currency))
 }
 
 /**

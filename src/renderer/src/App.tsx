@@ -208,6 +208,7 @@ export default function App() {
 
   function openBudget(month: string) {
     useBudgetStore.getState().setMonth(month)
+    useBudgetStore.getState().setView('month')
     setView('budget')
   }
 
@@ -254,6 +255,7 @@ export default function App() {
   function copyLastMonthsPlan() {
     const budget = useBudgetStore.getState()
     budget.setMonth(currentMonth())
+    budget.setView('month')
     setView('budget')
     budget.copyFromPrevious('PLAN')
       .then(count => budget.setFlash({ kind: 'copied', count }))
@@ -281,6 +283,10 @@ export default function App() {
         break
       case 'categories': openCategories(target.tab); break
       case 'budgetCopy': copyLastMonthsPlan(); break
+      case 'budgetYear':
+        useBudgetStore.getState().setView('year')
+        setView('budget')
+        break
       case 'billAdd': useRecurringStore.getState().openForm(); break
       case 'debtAdd': useDebtsStore.getState().openForm(); break
       case 'notifications': {
@@ -319,6 +325,7 @@ export default function App() {
         return (
           <BudgetScreen
             onShowTransactions={showBudgetTransactions}
+            onShowCategoryTransactions={showCategoryTransactions}
             onShowUncategorised={showUncategorised}
             onManageCategories={() => openCategories()}
           />

@@ -5,8 +5,9 @@
 import type { TFunction } from 'i18next'
 import type { ReportDocument, ReportRow, ReportSection } from '../../../shared/report-document'
 import { formatMoney } from '../../../shared/money'
-import { isOutgoing, type BudgetGroupRow, type BudgetMonth } from '../../../shared/budget'
+import { isOutgoing, type BudgetGroupRow, type BudgetMonth, type BudgetYear, type YearGroupRow } from '../../../shared/budget'
 import { formatDate } from './date-format'
+import { shortMonthLabel } from './budget'
 
 export const WORKSHEET_INCOME = ['salary', 'other_income'] as const
 export const WORKSHEET_EXPENSES = [
@@ -118,6 +119,63 @@ export function buildBudgetStatement(t: TFunction, budget: BudgetMonth, month: D
       },
     ],
     footnote: t('worksheet.statement_footnote'),
+  }
+}
+
+/** Year sheet amounts in whole euros, so 13 columns fit across the page */
+const wholeMoney = (cents: number) => formatMoney(cents, { whole: true })
+/** A month cell of the year sheet: blank for nothing, so the planned months stand out */
+const yearCell = (cents: number) => (cents === 0 ? '' : wholeMoney(cents))
+
+function yearSection(t: TFunction, heading: string, groups: YearGroupRow[], elapsed: number, totalLabel: string, lang: string): ReportSection {
+  const rows: ReportRow[] = []
+  const line = (label: string, months: number[], total: number, bold = false) => rows.push({ cells: [label, ...months.map(yearCell), wholeMoney(total)], bold })
+  for (const g of groups) {
+    const used = g.categories.filter(c => c.plannedCents !== 0 || c.actualCents !== 0)
+    if (used.length === 0) continue
+    line(g.name, g.months.map(m => m.plannedCents), g.plannedCents, true)
+    for (const c of used) line(`    ${c.name}`, c.months.map(m => m.plannedCents), c.plannedCents)
+    if (elapsed > 0) line(`    ${t('worksheet.year_actual')}`, g.months.map((m, i) => (i < elapsed ? m.actualCents : 0)), g.actualCents)
+  }
+  const sum = (i: number) => groups.reduce((total, g) => total + g.months[i].plannedCents, 0)
+  line(totalLabel, Array.from({ length: 12 }, (_, i) => sum(i)), groups.reduce((total, g) => total + g.plannedCents, 0), true)
+  return { heading, columns: yearColumns(t, lang), rows }
+}
+
+function yearColumns(t: TFunction, lang: string): ReportSection['columns'] {
+  return [
+    { header: t('worksheet.col_category'), width: 22 },
+    ...Array.from({ length: 12 }, (_, i) => ({ header: shortMonthLabel(i, lang), width: 6, align: 'right' as const })),
+    { header: t('worksheet.year_col_total'), width: 7, align: 'right' },
+  ]
+}
+
+/** The year's plan month by month (with what was spent so far), for the Year view's Print: A4 landscape */
+export function buildBudgetYearStatement(t: TFunction, budget: BudgetYear, lang: string, today = new Date()): ReportDocument {
+  const income = budget.groups.filter(g => !isOutgoing(g.type))
+  const out = budget.groups.filter(g => isOutgoing(g.type))
+  const planned = (groups: YearGroupRow[], i: number) => groups.reduce((sum, g) => sum + g.months[i].plannedCents, 0)
+  const months = Array.from({ length: 12 }, (_, i) => i)
+  return {
+    title: t('worksheet.year_title', { year: budget.year }),
+    subtitle: t('worksheet.statement_subtitle', { date: formatDate(today) }),
+    orientation: 'landscape',
+    writeIn: false,
+    sections: [
+      yearSection(t, t('worksheet.income'), income, budget.elapsedMonths, t('worksheet.total_income'), lang),
+      yearSection(t, t('worksheet.expenses'), out, budget.elapsedMonths, t('worksheet.total_expenses'), lang),
+      {
+        heading: t('worksheet.summary'),
+        columns: yearColumns(t, lang),
+        rows: [
+          {
+            cells: [t('worksheet.left_over'), ...months.map(i => wholeMoney(planned(income, i) - planned(out, i))), wholeMoney(budget.summary.leftToBudgetCents)],
+            bold: true,
+          },
+        ],
+      },
+    ],
+    footnote: t('worksheet.year_footnote'),
   }
 }
 

@@ -1,13 +1,32 @@
 import { create } from 'zustand'
 import { addMonths } from '../../../shared/date-only'
-import type { BudgetMonth, CopySource } from '../../../shared/budget'
+import type { BudgetMonth, BudgetYear, CopySource, FillYearInput } from '../../../shared/budget'
 import { currentMonth } from './transactions'
-import { withPlanned } from '../lib/budget'
+import { withPlanned, withYearPlanned } from '../lib/budget'
+
+export type BudgetView = 'month' | 'year'
+
+/** A fill without its year: the store adds the year on screen */
+export type YearFill = FillYearInput extends infer F ? (F extends unknown ? Omit<F, 'year'> : never) : never
 
 /** Outcome of a write started outside the page (Ctrl+K), shown once by the page */
 export type BudgetFlash = { kind: 'copied'; count: number } | { kind: 'error'; error: unknown }
 
 type BudgetStore = {
+  /** Month or Year view of the Budget page */
+  view: BudgetView
+  setView: (view: BudgetView) => void
+  year: number
+  yearData: BudgetYear | null
+  setYear: (year: number) => void
+  shiftYear: (delta: number) => void
+  loadYear: () => Promise<void>
+  /** Loads whichever view is showing */
+  reload: () => Promise<void>
+  /** Saves one month's plan from the year grid, at once on screen (rolls back and rethrows on failure) */
+  setYearPlanned: (monthIndex: number, categoryId: string, plannedCents: number) => Promise<void>
+  /** Fills the empty months of the year; returns how many lines were written */
+  fillYear: (fill: YearFill) => Promise<number>
   /** 'yyyy-MM' shown on the Budget page */
   month: string
   data: BudgetMonth | null
@@ -30,8 +49,49 @@ type BudgetStore = {
 
 // Answers can arrive out of order when months change quickly; only the latest counts
 let requestSeq = 0
+let yearSeq = 0
 
 export const useBudgetStore = create<BudgetStore>()((set, get) => ({
+  view: 'month',
+  setView: view => {
+    if (view === get().view) return
+    set({ view })
+    void get().reload()
+  },
+  year: new Date().getFullYear(),
+  yearData: null,
+  setYear: year => {
+    if (year === get().year) return
+    set({ year })
+    void get().loadYear()
+  },
+  shiftYear: delta => get().setYear(get().year + delta),
+  loadYear: async () => {
+    const seq = ++yearSeq
+    const { year } = get()
+    set({ loading: true })
+    try {
+      const yearData = await window.api.getBudgetYear(year)
+      if (seq === yearSeq) set({ yearData, loading: false, error: null })
+    } catch (error) {
+      if (seq === yearSeq) set({ loading: false, error })
+    }
+  },
+  reload: () => (get().view === 'year' ? get().loadYear() : get().load()),
+  setYearPlanned: async (monthIndex, categoryId, plannedCents) => {
+    const { year, yearData } = get()
+    if (yearData?.year === year) set({ yearData: withYearPlanned(yearData, monthIndex, categoryId, plannedCents) })
+    try {
+      await window.api.setPlanned(`${year}-${String(monthIndex + 1).padStart(2, '0')}`, categoryId, plannedCents)
+    } finally {
+      await get().loadYear()
+    }
+  },
+  fillYear: async fill => {
+    const written = await window.api.fillBudgetYear({ ...fill, year: get().year } as FillYearInput)
+    await get().loadYear()
+    return written
+  },
   month: currentMonth(),
   data: null,
   loading: false,

@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { actualFromSum, budgetGroup, budgetRow, computeCarry, roundUpToUnit, summariseBudget } from './budget'
+import {
+  actualFromSum,
+  budgetGroup,
+  budgetRow,
+  carrySeries,
+  compareRange,
+  computeCarry,
+  elapsedMonths,
+  fillMonths,
+  roundUpToUnit,
+  summariseBudget,
+  summariseYear,
+  yearGroup,
+  yearRow,
+} from './budget'
 
 const row = (id: string, plannedCents: number, actualCents: number, carriedInCents = 0) =>
   budgetRow({ id, name: id, icon: null, archived: false, carryOver: carriedInCents > 0, plannedCents, carriedInCents, actualCents, previousActualCents: 0, suggestedCents: 0 })
@@ -69,6 +83,70 @@ describe('budget rows and summary', () => {
       actualOutCents: 31_500,
       leftToBudgetCents: 227_000,
       leftToSpendCents: 46_500,
+    })
+  })
+})
+
+const twelve = (values: Record<number, number>) => Array.from({ length: 12 }, (_, i) => values[i] ?? 0)
+const yRow = (id: string, planned: number[], actual: number[], carries = false, carryInCents = 0, elapsed = 10) =>
+  yearRow(
+    { id, name: id, icon: null, archived: false, carryOver: carries, carries, carryInCents, planned, actual, thisYearCents: 0, lastYearCents: 0, lastYearFullCents: 0, suggestedCents: 0 },
+    elapsed,
+  )
+
+describe('carrySeries', () => {
+  it('should give what each month starts with, ending with computeCarry', () => {
+    const months = [{ plannedCents: 100, actualCents: 40 }, { plannedCents: 0, actualCents: 80 }, { plannedCents: 50, actualCents: 0 }]
+    expect(carrySeries(months, 10)).toEqual([10, 70, 0, 50])
+    expect(carrySeries(months).at(-1)).toBe(computeCarry(months))
+  })
+})
+
+describe('year ranges', () => {
+  it('should count the months that have started', () => {
+    expect([elapsedMonths(2025, '2026-10'), elapsedMonths(2026, '2026-10'), elapsedMonths(2027, '2026-10')]).toEqual([12, 10, 0])
+  })
+
+  it('should fill from this month on in the current year, all months in another', () => {
+    expect(fillMonths(2026, '2026-10')).toEqual(['2026-10', '2026-11', '2026-12'])
+    expect(fillMonths(2027, '2026-10')).toHaveLength(12)
+    expect(fillMonths(2025, '2026-10')).toHaveLength(12)
+  })
+
+  it('should compare the same dates last year, 29 Feb as 28 Feb, a past year whole, a future year not at all', () => {
+    expect(compareRange(2026, '2026-10-30')).toEqual({ from: '2026-01-01', to: '2026-10-30', lastFrom: '2025-01-01', lastTo: '2025-10-30' })
+    expect(compareRange(2028, '2028-02-29')?.lastTo).toBe('2027-02-28')
+    expect(compareRange(2025, '2026-10-30')).toMatchObject({ to: '2025-12-31', lastTo: '2024-12-31' })
+    expect(compareRange(2027, '2026-10-30')).toBeNull()
+  })
+})
+
+describe('yearRow, yearGroup and summariseYear', () => {
+  it('should sum the year and count only the months so far towards what is available', () => {
+    const r = yRow('food', twelve({ 0: 500, 10: 600 }), twelve({ 0: 200 }))
+    expect(r).toMatchObject({ plannedCents: 1_100, actualCents: 200, availableToDateCents: 500 })
+    expect(r.months[1]).toEqual({ plannedCents: 0, actualCents: 0, carriedInCents: 0, availableCents: 0 })
+  })
+
+  it('should chain unspent money month to month for a carry-over category', () => {
+    const r = yRow('food', twelve({ 0: 100, 1: 100 }), twelve({ 0: 30, 1: 250 }), true, 20)
+    expect(r.months.slice(0, 3).map(m => m.availableCents)).toEqual([120, 190, 0])
+    expect(r.availableToDateCents).toBe(220)
+  })
+
+  it('should sum groups per month and give the tiles', () => {
+    const out = yearGroup({ id: 'g', name: 'g', type: 'EXPENSE', icon: null, categories: [yRow('a', twelve({ 0: 100 }), twelve({ 0: 150 })), yRow('b', twelve({ 0: 50, 11: 50 }), twelve({}))] })
+    const income = yearGroup({ id: 'i', name: 'i', type: 'INCOME', icon: null, categories: [yRow('s', twelve({ 0: 1_000 }), twelve({ 0: 1_000 }))] })
+    expect(out.months[0]).toEqual({ plannedCents: 150, actualCents: 150 })
+    expect(out.plannedCents).toBe(200)
+    expect(summariseYear([income, out])).toEqual({
+      plannedIncomeCents: 1_000,
+      actualIncomeCents: 1_000,
+      plannedOutCents: 200,
+      actualOutCents: 150,
+      availableOutToDateCents: 150,
+      leftToBudgetCents: 800,
+      leftToSpendCents: 0,
     })
   })
 })

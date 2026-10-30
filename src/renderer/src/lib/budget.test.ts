@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setMoneyLanguage } from '../../../shared/money'
-import { budgetGroup, budgetRow, summariseBudget, type BudgetMonth } from '../../../shared/budget'
-import { meterTone, monthDate, monthTense, parsePlanned, plannedText, withPlanned } from './budget'
+import { budgetGroup, budgetRow, summariseBudget, summariseYear, yearGroup, yearRow, type BudgetMonth, type BudgetYear } from '../../../shared/budget'
+import { meterTone, monthDate, monthTense, parsePlanned, plannedText, shortMonthLabel, withPlanned, withYearPlanned, yearAsBudgetSummary, yearChange } from './budget'
 
 beforeEach(() => setMoneyLanguage('el'))
 
@@ -58,5 +58,37 @@ describe('withPlanned', () => {
     expect(next.groups[1]).toMatchObject({ plannedCents: 10_000, availableCents: 10_000 })
     expect(next.summary).toMatchObject({ leftToBudgetCents: 190_000, leftToSpendCents: 6_000 })
     expect(data.groups[1].plannedCents).toBe(0)
+  })
+})
+
+describe('year helpers', () => {
+  const twelve = (values: Record<number, number>) => Array.from({ length: 12 }, (_, i) => values[i] ?? 0)
+  const row = (id: string, planned: number[], actual: number[], carries = false) =>
+    yearRow({ id, name: id, icon: null, archived: false, carryOver: carries, carries, carryInCents: 0, planned, actual, thisYearCents: 0, lastYearCents: 0, lastYearFullCents: 0, suggestedCents: 0 }, 2)
+  const groups = [yearGroup({ id: 'g', name: 'g', type: 'EXPENSE', icon: null, categories: [row('food', twelve({ 0: 100 }), twelve({ 0: 40 }), true), row('fun', twelve({}), twelve({}))] })]
+  const data: BudgetYear = { year: 2026, elapsedMonths: 2, exists: true, updatedAt: null, summary: summariseYear(groups), groups, compare: null, latestPlannedMonth: '2026-01' }
+
+  it('should change one month of one category and recompute the carry, the sums and the tiles', () => {
+    const next = withYearPlanned(data, 1, 'food', 50)
+    const food = next.groups[0].categories[0]
+    expect(food.months[1]).toMatchObject({ plannedCents: 50, carriedInCents: 60, availableCents: 110 })
+    expect([food.plannedCents, next.groups[0].months[1].plannedCents, next.summary.plannedOutCents]).toEqual([150, 50, 150])
+    expect(withYearPlanned(withYearPlanned(data, 0, 'food', 0), 1, 'food', 0).exists).toBe(false)
+  })
+
+  it("should give the year tiles the month tiles' shape", () => {
+    expect(yearAsBudgetSummary(data.summary)).toMatchObject({ availableOutCents: 100, actualOutCents: 40, leftToSpendCents: 60 })
+  })
+
+  it('should give the change and a percentage only when last year had something', () => {
+    expect(yearChange(1_200, 1_000)).toEqual({ deltaCents: 200, percent: 20 })
+    expect(yearChange(900, 1_000)).toEqual({ deltaCents: -100, percent: -10 })
+    expect(yearChange(500, 0)).toEqual({ deltaCents: 500, percent: null })
+  })
+
+  it('should name months short, capitalised, without a trailing dot', () => {
+    expect(shortMonthLabel(0, 'en')).toBe('Jan')
+    expect(shortMonthLabel(9, 'el')).toMatch(/^Οκτ/)
+    expect(shortMonthLabel(9, 'el')).not.toMatch(/\.$/)
   })
 })

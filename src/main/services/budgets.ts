@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '../db/prisma'
+import type { Prisma } from '../../../prisma/generated/client/client'
 import { addMonths, isMonth, monthRange } from '../../shared/date-only'
 import { monthlyByCategory } from './recurring'
 import { CATEGORY_TYPES, type CategoryType } from '../../shared/ledger'
@@ -16,21 +17,21 @@ import {
   type BudgetMonth,
 } from '../../shared/budget'
 
-const TYPE_ORDER = new Map<CategoryType, number>(CATEGORY_TYPES.map((t, i) => [t, i]))
+export const TYPE_ORDER = new Map<CategoryType, number>(CATEGORY_TYPES.map((t, i) => [t, i]))
 
 const month = z.string().refine(isMonth)
 
-function parse<S extends z.ZodTypeAny>(schema: S, input: unknown): z.infer<S> {
+export function parse<S extends z.ZodTypeAny>(schema: S, input: unknown): z.infer<S> {
   const parsed = schema.safeParse(input)
   if (!parsed.success) throw new Error('INVALID_INPUT')
   return parsed.data
 }
 
-/** Booked sum per category in a month (categorised rows only, so transfers never count) */
-async function sumsByCategory(m: string): Promise<Map<string, number>> {
+/** Booked sum per category over a date range (categorised rows only, so transfers never count) */
+export async function sumsByCategory(range: { gte: Date; lt: Date }): Promise<Map<string, number>> {
   const sums = await prisma.transaction.groupBy({
     by: ['categoryId'],
-    where: { bookedAt: monthRange(m), categoryId: { not: null } },
+    where: { bookedAt: range, categoryId: { not: null } },
     _sum: { amountCents: true },
   })
   return new Map(sums.map(s => [s.categoryId!, s._sum.amountCents ?? 0]))
@@ -40,7 +41,7 @@ async function sumsByCategory(m: string): Promise<Map<string, number>> {
  * Unspent money carried into `m` for each carry-over category, chained month by month
  * from the first month it was planned.
  */
-async function carriedInto(m: string, categories: Array<{ id: string; type: CategoryType }>): Promise<Map<string, number>> {
+export async function carriedInto(m: string, categories: Array<{ id: string; type: CategoryType }>): Promise<Map<string, number>> {
   const carried = new Map<string, number>()
   if (categories.length === 0) return carried
   const ids = categories.map(c => c.id)
@@ -61,13 +62,7 @@ async function carriedInto(m: string, categories: Array<{ id: string; type: Cate
     byMonth.set(l.budget.month, l.plannedCents)
     planned.set(l.categoryId, byMonth)
   }
-  const booked = new Map<string, Map<string, number>>()
-  for (const r of rows) {
-    const key = r.bookedAt.toISOString().slice(0, 7)
-    const byMonth = booked.get(r.categoryId!) ?? new Map<string, number>()
-    byMonth.set(key, (byMonth.get(key) ?? 0) + r.amountCents)
-    booked.set(r.categoryId!, byMonth)
-  }
+  const booked = bookedByMonth(rows)
   for (const c of categories) {
     const plan = planned.get(c.id)
     if (!plan) continue
@@ -81,14 +76,27 @@ async function carriedInto(m: string, categories: Array<{ id: string; type: Cate
   return carried
 }
 
+/** Booked rows → category → 'yyyy-MM' → summed cents */
+export function bookedByMonth(rows: Array<{ categoryId: string | null; amountCents: number; bookedAt: Date }>): Map<string, Map<string, number>> {
+  const booked = new Map<string, Map<string, number>>()
+  for (const r of rows) {
+    if (r.categoryId === null) continue
+    const key = r.bookedAt.toISOString().slice(0, 7)
+    const byMonth = booked.get(r.categoryId) ?? new Map<string, number>()
+    byMonth.set(key, (byMonth.get(key) ?? 0) + r.amountCents)
+    booked.set(r.categoryId, byMonth)
+  }
+  return booked
+}
+
 /** Plan vs actual for one month, grouped like the Categories page. Throws: 'INVALID_INPUT' */
 export async function getBudgetMonth(input: unknown): Promise<BudgetMonth> {
   const m = parse(month, input)
   const previous = addMonths(m, -1)
   const [budget, sums, previousSums, previousLines, uncategorisedCount, suggested] = await Promise.all([
     prisma.budget.findUnique({ where: { month: m }, include: { lines: true } }),
-    sumsByCategory(m),
-    sumsByCategory(previous),
+    sumsByCategory(monthRange(m)),
+    sumsByCategory(monthRange(previous)),
     prisma.budgetLine.count({ where: { budget: { month: previous } } }),
     prisma.transaction.count({ where: { bookedAt: monthRange(m), categoryId: null, transferId: null } }),
     monthlyByCategory(),
@@ -144,10 +152,10 @@ export async function getBudgetMonth(input: unknown): Promise<BudgetMonth> {
   }
 }
 
-const latest = (...dates: Date[]) => new Date(Math.max(...dates.map(d => d.getTime())))
+export const latest = (...dates: Date[]) => new Date(Math.max(...dates.map(d => d.getTime())))
 
 /** A category (never a group) that can take a plan. Throws: 'CATEGORY_NOT_FOUND' */
-async function assertPlannable(categoryId: string, allowArchived = false): Promise<void> {
+export async function assertPlannable(categoryId: string, allowArchived = false): Promise<void> {
   const found = await prisma.category.findUnique({ where: { id: categoryId }, select: { parentId: true, archivedAt: true } })
   if (!found || found.parentId === null || (found.archivedAt && !allowArchived)) throw new Error('CATEGORY_NOT_FOUND')
 }
@@ -195,7 +203,7 @@ export async function copyBudget(input: unknown): Promise<number> {
     const ids = new Set(active.map(c => c.id))
     for (const [id, cents] of await monthlyByCategory()) if (ids.has(id) && cents > 0) amounts.set(id, cents)
   } else {
-    const sums = await sumsByCategory(from)
+    const sums = await sumsByCategory(monthRange(from))
     for (const c of active) {
       const cents = roundUpToUnit(actualFromSum(c.type, sums.get(c.id) ?? 0))
       if (cents > 0) amounts.set(c.id, cents)
@@ -203,13 +211,16 @@ export async function copyBudget(input: unknown): Promise<number> {
   }
   if (amounts.size === 0) throw new Error('BUDGET_SOURCE_EMPTY')
 
-  return prisma.$transaction(async tx => {
-    const budget = await tx.budget.upsert({ where: { month: to }, create: { month: to }, update: {} })
-    const taken = new Set((await tx.budgetLine.findMany({ where: { budgetId: budget.id }, select: { categoryId: true } })).map(l => l.categoryId))
-    const data = [...amounts].filter(([id]) => !taken.has(id)).map(([categoryId, plannedCents]) => ({ budgetId: budget.id, categoryId, plannedCents }))
-    if (data.length) await tx.budgetLine.createMany({ data })
-    return data.length
-  })
+  return prisma.$transaction(tx => fillEmptyLines(tx, to, amounts))
+}
+
+/** Writes `amounts` (category → cents) into the lines of `m` that are still empty; returns how many were written */
+export async function fillEmptyLines(tx: Prisma.TransactionClient, m: string, amounts: Map<string, number>): Promise<number> {
+  const budget = await tx.budget.upsert({ where: { month: m }, create: { month: m }, update: {} })
+  const taken = new Set((await tx.budgetLine.findMany({ where: { budgetId: budget.id }, select: { categoryId: true } })).map(l => l.categoryId))
+  const data = [...amounts].filter(([id]) => !taken.has(id)).map(([categoryId, plannedCents]) => ({ budgetId: budget.id, categoryId, plannedCents }))
+  if (data.length) await tx.budgetLine.createMany({ data })
+  return data.length
 }
 
 /** Removes a month's whole plan. Throws: 'INVALID_INPUT' */

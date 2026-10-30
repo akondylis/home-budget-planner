@@ -44,6 +44,22 @@ export function monthRange(month: string): { gte: Date; lt: Date } {
   return { gte: new Date(Date.UTC(y, m - 1, 1)), lt: new Date(Date.UTC(y, m, 1)) }
 }
 
+/** A calendar year the budget can show */
+export function isYear(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1900 && value <= 9999
+}
+
+/** The 12 'yyyy-MM' months of a year */
+export function yearMonths(year: number): string[] {
+  return Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`)
+}
+
+/** 'yyyy-MM-dd' to 'yyyy-MM-dd', both days included → [from 00:00 UTC, day after `to` 00:00 UTC) */
+export function dayRange(from: string, to: string): { gte: Date; lt: Date } {
+  if (!isDateOnly(from) || !isDateOnly(to)) throw new Error('INVALID_DATE')
+  return { gte: new Date(`${from}T00:00:00Z`), lt: new Date(`${addDays(to, 1)}T00:00:00Z`) }
+}
+
 /** 'yyyy-MM' moved by `delta` months */
 export function addMonths(month: string, delta: number): string {
   const [y, m] = month.split('-').map(Number)

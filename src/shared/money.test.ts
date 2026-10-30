@@ -22,6 +22,11 @@ describe('formatMoney', () => {
     expect(formatMoney(-500, { sign: 'always' })).toBe('-€5.00')
   })
 
+  it('should round to whole units when asked, without touching the default', () => {
+    expect(plain(formatMoney(123456, { whole: true }))).toBe('1.235 €')
+    expect(plain(formatMoney(123456))).toBe('1.234,56 €')
+  })
+
   it('should return an empty string when the value is missing', () => {
     expect(formatMoney(null)).toBe('')
     expect(formatMoney(undefined)).toBe('')

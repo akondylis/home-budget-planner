@@ -29,6 +29,7 @@ export type PaletteTarget =
   | { kind: 'banks' }
   | { kind: 'categories'; tab: 'categories' | 'rules' }
   | { kind: 'budgetCopy' }
+  | { kind: 'budgetYear' }
   | { kind: 'billAdd' }
   | { kind: 'debtAdd' }
   | { kind: 'notifications' }
@@ -114,6 +115,7 @@ export function buildActions({ t, theme, lang, members = [], currentMemberId = n
     { id: 'import', group: 'actions', title: t('import.command'), keywords: 'import statement csv bank card εισαγωγη κινησεις τραπεζα καρτα', icon: 'download', target: { kind: 'import' } },
     { id: 'importHistory', group: 'actions', title: t('import.history_title'), keywords: 'import history undo statement ιστορικο εισαγωγες αναιρεση', icon: 'undo', target: { kind: 'importHistory' } },
     { id: 'budgetCopy', group: 'actions', title: t('palette.budget_copy'), keywords: 'budget plan copy last month προυπολογισμος πλανο αντιγραφη προηγουμενος μηνας', icon: 'copy', target: { kind: 'budgetCopy' } },
+    { id: 'budgetYear', group: 'actions', title: t('palette.budget_year'), keywords: 'budget year yearly annual 12 months plan last year προυπολογισμος ετος ετησιος χρονια 12 μηνες περσι', icon: 'calendar', target: { kind: 'budgetYear' } },
     { id: 'billAdd', group: 'actions', title: t('recurring.palette_add'), keywords: 'bill subscription recurring rent insurance add new λογαριασμος συνδρομη παγιο ενοικιο ασφαλεια νεος', icon: 'repeat', target: { kind: 'billAdd' } },
     { id: 'debtAdd', group: 'actions', title: t('debts.palette_add'), keywords: 'debt loan instalments owed borrow lend add new δανειο δοσεις οφειλη χρεος δανεικα νεο', icon: 'credit-card', target: { kind: 'debtAdd' } },
     { id: 'notifications', group: 'actions', title: t('notifications.palette'), keywords: 'notifications bell reminders due overdue alerts ειδοποιησεις καμπανακι υπενθυμισεις ληξη', icon: 'bell', target: { kind: 'notifications' } },

@@ -10,11 +10,20 @@ export interface PlannedCellProps {
   name: string
   cents: number
   onSave: (cents: number) => Promise<void>
+  /** Accessible label instead of "Planned for {name}" (the year grid names the month too) */
+  label?: string
+  /** Column in a grid (the year view): ↑/↓/Enter stay in the column, ←/→ move along the row */
+  column?: number
 }
 
-/** Every Planned input on the page, in reading order, for ↑/↓ and Enter */
-function moveFocus(from: HTMLInputElement, delta: 1 | -1) {
-  const cells = [...document.querySelectorAll<HTMLInputElement>('input[data-planned-cell]')]
+/**
+ * Every Planned input on the page, in reading order, for ↑/↓ and Enter; in a grid,
+ * `sameColumn` keeps to the inputs of the cell's own column.
+ */
+function moveFocus(from: HTMLInputElement, delta: 1 | -1, sameColumn = true) {
+  let cells = [...document.querySelectorAll<HTMLInputElement>('input[data-planned-cell]')]
+  const col = from.dataset.plannedCol
+  if (sameColumn && col !== undefined) cells = cells.filter(c => c.dataset.plannedCol === col)
   const next = cells[cells.indexOf(from) + delta]
   if (next) {
     next.focus()
@@ -23,7 +32,7 @@ function moveFocus(from: HTMLInputElement, delta: 1 | -1) {
 }
 
 /** Inline planned amount: saves on Enter or when focus leaves, Esc puts the saved amount back */
-export function PlannedCell({ name, cents, onSave }: PlannedCellProps) {
+export function PlannedCell({ name, cents, onSave, label, column }: PlannedCellProps) {
   const { t } = useTranslation()
   const [text, setText] = useState(plannedText(cents))
   const [focused, setFocused] = useState(false)
@@ -76,6 +85,14 @@ export function PlannedCell({ name, cents, onSave }: PlannedCellProps) {
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault()
       moveFocus(input, e.key === 'ArrowDown' ? 1 : -1)
+    } else if (column !== undefined && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      // Along the row only when the caret is at that edge, or the whole amount is selected
+      const { selectionStart: start, selectionEnd: end, value } = input
+      const all = start === 0 && end === value.length
+      const atEdge = e.key === 'ArrowLeft' ? start === 0 && end === 0 : start === value.length
+      if (!all && !atEdge) return
+      e.preventDefault()
+      moveFocus(input, e.key === 'ArrowRight' ? 1 : -1, false)
     }
   }
 
@@ -84,16 +101,17 @@ export function PlannedCell({ name, cents, onSave }: PlannedCellProps) {
       <div className="relative">
         <Input
           data-planned-cell
+          data-planned-col={column}
           inputMode="decimal"
           value={text}
           placeholder="0"
-          aria-label={t('budget.planned_for', { name })}
+          aria-label={label ?? t('budget.planned_for', { name })}
           aria-invalid={error ? true : undefined}
           onChange={e => setText(e.target.value)}
           onFocus={e => { setFocused(true); e.currentTarget.select() }}
           onBlur={() => { setFocused(false); void commit() }}
           onKeyDown={onKeyDown}
-          className={cx('h-8 w-full min-w-0 pr-6 text-right tabular-nums', error && 'border-red-500')}
+          className={cx('h-8 w-full min-w-0 text-right tabular-nums', column === undefined ? 'pr-6' : 'pl-2 pr-5', error && 'border-red-500')}
         />
         {saved && (
           <span className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-success-fg" title={t('budget.saved')}>

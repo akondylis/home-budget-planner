@@ -9,11 +9,14 @@ export interface BudgetSummaryTilesProps {
   summary: BudgetSummary
   /** Nothing booked yet: received / spent are left out */
   future: boolean
+  /** Year: "left to spend" counts only the months so far */
+  period?: 'month' | 'year'
 }
 
 /** Expected income · Left to budget (zero-based) · Left to spend */
-export function BudgetSummaryTiles({ summary, future }: BudgetSummaryTilesProps) {
+export function BudgetSummaryTiles({ summary, future, period = 'month' }: BudgetSummaryTilesProps) {
   const { t } = useTranslation()
+  const year = period === 'year'
   const ltb = summary.leftToBudgetCents
   const lts = summary.leftToSpendCents
   const spentLabel = t('budget.spent_of', { spent: formatMoney(summary.actualOutCents), available: formatMoney(summary.availableOutCents) })
@@ -24,7 +27,7 @@ export function BudgetSummaryTiles({ summary, future }: BudgetSummaryTilesProps)
         icon="arrow-down"
         label={t('budget.tile_income')}
         value={<Money cents={summary.plannedIncomeCents} />}
-        hint={future ? t('budget.tile_income_future') : t('budget.tile_income_hint', { received: formatMoney(summary.actualIncomeCents) })}
+        hint={future ? t(year ? 'budget.year_income_future' : 'budget.tile_income_future') : t('budget.tile_income_hint', { received: formatMoney(summary.actualIncomeCents) })}
       />
       <StatTile
         icon="target"
@@ -40,10 +43,10 @@ export function BudgetSummaryTiles({ summary, future }: BudgetSummaryTilesProps)
       />
       <StatTile
         icon="wallet"
-        label={t('budget.tile_left_to_spend')}
+        label={t(year ? 'budget.year_left_so_far' : 'budget.tile_left_to_spend')}
         value={<Money cents={lts} />}
         hint={
-          future ? t('budget.lts_future') : (
+          future ? t(year ? 'budget.year_lts_future' : 'budget.lts_future') : (
             <span className="flex flex-col gap-1">
               <span className={lts < 0 ? 'text-red-700' : undefined}>
                 {lts < 0 ? t('budget.lts_over', { amount: formatMoney(-lts) }) : spentLabel}

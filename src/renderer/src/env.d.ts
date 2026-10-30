@@ -72,6 +72,8 @@ interface Window {
     setPlanned:        (month: string, categoryId: string, plannedCents: number) => Promise<void>
     copyBudget:        (input: { from: string; to: string; source: import('../../shared/budget').CopySource }) => Promise<number>
     clearBudget:       (month: string) => Promise<void>
+    getBudgetYear:     (year: number) => Promise<import('../../shared/budget').BudgetYear>
+    fillBudgetYear:    (input: import('../../shared/budget').FillYearInput) => Promise<number>
 
     listBills:         () => Promise<import('../../shared/recurrence').RecurringRuleRow[]>
     createBill:        (input: import('../../shared/recurrence').RecurringRuleInput) => Promise<string>

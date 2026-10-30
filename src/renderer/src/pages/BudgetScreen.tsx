@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { Icon } from '../components/shell/icons'
-import { ActionMenu, Banner, Button, ConfirmDialog, ListCard, MetaLine, PageHeader, Spinner } from '../components/ui'
+import { ActionMenu, Banner, Button, ConfirmDialog, MetaLine, PageHeader, Spinner } from '../components/ui'
 import { isModalOpen } from '../components/ui/Modal'
 import { usePrintShortcut } from '../hooks/useShortcuts'
 import { MonthSwitcher } from '../components/budget/MonthSwitcher'
+import { BudgetEmptyState } from '../components/budget/BudgetEmptyState'
+import { BudgetViewToggle, YearView } from '../components/budget/YearView'
 import { BudgetSummaryTiles } from '../components/budget/BudgetSummaryTiles'
 import { BudgetTable, isUnplanned } from '../components/budget/BudgetTable'
 import { ReportPreviewModal } from '../components/pdf/ReportPreviewModal'
@@ -23,12 +24,20 @@ import type { AppLanguage } from '../types'
 
 export interface BudgetScreenProps {
   onShowTransactions: (month: string, categoryId: string) => void
+  /** The log on every row of one category (Year view) */
+  onShowCategoryTransactions: (categoryId: string) => void
   onShowUncategorised: (month: string) => void
   onManageCategories: () => void
 }
 
+/** The Budget page: one month, or the whole year */
+export function BudgetScreen(props: BudgetScreenProps) {
+  const view = useBudgetStore(s => s.view)
+  return view === 'year' ? <YearView {...props} /> : <MonthBudget {...props} />
+}
+
 /** Plan per category for a month, compared with what came in and went out */
-export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManageCategories }: BudgetScreenProps) {
+function MonthBudget({ onShowTransactions, onShowUncategorised, onManageCategories }: BudgetScreenProps) {
   const { t, i18n } = useTranslation()
   const month = useBudgetStore(s => s.month)
   const data = useBudgetStore(s => s.data)
@@ -131,6 +140,7 @@ export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManage
         )}
         actions={
           <>
+            <BudgetViewToggle />
             <MonthSwitcher
               month={month}
               current={current}
@@ -186,7 +196,7 @@ export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManage
           {notice && <Banner tone="success" className="mb-4">{notice}</Banner>}
 
           {data.groups.length === 0 ? (
-            <EmptyState
+            <BudgetEmptyState
               title={t('budget.no_categories_title')}
               body={t('budget.no_categories_body')}
               actions={<Button variant="primary" icon="tag" onClick={onManageCategories}>{t('categories.title')}</Button>}
@@ -227,19 +237,6 @@ export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManage
   )
 }
 
-function EmptyState({ title, body, actions }: { title: string; body: string; actions: ReactNode }) {
-  return (
-    <ListCard className="flex flex-col items-center px-6 py-12 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent">
-        <Icon name="target" size={24} />
-      </span>
-      <h2 className="mt-4 text-sm font-semibold text-fg">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-fg-muted">{body}</p>
-      <div className="mt-5 flex flex-wrap justify-center gap-2">{actions}</div>
-    </ListCard>
-  )
-}
-
 /** No plan yet: the best start first (last month's plan, else its spending, else blank) */
 function PlanEmptyState({ data, label, previousLabel, busy, onCopy, onBlank }: {
   data: BudgetMonth
@@ -258,7 +255,7 @@ function PlanEmptyState({ data, label, previousLabel, busy, onCopy, onBlank }: {
   ].filter(o => o !== false)
 
   return (
-    <EmptyState
+    <BudgetEmptyState
       title={t('budget.empty_title', { month: label })}
       body={t('budget.empty_body')}
       actions={options.map((o, i) => (

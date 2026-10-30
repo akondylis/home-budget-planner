@@ -78,6 +78,8 @@ contextBridge.exposeInMainWorld('api', {
   setPlanned:        (month: string, categoryId: string, plannedCents: number) => ipcRenderer.invoke('budget:setPlanned', month, categoryId, plannedCents),
   copyBudget:        (input: unknown)                 => ipcRenderer.invoke('budget:copy', input),
   clearBudget:       (month: string)                  => ipcRenderer.invoke('budget:clear', month),
+  getBudgetYear:     (year: number)                   => ipcRenderer.invoke('budget:getYear', year),
+  fillBudgetYear:    (input: unknown)                 => ipcRenderer.invoke('budget:fillYear', input),
 
   // ── Recurring (subscriptions & bills) ───────────────────────────────────────
   listBills:         ()                               => ipcRenderer.invoke('recurring:list'),
