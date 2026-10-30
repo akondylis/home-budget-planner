@@ -18,7 +18,7 @@ Theme, UI kit and UX rules are inherited from the Matchday project (`../chess-bo
 - Money: amounts are `Int` minor units (cents), never `Float`; format with `formatMoney()` / `<Money>`, parse input with `parseMoney()` (`src/shared/money.ts`) → `docs/domain-model.md`
 - Signs: an expense is negative, income positive; transfers between own accounts are two linked rows and never count as income/expense → `docs/domain-model.md`
 - Dates: display with `formatDate()` / `formatDateTime()` (`src/shared/date-format.ts`); never `toLocaleDateString()`
-- Design & usability: every UI/UX decision and every visual (screens, PDFs, charts, diagrams) follows UI/UX best practice, starts from the user's job and makes it clearer and easier; every change must improve clarity, visual hierarchy and UX; every feature plan includes a **UX** section and a UX walkthrough in its verification → `docs/design-principles.md`
+- Design & usability: every UI/UX decision and every visual (screens, PDFs, charts, diagrams) follows current UI/UX best practice and trends, stays clear, starts from the user's job and makes it clearer and easier; every change must improve clarity, visual hierarchy and UX; every feature plan includes a **UX** section and a UX walkthrough in its verification → `docs/design-principles.md`
 - Charts: follow the `dataviz` skill; income/expense series use `chart-income` / `chart-expense` tokens (validated for colour-blind readers, light + dark)
 
 **Working Style**

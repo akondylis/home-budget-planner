@@ -6,6 +6,7 @@ import { assertMember } from './members'
 import { dateOnlyToDate, dateToDateOnly, isDateOnly, isMonth, monthRange } from '../../shared/date-only'
 import {
   CATEGORY_TYPES,
+  LOG_SORT_KEYS,
   signedAmount,
   type PayeeSuggestion,
   type TransactionFilter,
@@ -13,6 +14,8 @@ import {
   type TransactionRow,
 } from '../../shared/ledger'
 import { HOUSEHOLD, type MemberColour } from '../../shared/members'
+import { sumMoney } from '../../shared/money'
+import { queryMatcher, rowComparator } from './transaction-search'
 
 export const DEFAULT_PAGE_SIZE = 50
 const MAX_PAGE_SIZE = 200
@@ -53,6 +56,9 @@ const filterInput = z.object({
   importBatchId: z.string().optional(),
   /** A member id, or HOUSEHOLD for rows that are for no one parent */
   memberId: z.string().optional(),
+  query: z.string().trim().max(100).optional(),
+  sort: z.enum(LOG_SORT_KEYS).default('date'),
+  direction: z.enum(['asc', 'desc']).default('desc'),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
 })
@@ -104,33 +110,104 @@ function filterWhere(f: z.infer<typeof filterInput>): Prisma.TransactionWhereInp
 
 const UNCATEGORISED: Prisma.TransactionWhereInput = { categoryId: null, transferId: null }
 
-/** One page of the log, newest first, with the totals of everything the filter matches */
+const ROW_INCLUDE = {
+  account: { select: { name: true } },
+  category: { select: { name: true, type: true, parent: { select: { name: true } } } },
+  member: { select: { name: true, colour: true } },
+  createdBy: { select: { name: true } },
+} satisfies Prisma.TransactionInclude
+
+type FullRow = Prisma.TransactionGetPayload<{ include: typeof ROW_INCLUDE }>
+type Filter = z.infer<typeof filterInput>
+type PageResult = Omit<TransactionPage, 'rows' | 'page' | 'pageSize'> & { rows: FullRow[] }
+
+/** One page of the log, newest first unless sorted, with the totals of everything the filter matches */
 export async function listTransactions(input: unknown = {}): Promise<TransactionPage> {
   const f = parse(filterInput, input ?? {})
   const base = filterWhere(f)
+  // Search and text sorts fold Greek case and accents, which SQLite cannot
+  const result = f.query || f.sort === 'description' || f.sort === 'category' ? await memoryPage(f, base) : await sqlPage(f, base)
+  return { ...result, rows: await toRows(result.rows), page: f.page, pageSize: f.pageSize }
+}
+
+/** Unsearched, sorted by date or amount: paging and totals in SQL */
+async function sqlPage(f: Filter, base: Prisma.TransactionWhereInput): Promise<PageResult> {
   const where: Prisma.TransactionWhereInput = f.uncategorised ? { AND: [base, UNCATEGORISED] } : base
   const notTransfer: Prisma.TransactionWhereInput = { AND: [where, { transferId: null }] }
+  const orderBy: Prisma.TransactionOrderByWithRelationInput[] = f.sort === 'amount'
+    ? [{ amountCents: f.direction }, { bookedAt: 'desc' }, { createdAt: 'desc' }]
+    : [{ bookedAt: f.direction }, { createdAt: f.direction }]
 
   const [rows, total, income, expense, uncategorisedCount] = await Promise.all([
-    prisma.transaction.findMany({
-      where,
-      orderBy: [{ bookedAt: 'desc' }, { createdAt: 'desc' }],
-      skip: (f.page - 1) * f.pageSize,
-      take: f.pageSize,
-      include: {
-        account: { select: { name: true } },
-        category: { select: { name: true, type: true, parent: { select: { name: true } } } },
-        member: { select: { name: true, colour: true } },
-        createdBy: { select: { name: true } },
-      },
-    }),
+    prisma.transaction.findMany({ where, orderBy, skip: (f.page - 1) * f.pageSize, take: f.pageSize, include: ROW_INCLUDE }),
     prisma.transaction.count({ where }),
     prisma.transaction.aggregate({ where: { AND: [notTransfer, { amountCents: { gt: 0 } }] }, _sum: { amountCents: true } }),
     prisma.transaction.aggregate({ where: { AND: [notTransfer, { amountCents: { lt: 0 } }] }, _sum: { amountCents: true } }),
     prisma.transaction.count({ where: { AND: [base, UNCATEGORISED] } }),
   ])
+  return {
+    rows,
+    total,
+    incomeCents: income._sum.amountCents ?? 0,
+    expenseCents: expense._sum.amountCents ?? 0,
+    uncategorisedCount,
+  }
+}
 
-  // The other side of each transfer on the page, in one query
+/** Searched or sorted by text: the filter's rows are matched and ordered in memory, then one page is loaded in full */
+async function memoryPage(f: Filter, base: Prisma.TransactionWhereInput): Promise<PageResult> {
+  const light = await prisma.transaction.findMany({
+    where: base,
+    select: {
+      id: true, bookedAt: true, createdAt: true, amountCents: true, payee: true, description: true, note: true,
+      transferId: true, categoryId: true, account: { select: { name: true } }, category: { select: { name: true } },
+    },
+  })
+  const otherAccount = light.some(r => r.transferId) ? await transferAccountNames() : new Map<string, string>()
+  const rows = light.map(r => ({
+    ...r,
+    accountName: r.account.name,
+    categoryName: r.category?.name ?? null,
+    transferAccountName: r.transferId ? otherAccount.get(`${r.transferId}:${r.id}`) ?? null : null,
+  }))
+  const searched = f.query ? rows.filter(queryMatcher(f.query)) : rows
+  const isUncategorised = (r: (typeof rows)[number]) => r.categoryId === null && r.transferId === null
+  const matched = (f.uncategorised ? searched.filter(isUncategorised) : searched)
+    .sort(rowComparator({ key: f.sort, direction: f.direction }))
+
+  const pageIds = matched.slice((f.page - 1) * f.pageSize, f.page * f.pageSize).map(r => r.id)
+  const full = await prisma.transaction.findMany({ where: { id: { in: pageIds } }, include: ROW_INCLUDE })
+  const byId = new Map(full.map(r => [r.id, r]))
+  const counted = matched.filter(r => r.transferId === null)
+  return {
+    rows: pageIds.map(id => byId.get(id)).filter((r): r is FullRow => r !== undefined),
+    total: matched.length,
+    incomeCents: sumMoney(counted.filter(r => r.amountCents > 0).map(r => r.amountCents)),
+    expenseCents: sumMoney(counted.filter(r => r.amountCents < 0).map(r => r.amountCents)),
+    uncategorisedCount: searched.filter(isUncategorised).length,
+  }
+}
+
+/** For every transfer row, keyed `transferId:rowId`, the account on the other side */
+async function transferAccountNames(): Promise<Map<string, string>> {
+  const sides = await prisma.transaction.findMany({
+    where: { transferId: { not: null } },
+    select: { id: true, transferId: true, account: { select: { name: true } } },
+  })
+  const pairs = new Map<string, typeof sides>()
+  for (const s of sides) pairs.set(s.transferId!, [...(pairs.get(s.transferId!) ?? []), s])
+  const names = new Map<string, string>()
+  for (const [transferId, pair] of pairs) {
+    for (const a of pair) {
+      const b = pair.find(s => s.id !== a.id)
+      if (b) names.set(`${transferId}:${a.id}`, b.account.name)
+    }
+  }
+  return names
+}
+
+/** Page rows as the renderer sees them, with the other side of each transfer in one query */
+async function toRows(rows: FullRow[]): Promise<TransactionRow[]> {
   const transferIds = rows.map(r => r.transferId).filter((id): id is string => id !== null)
   const otherSides = transferIds.length
     ? await prisma.transaction.findMany({
@@ -141,39 +218,31 @@ export async function listTransactions(input: unknown = {}): Promise<Transaction
   // Both sides can be on the page; then each points at the other
   const sides = [...otherSides, ...rows.filter(r => r.transferId)]
 
-  return {
-    rows: rows.map((r): TransactionRow => {
-      const other = r.transferId ? sides.find(s => s.transferId === r.transferId && s.id !== r.id) : undefined
-      return {
-        id: r.id,
-        accountId: r.accountId,
-        accountName: r.account.name,
-        bookedAt: dateToDateOnly(r.bookedAt),
-        amountCents: r.amountCents,
-        description: r.description,
-        payee: r.payee,
-        note: r.note,
-        categoryId: r.categoryId,
-        categoryName: r.category?.name ?? null,
-        categoryGroupName: r.category?.parent?.name ?? null,
-        categoryType: r.category?.type ?? null,
-        transferId: r.transferId,
-        transferAccountId: other?.accountId ?? null,
-        transferAccountName: other?.account.name ?? null,
-        importBatchId: r.importBatchId,
-        memberId: r.memberId,
-        memberName: r.member?.name ?? null,
-        memberColour: (r.member?.colour as MemberColour | undefined) ?? null,
-        createdByName: r.createdBy?.name ?? null,
-      }
-    }),
-    total,
-    page: f.page,
-    pageSize: f.pageSize,
-    incomeCents: income._sum.amountCents ?? 0,
-    expenseCents: expense._sum.amountCents ?? 0,
-    uncategorisedCount,
-  }
+  return rows.map((r): TransactionRow => {
+    const other = r.transferId ? sides.find(s => s.transferId === r.transferId && s.id !== r.id) : undefined
+    return {
+      id: r.id,
+      accountId: r.accountId,
+      accountName: r.account.name,
+      bookedAt: dateToDateOnly(r.bookedAt),
+      amountCents: r.amountCents,
+      description: r.description,
+      payee: r.payee,
+      note: r.note,
+      categoryId: r.categoryId,
+      categoryName: r.category?.name ?? null,
+      categoryGroupName: r.category?.parent?.name ?? null,
+      categoryType: r.category?.type ?? null,
+      transferId: r.transferId,
+      transferAccountId: other?.accountId ?? null,
+      transferAccountName: other?.account.name ?? null,
+      importBatchId: r.importBatchId,
+      memberId: r.memberId,
+      memberName: r.member?.name ?? null,
+      memberColour: (r.member?.colour as MemberColour | undefined) ?? null,
+      createdByName: r.createdBy?.name ?? null,
+    }
+  })
 }
 
 /** Past payees, latest first, with the category, account and member used last time (form defaults) */
@@ -275,6 +344,22 @@ export async function setMember(ids: unknown, memberId: unknown): Promise<number
   return result.count
 }
 
+/**
+ * Puts the same payee on many rows ('' or null clears it); transfers are skipped.
+ * Like an edit, a hand-entered row's description follows its payee; an imported row keeps its bank text.
+ * Returns how many changed.
+ */
+export async function setPayee(ids: unknown, payee: unknown): Promise<number> {
+  if (!Array.isArray(ids) || !ids.every(i => typeof i === 'string')) throw new Error('INVALID_INPUT')
+  const value = parse(text(120), payee)
+  const where = { id: { in: ids as string[] }, transferId: null }
+  const [imported, manual] = await prisma.$transaction([
+    prisma.transaction.updateMany({ where: { ...where, importBatchId: { not: null } }, data: { payee: value } }),
+    prisma.transaction.updateMany({ where: { ...where, importBatchId: null }, data: { payee: value, description: value ?? '' } }),
+  ])
+  return imported.count + manual.count
+}
+
 // ── Transfers ────────────────────────────────────────────────────────────────
 
 /**
@@ -348,6 +433,51 @@ export async function linkTransfer(idA: unknown, idB: unknown): Promise<string> 
   const transferId = randomUUID()
   await prisma.transaction.updateMany({ where: { id: { in: [a.id, b.id] } }, data: { transferId, categoryId: null } })
   return transferId
+}
+
+/**
+ * Turns saved rows into transfers with another own account (e.g. ATM withdrawals → Cash): each row
+ * loses its category and member, and its other side is written with the opposite amount. That side
+ * joins the row's import, as at import time, so undoing the import removes both. All or nothing.
+ * Throws: 'INVALID_INPUT', 'TRANSACTION_NOT_FOUND', 'TRANSFER_MISMATCH', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND', 'VOUCHER_NO_TRANSFER_OUT'
+ */
+export async function makeTransfers(ids: unknown, otherAccountId: unknown): Promise<string[]> {
+  if (!Array.isArray(ids) || ids.length === 0 || !ids.every(id => typeof id === 'string') || typeof otherAccountId !== 'string') {
+    throw new Error('INVALID_INPUT')
+  }
+  const unique = [...new Set(ids as string[])]
+  const rows = await prisma.transaction.findMany({ where: { id: { in: unique } } })
+  if (rows.length !== unique.length) throw new Error('TRANSACTION_NOT_FOUND')
+  for (const row of rows) {
+    if (row.transferId || row.amountCents === 0) throw new Error('TRANSFER_MISMATCH')
+    if (row.accountId === otherAccountId) throw new Error('SAME_ACCOUNT')
+  }
+  const other = await assertAccount(otherAccountId)
+  if (other.kind === 'MEAL_VOUCHER' && rows.some(r => r.amountCents > 0)) throw new Error('VOUCHER_NO_TRANSFER_OUT')
+  const outgoingFrom = [...new Set(rows.filter(r => r.amountCents < 0).map(r => r.accountId))]
+  if (outgoingFrom.length > 0) {
+    const voucher = await prisma.account.findFirst({ where: { id: { in: outgoingFrom }, kind: 'MEAL_VOUCHER' }, select: { id: true } })
+    if (voucher) throw new Error('VOUCHER_NO_TRANSFER_OUT')
+  }
+  const transferIds = rows.map(() => randomUUID())
+  await prisma.$transaction(
+    rows.flatMap((row, i) => [
+      prisma.transaction.update({ where: { id: row.id }, data: { transferId: transferIds[i], categoryId: null, memberId: null } }),
+      prisma.transaction.create({
+        data: {
+          accountId: otherAccountId,
+          bookedAt: row.bookedAt,
+          amountCents: -row.amountCents,
+          description: row.payee || row.description,
+          note: row.note,
+          transferId: transferIds[i],
+          importBatchId: row.importBatchId,
+          createdByMemberId: row.createdByMemberId,
+        },
+      }),
+    ]),
+  )
+  return transferIds
 }
 
 // ── Deleting ─────────────────────────────────────────────────────────────────

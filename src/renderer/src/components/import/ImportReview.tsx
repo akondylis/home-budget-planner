@@ -1,24 +1,27 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { Badge, FilterChip, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SortHeader, cx, type BadgeTone, type SelectMenuOption } from '../ui'
-import { Icon, type IconName } from '../shell/icons'
+import type { IconName } from '../shell/icons'
 import { CategoryPicker } from '../transactions/CategoryPicker'
-import { QuickCategoryDialog } from '../categories/QuickCategoryDialog'
 import { RulePrompt } from './RulePrompt'
 import { useLedgerStore } from '../../store/ledger'
-import { findCategory } from '../../lib/ledger'
+import { findCategory, kindForAmount, transferAccounts } from '../../lib/ledger'
+import { parseTarget, transferValue } from '../../lib/category-target'
 import { formatDate } from '../../lib/date-format'
+import { keepTextUnselected, rangeKeys } from '../../lib/range-select'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
+import { formatMoney } from '../../../../shared/money'
 import {
   SELECTABLE,
   applyToSamePayee,
   filterRows,
+  keepsMatch,
   needsCategory,
   offersRule,
   reviewCounts,
+  shownStatus,
   sortRows,
-  transferAccounts,
   type Choices,
   type ReviewFilter,
   type ReviewSort,
@@ -41,7 +44,7 @@ const STATUS_BADGE: Record<RowStatus, { tone: BadgeTone; icon: IconName }> = {
 
 // Picker values that are not categories
 const LINK = 'link'
-const TRANSFER_TO = 'transfer:'
+const MATCHED = 'matched'
 
 export interface ImportReviewProps {
   accountId: string
@@ -72,13 +75,13 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
   // Rows the user sorted by hand: a new rule does not overwrite them
   const [touched, setTouched] = useState<ReadonlySet<number>>(new Set())
   const [prompt, setPrompt] = useState<Prompt | null>(null)
-  // A category typed in a row's picker that does not exist yet
-  const [creating, setCreating] = useState<{ row: PreviewRow; name: string } | null>(null)
 
   const counts = reviewCounts(rows, choices)
   const visible = sortRows(filterRows(rows, choices, filter), sort, i18n.language)
   const tickable = visible.filter(r => SELECTABLE.has(r.status))
   const allTicked = tickable.length > 0 && tickable.every(r => choices[r.line].include)
+  // Last ticked line: Shift+click ticks everything between it and the next one
+  const anchor = useRef<number | null>(null)
 
   /** A new column starts ascending; the sorted one flips */
   function sortBy(key: ReviewSortKey) {
@@ -90,12 +93,19 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
     onChoices({ ...choices, [line]: choice })
   }
 
+  function tick(line: number, shift: boolean) {
+    const range = shift ? rangeKeys(tickable.map(r => r.line), anchor.current, line) : null
+    anchor.current = line
+    const include = !choices[line].include
+    onChoices({ ...choices, ...Object.fromEntries((range ?? [line]).map(l => [l, { ...choices[l], include }])) })
+  }
+
   function pick(row: PreviewRow, value: string) {
     const target: RowChoice['target'] = value === LINK
       ? { kind: 'link' }
-      : value.startsWith(TRANSFER_TO)
-        ? { kind: 'transfer', toAccountId: value.slice(TRANSFER_TO.length) }
-        : { kind: 'category', categoryId: value }
+      : value === MATCHED
+        ? { kind: 'transfer', toAccountId: null }
+        : parseTarget(value)
     update(row.line, { include: true, target })
     setTouched(new Set(touched).add(row.line))
     if (target.kind === 'category' && offersRule(row, value)) {
@@ -147,7 +157,7 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
 
       {prompt && (
         <RulePrompt
-          merchant={prompt.merchant}
+          merchants={[prompt.merchant]}
           categoryName={prompt.categoryName}
           busy={prompt.busy}
           done={prompt.done}
@@ -177,7 +187,8 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
         {visible.map(row => {
           const choice = choices[row.line]
           const selectable = SELECTABLE.has(row.status)
-          const badge = STATUS_BADGE[row.status]
+          const status = shownStatus(row, choice)
+          const badge = STATUS_BADGE[status]
           return (
             <ListRow key={row.line} cols={COLS} muted={!choice.include}>
               <div>
@@ -186,7 +197,8 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
                     type="checkbox"
                     aria-label={t('import.tick_row', { name: row.description })}
                     checked={choice.include}
-                    onChange={() => update(row.line, { ...choice, include: !choice.include })}
+                    onMouseDown={keepTextUnselected}
+                    onChange={e => tick(row.line, (e.nativeEvent as MouseEvent).shiftKey)}
                   />
                 )}
               </div>
@@ -195,80 +207,57 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
               <div>
                 {!selectable ? (
                   <span className="text-sm text-fg-muted">—</span>
-                ) : row.status === 'TRANSFER_MATCH' ? (
-                  <span className="flex items-center gap-1.5 text-sm text-fg">
-                    <Icon name="arrows-up-down" size={14} className="shrink-0 text-fg-muted" />
-                    {row.transferWith?.accountName}
-                  </span>
                 ) : (
                   <CategoryPicker
                     categories={categories}
-                    value={pickerValue(choice)}
+                    value={pickerValue(row, choice)}
                     kind={kindOf(row)}
                     ariaLabel={t('import.goes_to_of', { name: row.description })}
                     placeholder={t('log.to_categorise')}
-                    leading={leadingOptions(row, transferAccounts(accounts, accountId, !isIncoming(row)), t)}
+                    leading={leadingOptions(row, t)}
+                    transferTargets={transferAccounts(accounts, accountId, !isIncoming(row))}
+                    incoming={isIncoming(row)}
                     onChange={value => pick(row, value)}
-                    onCreate={name => setCreating({ row, name })}
+                    creatable
+                    createGroupId={findCategory(categories, row.suggestion?.categoryId)?.parentId}
+                    needsCategory={needsCategory(row, choice)}
                     density="compact"
-                    triggerClassName={cx('h-8 w-full text-xs', needsCategory(row, choice) && 'border-amber-500 text-amber-700')}
+                    triggerClassName="h-8 w-full text-xs"
                   />
                 )}
               </div>
               <div className="text-right">
                 {row.amountCents === null ? <span className="text-sm text-fg-muted">—</span> : <Money cents={row.amountCents} signed />}
               </div>
-              <div><Badge tone={badge.tone} icon={badge.icon}>{t(`import.status.${row.status}`)}</Badge></div>
+              <div><Badge tone={badge.tone} icon={badge.icon}>{t(`import.status.${status}`)}</Badge></div>
             </ListRow>
           )
         })}
         {visible.length === 0 && <p className="px-4 py-6 text-center text-sm text-fg-muted">{t('import.filter_empty')}</p>}
       </ListCard>
       </div>
-
-      {creating && (
-        <QuickCategoryDialog
-          categories={categories}
-          initialName={creating.name}
-          kind={kindOf(creating.row)}
-          groupId={findCategory(categories, creating.row.suggestion?.categoryId)?.parentId}
-          onClose={() => setCreating(null)}
-          onCreated={id => {
-            const { row } = creating
-            setCreating(null)
-            pick(row, id)
-          }}
-        />
-      )}
     </div>
   )
 }
 
 const isIncoming = (row: PreviewRow) => row.amountCents !== null && row.amountCents > 0
-const kindOf = (row: PreviewRow) => (isIncoming(row) ? 'INCOME' : 'EXPENSE')
+const kindOf = (row: PreviewRow) => kindForAmount(row.amountCents ?? 0)
 
-function pickerValue(choice: RowChoice): string | null {
+function pickerValue(row: PreviewRow, choice: RowChoice): string | null {
   const { target } = choice
   if (target.kind === 'link') return LINK
-  if (target.kind === 'transfer') return target.toAccountId ? `${TRANSFER_TO}${target.toAccountId}` : null
+  if (keepsMatch(row, choice)) return MATCHED
+  if (target.kind === 'transfer') return target.toAccountId ? transferValue(target.toAccountId) : null
   return target.categoryId
 }
 
-/**
- * Choices above the categories: link to the hand-entered twin, then a transfer to (or from)
- * one of our own accounts, cash first for an ATM withdrawal
- */
-function leadingOptions(row: PreviewRow, targets: AccountSummary[], t: TFunction): SelectMenuOption<string>[] {
-  const options: SelectMenuOption<string>[] = row.status === 'POSSIBLE_DUPLICATE' ? [{ value: LINK, label: t('import.target_link') }] : []
-  if (targets.length === 0) return options
-  const label = isIncoming(row) ? 'import.transfer_from' : 'import.transfer_to'
-  options.push({ value: 'transfer-heading', label: t('import.transfer_heading'), kind: 'heading' })
-  for (const a of targets) {
-    options.push({
-      value: `${TRANSFER_TO}${a.id}`,
-      label: t(label, { account: a.name }),
-      searchText: [t('import.transfer_search'), t('import.transfer_heading'), a.name, a.institutionName].filter(Boolean).join(' '),
-    })
+/** Choices above the categories: link to the hand-entered twin, or keep the transfer the app matched */
+function leadingOptions(row: PreviewRow, t: TFunction): SelectMenuOption<string>[] {
+  const options: SelectMenuOption<string>[] = []
+  if (row.status === 'POSSIBLE_DUPLICATE') options.push({ value: LINK, label: t('import.target_link') })
+  if (row.status === 'TRANSFER_MATCH' && row.transferWith) {
+    const { accountName, bookedAt } = row.transferWith
+    options.push({ value: MATCHED, label: t('import.target_matched', { account: accountName, date: formatDate(bookedAt) }) })
   }
   return options
 }
@@ -278,7 +267,14 @@ function explain(row: PreviewRow, choice: RowChoice, t: TFunction, accounts: Acc
   switch (row.status) {
     case 'ALREADY_IMPORTED': return t('import.why_already')
     case 'INVALID': return t(`import.why_invalid_${row.problem ?? 'DATE'}`, { line: row.line })
-    case 'TRANSFER_MATCH': return row.transferWith ? t('import.why_transfer', { date: formatDate(row.transferWith.bookedAt) }) : null
+    case 'TRANSFER_MATCH': {
+      const other = row.transferWith
+      // What it was paired with, so a wrong pair shows at a glance; once changed, it reads like a new row
+      if (other && keepsMatch(row, choice)) {
+        return t('import.why_transfer', { description: other.description || t('log.no_description'), amount: formatMoney(other.amountCents), date: formatDate(other.bookedAt), account: other.accountName })
+      }
+      break
+    }
     case 'POSSIBLE_DUPLICATE':
       return row.duplicateOf
         ? t('import.why_duplicate', { date: formatDate(row.duplicateOf.bookedAt), payee: row.duplicateOf.payee ?? t('log.no_description') })

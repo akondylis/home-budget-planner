@@ -21,6 +21,7 @@ paths:
 
 ## UX (binding — full guide in `docs/design-principles.md`)
 
+- Follow current UX best practice and trends and keep the UI clear: progressive disclosure, grouped/searchable long lists, inline help and live feedback; dialogs never scroll sideways
 - One primary (solid) button per screen/dialog; labels name the outcome ("Add expense", not "OK")
 - Title → context line (`MetaLine`: month · account · member) → content → secondary actions; identity fields before options
 - Smart defaults from known data (today, last account, last category for this payee); after a create, show the created item

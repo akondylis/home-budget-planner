@@ -16,7 +16,7 @@ import type {
 export type RowTarget =
   | { kind: 'category'; categoryId: string | null }
   | { kind: 'link' }
-  /** null = the other side already in the app (`transferWith`) */
+  /** null = the suggested other side already in the app (`transferWith`); an id writes a new other side there */
   | { kind: 'transfer'; toAccountId: string | null }
 
 export interface RowChoice {
@@ -32,18 +32,6 @@ export const SELECTABLE: ReadonlySet<RowStatus> = new Set(['NEW', 'POSSIBLE_DUPL
 /** Cash accounts other than the one being imported, for "ATM withdrawal → Cash" */
 export function cashAccounts(accounts: AccountSummary[], importingInto: string): AccountSummary[] {
   return accounts.filter(a => a.kind === 'CASH' && !a.archived && a.id !== importingInto)
-}
-
-/**
- * Own accounts a row can move money to (`outgoing`) or from: every active account but the one
- * being imported, cash first. Money never leaves a meal-voucher account by transfer.
- */
-export function transferAccounts(accounts: AccountSummary[], importingInto: string, outgoing: boolean): AccountSummary[] {
-  const source = accounts.find(a => a.id === importingInto)
-  if (outgoing && source?.kind === 'MEAL_VOUCHER') return []
-  return accounts
-    .filter(a => !a.archived && a.id !== importingInto && (outgoing || a.kind !== 'MEAL_VOUCHER'))
-    .sort((a, b) => Number(b.kind === 'CASH') - Number(a.kind === 'CASH') || a.name.localeCompare(b.name))
 }
 
 /**
@@ -66,6 +54,16 @@ export function initialChoice(row: PreviewRow, cashAccountId: string | null): Ro
 
 export function initialChoices(rows: PreviewRow[], cashAccountId: string | null): Choices {
   return Object.fromEntries(rows.map(r => [r.line, initialChoice(r, cashAccountId)]))
+}
+
+/** Whether a transfer-match row still pairs with the other side the app found */
+export function keepsMatch(row: Pick<PreviewRow, 'status'>, choice: RowChoice): boolean {
+  return row.status === 'TRANSFER_MATCH' && choice.target.kind === 'transfer' && choice.target.toAccountId === null
+}
+
+/** The badge a row shows: a transfer match the user changed reads as a new row */
+export function shownStatus(row: Pick<PreviewRow, 'status'>, choice: RowChoice): RowStatus {
+  return row.status === 'TRANSFER_MATCH' && !keepsMatch(row, choice) ? 'NEW' : row.status
 }
 
 /** The decision for one row; the service fills in the suggested payee */

@@ -182,13 +182,14 @@ model Transaction {
   importBatch       ImportBatch? @relation(fields: [importBatchId], references: [id])
   /// sha256 of account, date, amount, description and occurrence (see docs/domain-model.md)
   fingerprint       String?
+  /// Not unique alone: a bank can give the interest and its tax one reference (dedupe keys on reference + amount)
   bankReference     String?
   balanceAfterCents Int?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
   @@unique([accountId, fingerprint])
-  @@unique([accountId, bankReference])
+  @@index([accountId, bankReference])
   @@index([accountId, bookedAt])
   @@index([bookedAt])
   @@index([categoryId])

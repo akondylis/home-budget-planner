@@ -9,7 +9,7 @@ export interface ShortcutsModalProps {
   onClose: () => void
 }
 
-/** Keyboard cheat-sheet, opened with ? or F1; lists every app shortcut */
+/** Keyboard cheat-sheet, opened with ? or F1; lists every app shortcut and list gesture */
 export function ShortcutsModal({ onClose }: ShortcutsModalProps) {
   const { t } = useTranslation()
 
@@ -23,6 +23,11 @@ export function ShortcutsModal({ onClose }: ShortcutsModalProps) {
             ))}
           </Section>
         ))}
+        {/* Mouse gestures: shown here, handled by the lists themselves */}
+        <Section title={t('shortcuts.groups.lists')}>
+          <Row keys={[['Shift', t('shortcuts.click')]]} label={t('shortcuts.gestures.selectRange')} />
+          <Row keys={[[t('shortcuts.right_click')]]} label={t('shortcuts.gestures.rowMenu')} />
+        </Section>
       </div>
     </Modal>
   )

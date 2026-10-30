@@ -73,6 +73,7 @@ export function SubscriptionHints({ hints, onClose }: SubscriptionHintsProps) {
                   ariaLabel={t('subscriptions.sort_as', { name: hint.label })}
                   placeholder={t('subscriptions.sort_placeholder')}
                   onChange={id => void sort(hint, id)}
+                  creatable
                   triggerClassName="h-8 w-full text-xs"
                 />
               </div>

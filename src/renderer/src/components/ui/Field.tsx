@@ -38,7 +38,8 @@ export interface FieldProps {
 /** Label, control and hint/error, stacked */
 export function Field({ label, htmlFor, required, hint, error, className, children }: FieldProps) {
   return (
-    <div className={className}>
+    // min-w-0: a long option or value never widens a grid column past its share
+    <div className={cx('min-w-0', className)}>
       <label htmlFor={htmlFor} className="section-label mb-1 block">
         {label}
         {required && <span className="ml-0.5 text-red-700">*</span>}

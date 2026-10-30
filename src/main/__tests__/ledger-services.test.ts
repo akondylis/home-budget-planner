@@ -15,7 +15,9 @@ import {
   linkTransfer,
   listPayeeSuggestions,
   listTransactions,
+  makeTransfers,
   setCategory,
+  setPayee,
   updateTransaction,
   updateTransfer,
 } from '../services/transactions'
@@ -252,6 +254,63 @@ describe('transactions', () => {
     expect((await listTransactions({})).uncategorisedCount).toBe(0)
   })
 
+  it('should set one payee on several rows: bank text kept on imported ones, transfers skipped, empty clears', async () => {
+    const { bankId, cashId } = await setup()
+    const batch = await prisma.importBatch.create({
+      data: { accountId: bankId, fileName: 'a.csv', fileHash: 'h', dateFrom: new Date(), dateTo: new Date(), rowCount: 1, importedCount: 1, skippedCount: 0 },
+    })
+    const imported = await prisma.transaction.create({
+      data: { accountId: bankId, bookedAt: new Date('2026-10-05T12:00:00Z'), amountCents: -999, description: 'POS ΣΚΛΑΒΕΝΙΤΗΣ 1234', importBatchId: batch.id, fingerprint: 'f1' },
+    })
+    const { id: manualId } = await prisma.transaction.create({ data: { accountId: cashId, bookedAt: new Date('2026-10-06T12:00:00Z'), amountCents: -500, payee: 'skl', description: 'skl' } })
+    await createTransfer({ fromAccountId: bankId, toAccountId: cashId, amountCents: 5000, bookedAt: '2026-10-07' })
+    const transferRowId = (await listTransactions({})).rows.find(r => r.transferId)!.id
+
+    expect(await setPayee([imported.id, manualId, transferRowId], '  Σκλαβενίτης ')).toBe(2)
+    const byId = async (id: string) => prisma.transaction.findUnique({ where: { id }, select: { payee: true, description: true } })
+    expect(await byId(imported.id)).toEqual({ payee: 'Σκλαβενίτης', description: 'POS ΣΚΛΑΒΕΝΙΤΗΣ 1234' })
+    expect(await byId(manualId)).toEqual({ payee: 'Σκλαβενίτης', description: 'Σκλαβενίτης' })
+    expect((await byId(transferRowId))?.payee).toBeNull()
+
+    expect(await setPayee([imported.id], '')).toBe(1)
+    expect(await byId(imported.id)).toEqual({ payee: null, description: 'POS ΣΚΛΑΒΕΝΙΤΗΣ 1234' })
+    await expect(setPayee([imported.id], 42)).rejects.toThrow('INVALID_INPUT')
+    await expect(setPayee('nope', 'x')).rejects.toThrow('INVALID_INPUT')
+  })
+
+  it('should search across pages with totals that follow the search', async () => {
+    const { bankId, cashId, groceriesId, salaryId } = await setup()
+    await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date('2026-10-03T12:00:00Z'), amountCents: -4200, description: 'POS ΣΚΛΑΒΕΝΙΤΗΣ 1234', categoryId: groceriesId } })
+    await createTransaction({ kind: 'EXPENSE', accountId: cashId, amountCents: 1250, bookedAt: '2026-10-04', categoryId: groceriesId, payee: 'Σκλαβενίτης' })
+    await createTransaction({ kind: 'INCOME', accountId: bankId, amountCents: 200000, bookedAt: '2026-10-01', categoryId: salaryId, payee: 'Acme' })
+    await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date('2026-10-05T12:00:00Z'), amountCents: -999, description: 'ΣΚΛΑΒΕΝΙΤΗΣ ΚΗΦΙΣΙΑ' } })
+
+    const found = await listTransactions({ query: 'σκλαβενιτης', pageSize: 2 })
+    expect(found.total).toBe(3)
+    expect(found.rows.map(r => r.bookedAt)).toEqual(['2026-10-05', '2026-10-04'])
+    expect([found.incomeCents, found.expenseCents, found.uncategorisedCount]).toEqual([0, -6449, 1])
+    expect((await listTransactions({ query: 'σκλαβενιτης', page: 2, pageSize: 2 })).rows.map(r => r.bookedAt)).toEqual(['2026-10-03'])
+    expect((await listTransactions({ query: 'σκλαβενιτης', uncategorised: true })).total).toBe(1)
+    expect((await listTransactions({ query: '12,50' })).rows.map(r => r.payee)).toEqual(['Σκλαβενίτης'])
+    expect((await listTransactions({ query: 'nothing like it' })).total).toBe(0)
+  })
+
+  it('should sort by amount in SQL and by name or category in memory, across pages', async () => {
+    const { bankId, groceriesId, salaryId } = await setup()
+    await createTransaction({ kind: 'EXPENSE', accountId: bankId, amountCents: 5000, bookedAt: '2026-10-01', categoryId: groceriesId, payee: 'Lidl' })
+    await createTransaction({ kind: 'EXPENSE', accountId: bankId, amountCents: 1000, bookedAt: '2026-10-02', categoryId: groceriesId, payee: 'ab' })
+    await createTransaction({ kind: 'INCOME', accountId: bankId, amountCents: 200000, bookedAt: '2026-10-03', categoryId: salaryId, payee: 'Acme' })
+    await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date('2026-10-04T12:00:00Z'), amountCents: -300, description: 'Bakery' } })
+
+    const names = async (sort: 'amount' | 'description' | 'category', direction: 'asc' | 'desc', page = 1) =>
+      (await listTransactions({ sort, direction, page, pageSize: 2 })).rows.map(r => r.payee ?? r.description)
+    expect(await names('amount', 'asc')).toEqual(['Lidl', 'ab'])
+    expect(await names('amount', 'desc')).toEqual(['Acme', 'Bakery'])
+    expect([...await names('description', 'asc'), ...await names('description', 'asc', 2)]).toEqual(['ab', 'Acme', 'Bakery', 'Lidl'])
+    expect([...await names('category', 'asc'), ...await names('category', 'asc', 2)]).toEqual(['Acme', 'ab', 'Lidl', 'Bakery'])
+    expect((await listTransactions({ sort: 'description' })).total).toBe(4)
+  })
+
   it('should suggest past payees with their latest category', async () => {
     const { bankId, cashId, groceriesId, salaryId } = await setup()
     await createTransaction({ kind: 'EXPENSE', accountId: bankId, amountCents: 100, bookedAt: '2026-10-01', categoryId: salaryId, payee: 'Lidl' })
@@ -328,6 +387,57 @@ describe('transfers', () => {
     await deleteTransaction(hand.id)
     expect(await prisma.transaction.findUnique({ where: { id: imported.id } })).toMatchObject({ transferId: null })
   })
+
+  it('should turn a saved row into a transfer, writing the other side in the import it came from', async () => {
+    const { bankId, cashId, groceriesId } = await setup()
+    const parent = await createMember({ name: 'Ανδρέας', colour: 'blue' })
+    const batch = await prisma.importBatch.create({
+      data: { accountId: bankId, fileName: 'a.csv', fileHash: 'h', dateFrom: new Date(), dateTo: new Date(), rowCount: 1, importedCount: 1, skippedCount: 0 },
+    })
+    const row = await prisma.transaction.create({
+      data: { accountId: bankId, bookedAt: new Date('2026-10-05T12:00:00Z'), amountCents: -20_000, description: 'ATM 1234', categoryId: groceriesId, memberId: parent, importBatchId: batch.id },
+    })
+    const [transferId] = await makeTransfers([row.id], cashId)
+    expect(await prisma.transaction.findUnique({ where: { id: row.id } })).toMatchObject({ transferId, categoryId: null, memberId: null })
+    expect(await prisma.transaction.findFirst({ where: { accountId: cashId } })).toMatchObject({
+      transferId, amountCents: 20_000, description: 'ATM 1234', importBatchId: batch.id, bookedAt: row.bookedAt,
+    })
+    const page = await listTransactions({ month: '2026-10' })
+    expect([page.incomeCents, page.expenseCents, page.uncategorisedCount]).toEqual([0, 0, 0])
+    expect(await balanceOf(cashId)).toBe(25_000)
+    await expect(makeTransfers([row.id], cashId)).rejects.toThrow('TRANSFER_MISMATCH')
+  })
+
+  it('should refuse a transfer to the same, a missing or an archived account', async () => {
+    const { bankId, cashId } = await setup()
+    const row = await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date(), amountCents: -100 } })
+    await expect(makeTransfers([row.id], bankId)).rejects.toThrow('SAME_ACCOUNT')
+    await expect(makeTransfers([row.id], 'nope')).rejects.toThrow('ACCOUNT_NOT_FOUND')
+    await expect(makeTransfers(['nope'], cashId)).rejects.toThrow('TRANSACTION_NOT_FOUND')
+    await archiveAccount(cashId)
+    await expect(makeTransfers([row.id], cashId)).rejects.toThrow('ACCOUNT_NOT_FOUND')
+  })
+
+  it('should turn several rows into transfers at once', async () => {
+    const { bankId, cashId } = await setup()
+    const a = await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date('2026-10-05T12:00:00Z'), amountCents: -2_000, description: 'ATM 1' } })
+    const b = await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date('2026-10-06T12:00:00Z'), amountCents: -3_000, description: 'ATM 2' } })
+    const transferIds = await makeTransfers([a.id, b.id], cashId)
+    expect(new Set(transferIds).size).toBe(2)
+    expect(await prisma.transaction.count({ where: { accountId: cashId, transferId: { in: transferIds } } })).toBe(2)
+    expect(await balanceOf(cashId)).toBe(10_000)
+    const page = await listTransactions({ month: '2026-10' })
+    expect([page.incomeCents, page.expenseCents]).toEqual([0, 0])
+  })
+
+  it('should write nothing when one of several rows cannot become a transfer', async () => {
+    const { bankId, cashId } = await setup()
+    const ok = await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date(), amountCents: -2_000 } })
+    const own = await prisma.transaction.create({ data: { accountId: cashId, bookedAt: new Date(), amountCents: -500 } })
+    await expect(makeTransfers([ok.id, own.id], cashId)).rejects.toThrow('SAME_ACCOUNT')
+    await expect(makeTransfers([], cashId)).rejects.toThrow('INVALID_INPUT')
+    expect(await prisma.transaction.count({ where: { transferId: { not: null } } })).toBe(0)
+  })
 })
 
 describe('meal-voucher cards', () => {
@@ -371,5 +481,10 @@ describe('meal-voucher cards', () => {
     const out = await prisma.transaction.create({ data: { accountId: cardId, bookedAt: new Date(), amountCents: -300 } })
     const into = await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date(), amountCents: 300 } })
     await expect(linkTransfer(out.id, into.id)).rejects.toThrow('VOUCHER_NO_TRANSFER_OUT')
+    await expect(makeTransfers([out.id], bankId)).rejects.toThrow('VOUCHER_NO_TRANSFER_OUT')
+    // Money coming into the bank from the card would leave the card
+    await expect(makeTransfers([into.id], cardId)).rejects.toThrow('VOUCHER_NO_TRANSFER_OUT')
+    const spent = await prisma.transaction.create({ data: { accountId: bankId, bookedAt: new Date(), amountCents: -400 } })
+    expect(await makeTransfers([spent.id], cardId)).toBeTruthy()
   })
 })

@@ -2,6 +2,7 @@
 
 import { normalise } from '../../../shared/search-normalise'
 import { payeeKey } from '../../../shared/payee-key'
+import { ruleMatches, sortRules } from '../../../shared/rule-match'
 import type { CategoryNode, ManagedCategoryNode } from '../../../shared/ledger'
 import type { RuleSummary } from '../../../shared/statement-import'
 
@@ -81,4 +82,53 @@ export function filterRules(rules: RuleSummary[], filter: RuleFilter): RuleSumma
 /** The pattern as the main process will store it, shown under the field */
 export function previewPattern(text: string): string {
   return payeeKey(text) || normalise(text).trim()
+}
+
+/** The rule an import would use for this bank text (accounts aside), or null when none catches it */
+export function findCatchingRule(rules: RuleSummary[], text: string): RuleSummary | null {
+  const key = previewPattern(text)
+  if (!key) return null
+  return sortRules(rules).find(r => ruleMatches(r, key)) ?? null
+}
+
+/** One section of the Rules page: the rules that sort into one category */
+export interface RuleGroup {
+  categoryId: string
+  categoryName: string
+  /** The category's group, e.g. "Spending"; empty when the category is no longer listed */
+  groupName: string
+  rules: RuleSummary[]
+  learnedCount: number
+  hitTotal: number
+}
+
+/**
+ * Rules by category, in the order of the category tree. Inside a section the household's own
+ * rules come first, then the most used ones.
+ */
+export function groupRules(rules: RuleSummary[], categories: CategoryNode[]): RuleGroup[] {
+  const byCategory = new Map<string, RuleSummary[]>()
+  for (const r of rules) byCategory.set(r.categoryId, [...(byCategory.get(r.categoryId) ?? []), r])
+
+  const section = (categoryId: string, categoryName: string, groupName: string, list: RuleSummary[]): RuleGroup => ({
+    categoryId,
+    categoryName,
+    groupName,
+    rules: [...list].sort((a, b) => Number(b.learned) - Number(a.learned) || b.hitCount - a.hitCount || a.pattern.localeCompare(b.pattern)),
+    learnedCount: list.filter(r => r.learned).length,
+    hitTotal: list.reduce((sum, r) => sum + r.hitCount, 0),
+  })
+
+  const groups: RuleGroup[] = []
+  for (const group of categories) {
+    for (const child of group.children) {
+      const list = byCategory.get(child.id)
+      if (!list) continue
+      groups.push(section(child.id, child.name, group.name, list))
+      byCategory.delete(child.id)
+    }
+  }
+  // Categories missing from the tree (e.g. archived) still show their rules, last
+  for (const [categoryId, list] of byCategory) groups.push(section(categoryId, list[0].categoryName, '', list))
+  return groups
 }

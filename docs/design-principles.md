@@ -23,6 +23,11 @@ and the diagrams in `docs/diagrams/`.
   a calm layout. Show less, and reveal detail on demand (hover card, expand, drill-down), rather than showing everything.
 - **Reduce effort.** Ask on every change: does this save the user a click, a decision, some typing or a lookup? If
   it adds effort, it must add clear value.
+- **Current, clear UX.** Use today's best practice and current desktop-app UX patterns, not dated ones: progressive
+  disclosure (fold rare options and long sections), forms that read as a sentence, live inline feedback while
+  typing, search first, long lists grouped and foldable, and help placed where the question comes up (e.g. "which
+  rule catches this text?" right on the Rules page). Never a flat wall of rows. Dialogs fit their content at the
+  default window size and never scroll sideways.
 - **Diagrams follow the same rules.** One idea per diagram, a clear reading direction, readable labels, no
   crossing lines where they can be avoided, and colours from theme tokens with sufficient contrast.
 
@@ -110,6 +115,7 @@ no truncated key text, one primary button per dialog, amounts right-aligned and 
 - [ ] Follows UI/UX best practice; any break with convention is justified
 - [ ] Built around the user's job; the path to finish it is shorter or clearer than before
 - [ ] Clear at a glance: one question per screen or visual, detail on demand
+- [ ] Current UX patterns: long lists grouped/searchable, rare options folded, inline help where users get stuck; no sideways scroll
 - [ ] One primary action; labels name the outcome
 - [ ] Context line visible; identity before options
 - [ ] Defaults filled from known data

@@ -1,21 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="4266" height="960" viewBox="0 0 4266 960" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="4266" height="1028" viewBox="0 0 4266 1028" font-family="Segoe UI, Helvetica, Arial, sans-serif">
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#57606a"/></marker></defs>
-<rect width="4266" height="960" fill="#ffffff"/>
+<rect width="4266" height="1028" fill="#ffffff"/>
 <text x="40" y="58" font-size="28" font-weight="700" fill="#1f2328">Home Budget: how a click reaches the database</text>
 <text x="40" y="84" font-size="14" fill="#57606a">The renderer only calls window.api; each call crosses the preload bridge as a 'domain:action' channel to a thin handler and its service.</text>
-<rect x="40" y="118" width="170" height="266" rx="10" fill="#1f6feb"/>
+<rect x="40" y="118" width="170" height="300" rx="10" fill="#1f6feb"/>
 <text x="54" y="148" font-size="19" font-weight="700" fill="#fff">Renderer</text>
 <text x="54" y="168" font-size="12" fill="#fff">React UI · window.api only</text>
-<rect x="40" y="430" width="170" height="204" rx="10" fill="#8250df"/>
-<text x="54" y="460" font-size="19" font-weight="700" fill="#fff">Preload</text>
-<text x="54" y="480" font-size="12" fill="#fff">contextBridge bridge</text>
-<rect x="40" y="680" width="170" height="86" rx="10" fill="#bc4c00"/>
-<text x="54" y="710" font-size="19" font-weight="700" fill="#fff">Main</text>
-<text x="54" y="730" font-size="12" fill="#fff">ipc/&lt;domain&gt;.ts → services/</text>
-<rect x="40" y="812" width="170" height="44" rx="10" fill="#1a7f37"/>
-<text x="54" y="840" font-size="19" font-weight="700" fill="#fff">Data</text>
-<rect x="230" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="230" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="40" y="464" width="170" height="238" rx="10" fill="#8250df"/>
+<text x="54" y="494" font-size="19" font-weight="700" fill="#fff">Preload</text>
+<text x="54" y="514" font-size="12" fill="#fff">contextBridge bridge</text>
+<rect x="40" y="748" width="170" height="86" rx="10" fill="#bc4c00"/>
+<text x="54" y="778" font-size="19" font-weight="700" fill="#fff">Main</text>
+<text x="54" y="798" font-size="12" fill="#fff">ipc/&lt;domain&gt;.ts → services/</text>
+<rect x="40" y="880" width="170" height="44" rx="10" fill="#1a7f37"/>
+<text x="54" y="908" font-size="19" font-weight="700" fill="#fff">Data</text>
+<rect x="230" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="230" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="248" y="144" font-size="16" font-weight="700" fill="#1f2328">Members</text>
 <text x="248" y="166" font-size="13" fill="#57606a">Settings › Household</text>
 <text x="248" y="184" font-size="13" fill="#57606a">Sidebar chip (who is using)</text>
@@ -23,23 +23,23 @@
 <text x="248" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createMember()</text>
 <text x="248" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateMember()</text>
 <text x="248" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.archiveMember()</text>
-<rect x="230" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="230" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="248" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:list'</text>
-<text x="248" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:create'</text>
-<text x="248" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:update'</text>
-<text x="248" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:archive'</text>
-<rect x="230" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="230" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="248" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/member.ts</text>
-<text x="248" y="728" font-size="13" fill="#57606a">→ services/members.ts</text>
-<rect x="230" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="380" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Member</text>
-<path d="M380 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M380 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M380 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="566" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="566" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="230" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="230" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="248" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:list'</text>
+<text x="248" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:create'</text>
+<text x="248" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:update'</text>
+<text x="248" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'member:archive'</text>
+<rect x="230" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="230" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="248" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/member.ts</text>
+<text x="248" y="796" font-size="13" fill="#57606a">→ services/members.ts</text>
+<rect x="230" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="380" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Member</text>
+<path d="M380 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M380 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M380 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="566" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="566" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="584" y="144" font-size="16" font-weight="700" fill="#1f2328">Accounts</text>
 <text x="584" y="166" font-size="13" fill="#57606a">Accounts page</text>
 <text x="584" y="184" font-size="13" fill="#57606a">(Quick setup, cards)</text>
@@ -48,24 +48,24 @@
 <text x="584" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createAccounts()</text>
 <text x="584" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateAccount()</text>
 <text x="584" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.archiveAccount()</text>
-<rect x="566" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="566" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="584" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:list'</text>
-<text x="584" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:create'</text>
-<text x="584" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:createMany'</text>
-<text x="584" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:update'</text>
-<text x="584" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:archive'</text>
-<rect x="566" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="566" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="584" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/account.ts</text>
-<text x="584" y="728" font-size="13" fill="#57606a">→ services/accounts.ts</text>
-<rect x="566" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="716" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Account</text>
-<path d="M716 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M716 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M716 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="902" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="902" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="566" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="566" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="584" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:list'</text>
+<text x="584" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:create'</text>
+<text x="584" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:createMany'</text>
+<text x="584" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:update'</text>
+<text x="584" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'account:archive'</text>
+<rect x="566" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="566" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="584" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/account.ts</text>
+<text x="584" y="796" font-size="13" fill="#57606a">→ services/accounts.ts</text>
+<rect x="566" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="716" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Account</text>
+<path d="M716 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M716 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M716 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="902" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="902" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="920" y="144" font-size="16" font-weight="700" fill="#1f2328">Banks</text>
 <text x="920" y="166" font-size="13" fill="#57606a">Account form (New bank…)</text>
 <text x="920" y="184" font-size="13" fill="#57606a">Settings › Banks</text>
@@ -74,24 +74,24 @@
 <text x="920" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateInstitution()</text>
 <text x="920" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.archiveInstitution()</text>
 <text x="920" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.moveInstitution()</text>
-<rect x="902" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="902" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="920" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:list'</text>
-<text x="920" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:create'</text>
-<text x="920" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:update'</text>
-<text x="920" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:archive'</text>
-<text x="920" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:move'</text>
-<rect x="902" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="902" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="920" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/institution.ts</text>
-<text x="920" y="728" font-size="13" fill="#57606a">→ services/institutions.ts</text>
-<rect x="902" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="1052" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Institution</text>
-<path d="M1052 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M1052 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M1052 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="1238" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="1238" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="902" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="902" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="920" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:list'</text>
+<text x="920" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:create'</text>
+<text x="920" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:update'</text>
+<text x="920" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:archive'</text>
+<text x="920" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'institution:move'</text>
+<rect x="902" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="902" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="920" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/institution.ts</text>
+<text x="920" y="796" font-size="13" fill="#57606a">→ services/institutions.ts</text>
+<rect x="902" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="1052" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Institution</text>
+<path d="M1052 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1052 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1052 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="1238" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="1238" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="1256" y="144" font-size="16" font-weight="700" fill="#1f2328">Transactions</text>
 <text x="1256" y="166" font-size="13" fill="#57606a">Transactions page</text>
 <text x="1256" y="184" font-size="13" fill="#57606a">Entry form (Ctrl+N)</text>
@@ -101,33 +101,37 @@
 <text x="1256" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateTransaction()</text>
 <text x="1256" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setCategory()</text>
 <text x="1256" y="293" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setMember()</text>
-<text x="1256" y="310" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createTransfer()</text>
-<text x="1256" y="327" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateTransfer()</text>
-<text x="1256" y="344" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.linkTransfer()</text>
-<text x="1256" y="361" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.deleteTransaction()</text>
-<rect x="1238" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="1238" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="1256" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:list'</text>
-<text x="1256" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:payees'</text>
-<text x="1256" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:create'</text>
-<text x="1256" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:update'</text>
-<text x="1256" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:setCategory'</text>
-<text x="1256" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:setMember'</text>
-<text x="1256" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:createTransfer'</text>
-<text x="1256" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:updateTransfer'</text>
-<text x="1256" y="592" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:linkTransfer'</text>
-<text x="1256" y="609" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:delete'</text>
-<rect x="1238" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="1238" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="1256" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/transaction.ts</text>
-<text x="1256" y="728" font-size="13" fill="#57606a">→ services/transactions.ts</text>
-<rect x="1238" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="1388" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Transaction</text>
-<path d="M1388 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M1388 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M1388 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="1574" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="1574" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<text x="1256" y="310" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setPayee()</text>
+<text x="1256" y="327" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createTransfer()</text>
+<text x="1256" y="344" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateTransfer()</text>
+<text x="1256" y="361" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.linkTransfer()</text>
+<text x="1256" y="378" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.makeTransfer()</text>
+<text x="1256" y="395" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.deleteTransaction()</text>
+<rect x="1238" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="1238" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="1256" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:list'</text>
+<text x="1256" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:payees'</text>
+<text x="1256" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:create'</text>
+<text x="1256" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:update'</text>
+<text x="1256" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:setCategory'</text>
+<text x="1256" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:setMember'</text>
+<text x="1256" y="592" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:setPayee'</text>
+<text x="1256" y="609" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:createTransfer'</text>
+<text x="1256" y="626" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:updateTransfer'</text>
+<text x="1256" y="643" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:linkTransfer'</text>
+<text x="1256" y="660" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:makeTransfer'</text>
+<text x="1256" y="677" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'transaction:delete'</text>
+<rect x="1238" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="1238" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="1256" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/transaction.ts</text>
+<text x="1256" y="796" font-size="13" fill="#57606a">→ services/transactions.ts</text>
+<rect x="1238" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="1388" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Transaction</text>
+<path d="M1388 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1388 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1388 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="1574" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="1574" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="1592" y="144" font-size="16" font-weight="700" fill="#1f2328">Statement import</text>
 <text x="1592" y="166" font-size="13" fill="#57606a">Import wizard (account</text>
 <text x="1592" y="184" font-size="13" fill="#57606a">cards, log, Ctrl+K)</text>
@@ -136,25 +140,25 @@
 <text x="1592" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.commitImport()</text>
 <text x="1592" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listImports()</text>
 <text x="1592" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.undoImport()</text>
-<rect x="1574" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="1574" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="1592" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:pickFile'</text>
-<text x="1592" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:preview'</text>
-<text x="1592" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:commit'</text>
-<text x="1592" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:history'</text>
-<text x="1592" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:undo'</text>
-<rect x="1574" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="1574" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="1592" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/import.ts</text>
-<text x="1592" y="728" font-size="13" fill="#57606a">→ services/import/*</text>
-<text x="1592" y="746" font-size="13" fill="#57606a">→ (read, dedupe, commit)</text>
-<rect x="1574" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="1724" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · ImportBatch</text>
-<path d="M1724 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M1724 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M1724 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="1910" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="1910" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="1574" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="1574" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="1592" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:pickFile'</text>
+<text x="1592" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:preview'</text>
+<text x="1592" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:commit'</text>
+<text x="1592" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:history'</text>
+<text x="1592" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:undo'</text>
+<rect x="1574" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="1574" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="1592" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/import.ts</text>
+<text x="1592" y="796" font-size="13" fill="#57606a">→ services/import/*</text>
+<text x="1592" y="814" font-size="13" fill="#57606a">→ (read, dedupe, commit)</text>
+<rect x="1574" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="1724" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · ImportBatch</text>
+<path d="M1724 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1724 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M1724 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="1910" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="1910" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="1928" y="144" font-size="16" font-weight="700" fill="#1f2328">Category rules</text>
 <text x="1928" y="166" font-size="13" fill="#57606a">“Always put X in Y?”</text>
 <text x="1928" y="184" font-size="13" fill="#57606a">Categories › Merchant rules</text>
@@ -162,42 +166,42 @@
 <text x="1928" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createRule()</text>
 <text x="1928" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateRule()</text>
 <text x="1928" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.deleteRule()</text>
-<rect x="1910" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="1910" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="1928" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:list'</text>
-<text x="1928" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:create'</text>
-<text x="1928" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:update'</text>
-<text x="1928" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:delete'</text>
-<rect x="1910" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="1910" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="1928" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/rule.ts</text>
-<text x="1928" y="728" font-size="13" fill="#57606a">→ services/rules.ts</text>
-<rect x="1910" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="2060" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · CategoryRule</text>
-<path d="M2060 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M2060 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M2060 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="2246" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="2246" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="1910" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="1910" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="1928" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:list'</text>
+<text x="1928" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:create'</text>
+<text x="1928" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:update'</text>
+<text x="1928" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'rule:delete'</text>
+<rect x="1910" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="1910" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="1928" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/rule.ts</text>
+<text x="1928" y="796" font-size="13" fill="#57606a">→ services/rules.ts</text>
+<rect x="1910" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="2060" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · CategoryRule</text>
+<path d="M2060 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M2060 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M2060 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="2246" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="2246" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="2264" y="144" font-size="16" font-weight="700" fill="#1f2328">Subscriptions</text>
 <text x="2264" y="166" font-size="13" fill="#57606a">“Looks like a</text>
 <text x="2264" y="184" font-size="13" fill="#57606a">subscription” (log)</text>
 <text x="2264" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.subscriptionHints()</text>
-<rect x="2246" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="2246" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="2264" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'subscription:hints'</text>
-<rect x="2246" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="2246" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="2264" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/subscription.ts</text>
-<text x="2264" y="728" font-size="13" fill="#57606a">→ services/subscriptions.ts</text>
-<text x="2264" y="746" font-size="13" fill="#57606a">→ import/subscription-detect.ts</text>
-<rect x="2246" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="2396" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Transaction (read)</text>
-<path d="M2396 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M2396 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M2396 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="2582" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="2582" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="2246" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="2246" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="2264" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'subscription:hints'</text>
+<rect x="2246" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="2246" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="2264" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/subscription.ts</text>
+<text x="2264" y="796" font-size="13" fill="#57606a">→ services/subscriptions.ts</text>
+<text x="2264" y="814" font-size="13" fill="#57606a">→ import/subscription-detect.ts</text>
+<rect x="2246" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="2396" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Transaction (read)</text>
+<path d="M2396 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M2396 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M2396 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="2582" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="2582" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="2600" y="144" font-size="16" font-weight="700" fill="#1f2328">Budget</text>
 <text x="2600" y="166" font-size="13" fill="#57606a">Budget page</text>
 <text x="2600" y="184" font-size="13" fill="#57606a">(sidebar, Ctrl+K)</text>
@@ -205,24 +209,24 @@
 <text x="2600" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setPlanned()</text>
 <text x="2600" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.copyBudget()</text>
 <text x="2600" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.clearBudget()</text>
-<rect x="2582" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="2582" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="2600" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:get'</text>
-<text x="2600" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:setPlanned'</text>
-<text x="2600" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:copy'</text>
-<text x="2600" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:clear'</text>
-<rect x="2582" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="2582" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="2600" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/budget.ts</text>
-<text x="2600" y="728" font-size="13" fill="#57606a">→ services/budgets.ts</text>
-<text x="2600" y="746" font-size="13" fill="#57606a">→ shared/budget.ts (maths)</text>
-<rect x="2582" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="2732" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Budget, BudgetLine</text>
-<path d="M2732 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M2732 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M2732 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="2918" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="2918" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="2582" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="2582" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="2600" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:get'</text>
+<text x="2600" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:setPlanned'</text>
+<text x="2600" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:copy'</text>
+<text x="2600" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'budget:clear'</text>
+<rect x="2582" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="2582" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="2600" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/budget.ts</text>
+<text x="2600" y="796" font-size="13" fill="#57606a">→ services/budgets.ts</text>
+<text x="2600" y="814" font-size="13" fill="#57606a">→ shared/budget.ts (maths)</text>
+<rect x="2582" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="2732" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Budget, BudgetLine</text>
+<path d="M2732 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M2732 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M2732 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="2918" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="2918" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="2936" y="144" font-size="16" font-weight="700" fill="#1f2328">Categories</text>
 <text x="2936" y="166" font-size="13" fill="#57606a">Pickers; Manage categories;</text>
 <text x="2936" y="184" font-size="13" fill="#57606a">Budget (carry over)</text>
@@ -236,30 +240,30 @@
 <text x="2936" y="327" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.mergeCategory()</text>
 <text x="2936" y="344" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.deleteCategory()</text>
 <text x="2936" y="361" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setCarryOver()</text>
-<rect x="2918" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="2918" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="2936" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:list'</text>
-<text x="2936" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:create'</text>
-<text x="2936" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:update'</text>
-<text x="2936" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:archive'</text>
-<text x="2936" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:manage'</text>
-<text x="2936" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:move'</text>
-<text x="2936" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:reorder'</text>
-<text x="2936" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:merge'</text>
-<text x="2936" y="592" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:delete'</text>
-<text x="2936" y="609" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:setCarryOver'</text>
-<rect x="2918" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="2918" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="2936" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/category.ts</text>
-<text x="2936" y="728" font-size="13" fill="#57606a">→ services/categories.ts</text>
-<text x="2936" y="746" font-size="13" fill="#57606a">→ services/seed.ts (first run)</text>
-<rect x="2918" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="3068" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Category</text>
-<path d="M3068 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M3068 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M3068 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="3254" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="3254" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="2918" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="2918" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="2936" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:list'</text>
+<text x="2936" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:create'</text>
+<text x="2936" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:update'</text>
+<text x="2936" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:archive'</text>
+<text x="2936" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:manage'</text>
+<text x="2936" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:move'</text>
+<text x="2936" y="592" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:reorder'</text>
+<text x="2936" y="609" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:merge'</text>
+<text x="2936" y="626" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:delete'</text>
+<text x="2936" y="643" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:setCarryOver'</text>
+<rect x="2918" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="2918" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="2936" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/category.ts</text>
+<text x="2936" y="796" font-size="13" fill="#57606a">→ services/categories.ts</text>
+<text x="2936" y="814" font-size="13" fill="#57606a">→ services/seed.ts (first run)</text>
+<rect x="2918" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="3068" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Category</text>
+<path d="M3068 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M3068 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M3068 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="3254" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="3254" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="3272" y="144" font-size="16" font-weight="700" fill="#1f2328">Settings</text>
 <text x="3272" y="166" font-size="13" fill="#57606a">Settings page</text>
 <text x="3272" y="184" font-size="13" fill="#57606a">Title bar badge</text>
@@ -268,64 +272,64 @@
 <text x="3272" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setDateFormat()</text>
 <text x="3272" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.getAppInfo()</text>
 <text x="3272" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openDataDir()</text>
-<rect x="3254" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="3254" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="3272" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:get'</text>
-<text x="3272" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setLanguage'</text>
-<text x="3272" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setDateFormat'</text>
-<text x="3272" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:appInfo'</text>
-<text x="3272" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:openDataDir'</text>
-<rect x="3254" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="3254" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="3272" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/settings.ts</text>
-<text x="3272" y="728" font-size="13" fill="#57606a">→ services/settings.ts</text>
-<text x="3272" y="746" font-size="13" fill="#57606a">→ user-data.ts (portable)</text>
-<rect x="3254" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="3404" y="839" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · AppSettings (Prisma)</text>
-<path d="M3404 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M3404 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M3404 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="3590" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="3590" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="3254" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="3254" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="3272" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:get'</text>
+<text x="3272" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setLanguage'</text>
+<text x="3272" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setDateFormat'</text>
+<text x="3272" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:appInfo'</text>
+<text x="3272" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:openDataDir'</text>
+<rect x="3254" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="3254" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="3272" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/settings.ts</text>
+<text x="3272" y="796" font-size="13" fill="#57606a">→ services/settings.ts</text>
+<text x="3272" y="814" font-size="13" fill="#57606a">→ user-data.ts (portable)</text>
+<rect x="3254" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="3404" y="907" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · AppSettings (Prisma)</text>
+<path d="M3404 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M3404 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M3404 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="3590" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="3590" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="3608" y="144" font-size="16" font-weight="700" fill="#1f2328">PDF export</text>
 <text x="3608" y="166" font-size="13" fill="#57606a">Report preview modal</text>
 <text x="3608" y="184" font-size="13" fill="#57606a">(Overview, Ctrl+K)</text>
 <text x="3608" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.exportPdf()</text>
 <text x="3608" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openFile()</text>
-<rect x="3590" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="3590" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="3608" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'pdf:export'</text>
-<text x="3608" y="473" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'shell:openFile'</text>
-<rect x="3590" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="3590" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="3608" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/pdf.ts</text>
-<text x="3608" y="728" font-size="13" fill="#57606a">→ services/pdf/pdf-export.ts</text>
-<text x="3608" y="746" font-size="13" fill="#57606a">→ services/pdf/report-pdf.ts</text>
-<rect x="3590" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="3740" y="839" font-size="13" text-anchor="middle" fill="#1f2328">File on disk (save dialog)</text>
-<path d="M3740 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M3740 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M3740 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<rect x="3926" y="118" width="300" height="266" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
-<rect x="3926" y="118" width="6" height="266" rx="3" fill="#1f6feb"/>
+<rect x="3590" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="3590" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="3608" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'pdf:export'</text>
+<text x="3608" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'shell:openFile'</text>
+<rect x="3590" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="3590" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="3608" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/pdf.ts</text>
+<text x="3608" y="796" font-size="13" fill="#57606a">→ services/pdf/pdf-export.ts</text>
+<text x="3608" y="814" font-size="13" fill="#57606a">→ services/pdf/report-pdf.ts</text>
+<rect x="3590" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="3740" y="907" font-size="13" text-anchor="middle" fill="#1f2328">File on disk (save dialog)</text>
+<path d="M3740 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M3740 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M3740 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="3926" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="3926" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
 <text x="3944" y="144" font-size="16" font-weight="700" fill="#1f2328">Window</text>
 <text x="3944" y="166" font-size="13" fill="#57606a">Theme switch</text>
 <text x="3944" y="184" font-size="13" fill="#57606a">(title bar, Settings)</text>
 <text x="3944" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setTheme()</text>
-<rect x="3926" y="430" width="300" height="204" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
-<rect x="3926" y="430" width="6" height="204" rx="3" fill="#8250df"/>
-<text x="3944" y="456" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'window:setTheme'</text>
-<rect x="3926" y="680" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
-<rect x="3926" y="680" width="6" height="86" rx="3" fill="#bc4c00"/>
-<text x="3944" y="706" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/window.ts</text>
-<text x="3944" y="728" font-size="13" fill="#57606a">→ nativeTheme</text>
-<text x="3944" y="746" font-size="13" fill="#57606a">→ title bar colours</text>
-<rect x="3926" y="812" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="5 4"/>
-<text x="4076" y="839" font-size="13" text-anchor="middle" fill="#1f2328">No data stored</text>
-<path d="M4076 384 V427" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M4076 634 V677" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<path d="M4076 766 V809" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
-<text x="40" y="890" font-size="13" fill="#57606a">Each arrow is one window.api call: preload invokes the channel, the handler unpacks the arguments and calls a service.</text>
-<text x="40" y="910" font-size="13" fill="#57606a">Errors travel back as codes (e.g. PDF_EXPORT_FAILED) and the renderer shows them as error.* text.</text>
-<text x="40" y="930" font-size="13" fill="#57606a">Zoom (window.api.zoom) uses webFrame inside the preload, with no IPC.</text>
+<rect x="3926" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="3926" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="3944" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'window:setTheme'</text>
+<rect x="3926" y="748" width="300" height="86" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="3926" y="748" width="6" height="86" rx="3" fill="#bc4c00"/>
+<text x="3944" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/window.ts</text>
+<text x="3944" y="796" font-size="13" fill="#57606a">→ nativeTheme</text>
+<text x="3944" y="814" font-size="13" fill="#57606a">→ title bar colours</text>
+<rect x="3926" y="880" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="4076" y="907" font-size="13" text-anchor="middle" fill="#1f2328">No data stored</text>
+<path d="M4076 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M4076 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M4076 834 V877" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<text x="40" y="958" font-size="13" fill="#57606a">Each arrow is one window.api call: preload invokes the channel, the handler unpacks the arguments and calls a service.</text>
+<text x="40" y="978" font-size="13" fill="#57606a">Errors travel back as codes (e.g. PDF_EXPORT_FAILED) and the renderer shows them as error.* text.</text>
+<text x="40" y="998" font-size="13" fill="#57606a">Zoom (window.api.zoom) uses webFrame inside the preload, with no IPC.</text>
 </svg>

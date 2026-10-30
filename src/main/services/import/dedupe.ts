@@ -1,5 +1,6 @@
 // Duplicate protection, from exact to fuzzy (layers 2 and 3 of the import plan):
-//  - same bank reference, or same fingerprint, as a row already in the account → ALREADY_IMPORTED
+//  - same bank reference and amount, or same fingerprint, as a row already in the account → ALREADY_IMPORTED
+//    (a reference alone is not enough: Alpha gives credit interest and the tax on it one reference)
 //  - a hand-entered row (no fingerprint) in the account with the same amount, ±3 days → POSSIBLE_DUPLICATE
 // Layer 1 (same file again) is a banner, decided by the file hash; layer 4 is transfer-match.ts.
 
@@ -24,6 +25,7 @@ export interface ManualRow {
 
 export interface ExistingRows {
   fingerprints: Set<string>
+  /** refKey() of the account's rows */
   bankReferences: Set<string>
   /** Rows of this account entered by hand (no fingerprint), not yet linked to a statement */
   manual: ManualRow[]
@@ -32,6 +34,11 @@ export interface ExistingRows {
 export interface DedupeResult {
   status: Exclude<RowStatus, 'TRANSFER_MATCH'>
   duplicateOf: ManualRow | null
+}
+
+/** What a bank reference identifies: the reference together with the amount */
+export function refKey(bankReference: string, amountCents: number): string {
+  return `${bankReference}|${amountCents}`
 }
 
 /** Whole days between two 'yyyy-MM-dd' dates */
@@ -46,9 +53,10 @@ export function classifyRows(rows: DedupeRow[], existing: ExistingRows): DedupeR
   return rows.map(row => {
     if (row.problem || row.bookedAt === null || row.amountCents === null) return { status: 'INVALID', duplicateOf: null }
     if (row.bankReference) {
-      // The reference is unique per account, inside the file too
-      const known = existing.bankReferences.has(row.bankReference) || seenReferences.has(row.bankReference)
-      seenReferences.add(row.bankReference)
+      // Reference + amount is unique per account, inside the file too
+      const key = refKey(row.bankReference, row.amountCents)
+      const known = existing.bankReferences.has(key) || seenReferences.has(key)
+      seenReferences.add(key)
       if (known) return { status: 'ALREADY_IMPORTED', duplicateOf: null }
     }
     if (row.fingerprint && existing.fingerprints.has(row.fingerprint)) return { status: 'ALREADY_IMPORTED', duplicateOf: null }

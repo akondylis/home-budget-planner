@@ -16,12 +16,14 @@ minute, with no fear of doubles. Supported first: Alpha Bank and Eurobank, accou
 - **Step 3, review:** context line *account · file · period · Detected: Alpha Bank account*. Chips filter the
   table: *9 all · 8 new · 1 unreadable · 4 to categorise*. Each row: tick, date, bank text with a reason line
   ("Rule: Σκλαβενίτης", "As last time", "Imported before"…), **Goes to** (a category picker, or a transfer/link
-  choice), signed amount, status badge (text + colour). Primary: **Import 8 transactions**, live; **Nothing new to
+  choice), signed amount, status badge (text + colour). Shift+click ticks or unticks every shown row between
+  two boxes. Primary: **Import 8 transactions**, live; **Nothing new to
   import** (disabled) when every row is known. The same file again shows an info banner with when it was imported.
 - **Learning:** picking a category asks "Always put *ΚΑΦΕ ΜΙΚΡΟ ΚΗΦΙΣΙΑ* in *Φαγητό έξω*?"; **Always** saves a
   rule and gives that category to the other rows of the merchant (not to rows sorted by hand or by another rule).
 - **New category on the spot:** typing a name the picker does not know offers **Create «Οπωροπωλείο»** (↓ + Enter
-  reaches it); a small dialog asks for the group and the new category is used for that row straight away.
+  reaches it); a small dialog asks for the group and the new category is used for that row straight away. It is the
+  same picker as the log's ([transactions](transactions.md#ux)).
 - **After import:** the log, filtered to that import, with "8 imported · 1 to categorise · Balance matches the
   bank", **Undo import** and **Show all**. If the statement's balance differs, an amber banner gives both amounts,
   the difference and where to look. It warns, never blocks.
@@ -36,9 +38,9 @@ Each row ends with one status, from exact to fuzzy:
 
 | Status | When | Starts as |
 | --- | --- | --- |
-| `ALREADY_IMPORTED` | Same bank reference, or same fingerprint: account, date, cents, bank text and its occurrence number inside the file | Not selectable |
+| `ALREADY_IMPORTED` | Same bank reference and amount (Alpha gives interest and its tax one reference), or same fingerprint: account, date, cents, bank text and its occurrence number inside the file | Not selectable |
 | `POSSIBLE_DUPLICATE` | A hand-entered row in the account, same amount, ±3 days | Unticked; ticking **links** it (one row); a category = import anyway |
-| `TRANSFER_MATCH` | The opposite amount in another own account, ±5 days, not yet paired | Paired as a transfer |
+| `TRANSFER_MATCH` | The opposite amount in another own account, ±5 days, not yet paired | Paired as a transfer; the row names what it matched (bank text, amount, date) and its picker can change it to another account or a category |
 | `NEW` | Anything else | Ticked, with the rule or last-used category |
 | `INVALID` | Date or amount unreadable (the reason names the line) | Not selectable |
 

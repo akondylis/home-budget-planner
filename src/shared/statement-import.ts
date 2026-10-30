@@ -61,8 +61,8 @@ export interface PreviewRow {
   suggestion: CategorySuggestion | null
   /** POSSIBLE_DUPLICATE: the hand-entered row it may be */
   duplicateOf: { id: string; bookedAt: string; amountCents: number; payee: string | null } | null
-  /** TRANSFER_MATCH: the other side, already in another own account */
-  transferWith: { id: string; accountId: string; accountName: string; bookedAt: string } | null
+  /** TRANSFER_MATCH: the suggested other side, already in another own account (the user can pick something else) */
+  transferWith: { id: string; accountId: string; accountName: string; bookedAt: string; amountCents: number; description: string } | null
   transferHint: TransferHint | null
 }
 
@@ -104,7 +104,7 @@ export type ImportAction = 'IMPORT' | 'SKIP' | 'LINK' | 'TRANSFER'
 
 /**
  * What to do with one row; rows without a decision get the default for their status.
- * TRANSFER pairs with `transferWith`, or with `toAccountId` (e.g. an ATM withdrawal → Cash),
+ * TRANSFER pairs with `transferWith`, or with `toAccountId` when given (an ATM withdrawal → Cash, or a match the user changed),
  * where the other side is written too.
  */
 export interface ImportDecision {

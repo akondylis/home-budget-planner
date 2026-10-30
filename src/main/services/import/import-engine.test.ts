@@ -4,7 +4,7 @@ import { parseCsv, sniffDelimiter } from './csv'
 import { PROFILES, parseSavedMapping, profileFor, resolveColumns, resolveSavedMapping } from './profiles'
 import { parseRows, parseStatementAmount, parseStatementDate } from './parse-rows'
 import { fingerprintRows, payeeKey } from './fingerprint'
-import { classifyRows, daysBetween } from './dedupe'
+import { classifyRows, daysBetween, refKey } from './dedupe'
 import { matchTransfers, transferHint } from './transfer-match'
 import { ruleMatches, sortRules, suggestCategory, type RuleLike } from './apply-rules'
 import { readStatement } from './read-statement'
@@ -195,15 +195,24 @@ describe('fingerprints', () => {
 
 describe('classifyRows', () => {
   const base = { bankReference: null, fingerprint: 'f-new' }
-  const existing = (patch = {}) => ({ fingerprints: new Set(['f-old']), bankReferences: new Set(['R1']), manual: [], ...patch })
+  const existing = (patch = {}) => ({ fingerprints: new Set(['f-old']), bankReferences: new Set([refKey('R1', -1)]), manual: [], ...patch })
 
-  it('should mark a known fingerprint or bank reference as already imported', () => {
+  it('should mark a known fingerprint, or bank reference with the same amount, as already imported', () => {
     const result = classifyRows([
       { ...base, bookedAt: '2026-10-01', amountCents: -1, fingerprint: 'f-old' },
       { ...base, bookedAt: '2026-10-01', amountCents: -1, bankReference: 'R1' },
       { ...base, bookedAt: '2026-10-01', amountCents: -1 },
+      { ...base, bookedAt: '2026-10-01', amountCents: 5, bankReference: 'R1', fingerprint: 'f5' },
     ], existing())
-    expect(result.map(r => r.status)).toEqual(['ALREADY_IMPORTED', 'ALREADY_IMPORTED', 'NEW'])
+    expect(result.map(r => r.status)).toEqual(['ALREADY_IMPORTED', 'ALREADY_IMPORTED', 'NEW', 'NEW'])
+  })
+
+  it('should keep interest and its tax apart when the bank gives them one reference', () => {
+    const rows = [
+      { ...base, bookedAt: '2026-07-01', amountCents: -464, bankReference: '202606300991021637' },
+      { ...base, bookedAt: '2026-07-01', amountCents: 3092, bankReference: '202606300991021637', fingerprint: 'f2' },
+    ]
+    expect(classifyRows(rows, existing()).map(r => r.status)).toEqual(['NEW', 'NEW'])
   })
 
   it('should count a bank reference repeated inside one file once', () => {
@@ -239,7 +248,7 @@ describe('classifyRows', () => {
 })
 
 describe('transfers', () => {
-  const candidate = (id: string, accountId: string, bookedAt: string, amountCents: number) => ({ id, accountId, accountName: accountId, bookedAt, amountCents })
+  const candidate = (id: string, accountId: string, bookedAt: string, amountCents: number) => ({ id, accountId, accountName: accountId, bookedAt, amountCents, description: id })
 
   it('should pair a card payment with the opposite amount in another account within 5 days', () => {
     const rows = [

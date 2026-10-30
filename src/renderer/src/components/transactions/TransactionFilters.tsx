@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FilterChip, IconButton, SelectMenu } from '../ui'
+import { FilterChip, IconButton, Input, SelectMenu } from '../ui'
+import { Icon } from '../shell/icons'
 import { CategoryPicker } from './CategoryPicker'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { currentMonth, useTransactionsStore } from '../../store/transactions'
@@ -15,7 +17,9 @@ export function monthLabel(month: string, lang: string): string {
   return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'el-GR', { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1))
 }
 
-/** Month stepper, account, type, category and member pickers, and the "To categorise" switch; changes apply live */
+const SEARCH_DELAY_MS = 250
+
+/** Search box, month stepper, account, type, category and member pickers, and the "To categorise" switch; changes apply live */
 export function TransactionFilters() {
   const { t, i18n } = useTranslation()
   const filter = useTransactionsStore(s => s.filter)
@@ -24,9 +28,47 @@ export function TransactionFilters() {
   const categories = useLedgerStore(s => s.categories)
   const members = useLedgerStore(s => s.members)
   const uncategorisedCount = useTransactionsStore(s => s.data?.uncategorisedCount ?? 0)
+  const searchFocus = useTransactionsStore(s => s.searchFocus)
+  const searchRef = useRef<HTMLInputElement>(null)
+  // Typed text; the store follows after a pause so each key does not reload the log
+  const [query, setQuery] = useState(filter.query)
+
+  useEffect(() => {
+    if (query === filter.query) return
+    const timer = setTimeout(() => setFilter({ query }), SEARCH_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [query])
+
+  // "Clear all" and links from other screens reset the search
+  useEffect(() => { setQuery(filter.query) }, [filter.query])
+
+  useEffect(() => {
+    if (searchFocus > 0) searchRef.current?.focus()
+  }, [searchFocus])
+
+  function clearSearch() {
+    setQuery('')
+    setFilter({ query: '' })
+    searchRef.current?.focus()
+  }
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="relative min-w-56 flex-1">
+        <Icon name="search" size={16} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+        <Input
+          ref={searchRef}
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Escape' && query) { e.preventDefault(); e.stopPropagation(); clearSearch() } }}
+          placeholder={t('log.search')}
+          aria-label={t('log.search')}
+          className="w-full pl-8 pr-9"
+        />
+        {query && (
+          <IconButton icon="close" size="sm" label={t('log.search_clear')} onClick={clearSearch} className="absolute right-1 top-1/2 -translate-y-1/2" />
+        )}
+      </div>
       <div className="flex items-center gap-1" role="group" aria-label={t('log.month')}>
         <IconButton
           icon="chevron-down"

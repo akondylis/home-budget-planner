@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icon } from '../shell/icons'
 import { cx } from './cx'
@@ -94,9 +94,11 @@ export interface ListRowProps {
   children: ReactNode
   /** Rendered under the row across all columns */
   expansion?: ReactNode
+  /** Right-click (or the Menu key / Shift+F10 on a control in the row); keep each action reachable without it */
+  onContextMenu?: (e: ReactMouseEvent<HTMLDivElement>) => void
 }
 
-export function ListRow({ cols, striped = false, highlighted = false, muted = false, onOpen, children, expansion }: ListRowProps) {
+export function ListRow({ cols, striped = false, highlighted = false, muted = false, onOpen, children, expansion, onContextMenu }: ListRowProps) {
   return (
     <div
       data-highlighted={highlighted || undefined}
@@ -105,6 +107,7 @@ export function ListRow({ cols, striped = false, highlighted = false, muted = fa
       <div
         onClick={onOpen && (() => onOpen())}
         {...middleClickProps(onOpen)}
+        onContextMenu={onContextMenu}
         className={cx(
           cols,
           'h-12 transition-colors duration-150 hover:bg-surface-hover group-last:rounded-b-xl',

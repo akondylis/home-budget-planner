@@ -2,6 +2,7 @@ import { useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'rea
 import { useTranslation } from 'react-i18next'
 import { Banner, Button, ConfirmDialog, DateInput, Field, Input, Modal, Money, Segmented, Select } from '../ui'
 import { CategoryPicker } from './CategoryPicker'
+import { rowTitle } from './TransactionList'
 import { MemberDot } from '../members/MemberDot'
 import { Icon } from '../shell/icons'
 import { activeAccounts, useLedgerStore, type EntryRequest } from '../../store/ledger'
@@ -210,12 +211,13 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
   // Expense ⇄ income can change on an existing row; a transfer stays a transfer
   const kindLocked = (kind: FormKind) => editing !== null && (kind === 'TRANSFER') !== (editing.transferId !== null)
   const primaryLabel = editing ? t('entry.save') : t(`entry.add.${draft.kind}`)
+  const editingName = editing ? rowTitle(editing, t) : ''
   const formId = useId()
 
   return (
     <>
       <Modal
-        title={editing ? t('entry.edit_title') : t('entry.title')}
+        title={editing ? (editingName ? t('entry.edit_title_named', { name: editingName }) : t('entry.edit_title')) : t('entry.title')}
         onClose={onClose}
         closeDisabled={saving}
         size="md"
@@ -297,9 +299,15 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
                     setCategoryTouched(true)
                     update({ categoryId })
                   }}
+                  creatable
                 />
               </Field>
-              <Field label={t('entry.payee')} htmlFor={ids.payee} hint={t('entry.payee_hint')}>
+              <Field
+                label={t('entry.payee')}
+                htmlFor={ids.payee}
+                // An imported row keeps the bank's own line; show it so the row is recognisable
+                hint={editing?.importBatchId && editing.description ? t('entry.bank_text', { text: editing.description }) : t('entry.payee_hint')}
+              >
                 <Input
                   id={ids.payee}
                   list={ids.payees}

@@ -10,6 +10,7 @@ import {
   Banner,
   Button,
   ConfirmDialog,
+  MenuList,
   CollapsibleCard,
   CopyButton,
   DraftBadge,
@@ -34,6 +35,7 @@ import {
   visibleOptions,
 } from '.'
 import { createPanelRegistry, placePanel } from './Popover'
+import { RulePrompt } from '../import/RulePrompt'
 import { DateInput, shiftDay } from './DateInput'
 import { setDateFormat } from '../../lib/date-format'
 
@@ -56,6 +58,54 @@ describe('ActionMenu', () => {
     expect(html).toContain('aria-haspopup="menu"')
     expect(html).toContain('aria-expanded="false"')
     expect(html).not.toContain('Archive')
+  })
+})
+
+describe('MenuList', () => {
+  const items = [
+    { id: 'edit', label: 'Edit', icon: 'pencil' as const, onSelect: noop },
+    { id: 'rule', label: 'Create a rule', icon: 'repeat' as const, onSelect: noop, disabled: true, reason: 'No bank text' },
+    { id: 'delete', label: 'Delete', icon: 'trash' as const, onSelect: noop, danger: true, separated: true },
+  ]
+
+  it('lists the items as a labelled menu, the first enabled one focused', () => {
+    const html = renderToStaticMarkup(<MenuList label="Actions for Fuel" items={items} onClose={noop} />)
+    expect(html).toContain('role="menu"')
+    expect(html).toContain('aria-label="Actions for Fuel"')
+    expect(html.match(/role="menuitem"/g)).toHaveLength(3)
+    expect(html.indexOf('data-autofocus')).toBeLessThan(html.indexOf('Edit'))
+  })
+
+  it('says why an item is disabled, and sets a destructive one apart in red', () => {
+    const html = renderToStaticMarkup(<MenuList label="Actions" items={items} onClose={noop} />)
+    expect(html).toContain('No bank text')
+    expect(html).toMatch(/border-t[^"]*"[^>]*>.*Delete/)
+    expect(html).toContain('text-red-700')
+  })
+})
+
+describe('RulePrompt', () => {
+  it('asks about one merchant by name', () => {
+    const html = renderToStaticMarkup(<RulePrompt merchants={['ΒΑΣΙΛΟΠΟΥΛΟΣ']} categoryName="Groceries" onAccept={noop} onDismiss={noop} />)
+    expect(html).toContain('Always put “ΒΑΣΙΛΟΠΟΥΛΟΣ” in Groceries?')
+  })
+
+  it('names the first two of several merchants and counts the rest', () => {
+    const html = renderToStaticMarkup(<RulePrompt merchants={['A', 'B', 'C', 'D']} categoryName="Groceries" onAccept={noop} onDismiss={noop} />)
+    expect(html).toContain('«A», «B» and 2 more')
+    expect(html).toContain('One rule each')
+  })
+
+  it('joins two merchants with "and"', () => {
+    const html = renderToStaticMarkup(<RulePrompt merchants={['A', 'B']} categoryName="Groceries" onAccept={noop} onDismiss={noop} />)
+    expect(html).toContain('«A» and «B»')
+  })
+
+  it('floats at the bottom of the window when asked', () => {
+    const html = renderToStaticMarkup(<RulePrompt merchants={['A']} categoryName="Groceries" floating onAccept={noop} onDismiss={noop} />)
+    expect(html).toContain('fixed')
+    expect(html).toContain('bottom-4')
+    expect(html).toContain('aria-live="polite"')
   })
 })
 

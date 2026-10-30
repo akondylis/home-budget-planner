@@ -1,20 +1,24 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { Badge, Button, IconButton, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SelectMenu, cx } from '../ui'
+import { Badge, Button, IconButton, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SelectMenu, SortHeader, cx } from '../ui'
 import { MemberDot } from '../members/MemberDot'
 import { Icon } from '../shell/icons'
+import { BulkPayee } from './BulkPayee'
 import { CategoryPicker } from './CategoryPicker'
 import { RulePrompt } from '../import/RulePrompt'
+import { RowContextMenu, type RowMenuTarget } from './RowContextMenu'
 import { useLedgerStore } from '../../store/ledger'
 import { useTransactionsStore } from '../../store/transactions'
 import { formatDate } from '../../lib/date-format'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
-import { findCategory } from '../../lib/ledger'
+import { bulkTransferAccounts, findCategory, kindForAmount, kindForAmounts, ruleMerchants, transferAccounts } from '../../lib/ledger'
+import { parseTarget } from '../../lib/category-target'
 import { activeMembers } from '../../lib/members'
+import { keepTextUnselected, rangeKeys } from '../../lib/range-select'
 import { HOUSEHOLD } from '../../../../shared/members'
-import { merchantText } from '../../../../shared/payee-key'
-import type { TransactionRow } from '../../../../shared/ledger'
+import type { LogSortKey, TransactionRow } from '../../../../shared/ledger'
+import type { RuleSummary } from '../../../../shared/statement-import'
 
 const COLS = cx(LIST_GRID, 'grid-cols-[1.5rem_6.5rem_minmax(0,1fr)_13rem_8.5rem_2.25rem]')
 
@@ -31,23 +35,60 @@ export interface TransactionListProps {
   rows: TransactionRow[]
 }
 
-/** The log: tick rows for bulk actions, pick a category inline, click a row to edit it */
+/** How long "Rule saved" stays before the floating prompt closes itself */
+const DONE_MS = 5000
+
+/** The log: sort by a column, tick rows for bulk actions, pick a category (or a transfer) inline, click a row to edit it, right-click for more */
 export function TransactionList({ rows }: TransactionListProps) {
   const { t } = useTranslation()
+  const accounts = useLedgerStore(s => s.accounts)
   const categories = useLedgerStore(s => s.categories)
   const members = useLedgerStore(s => s.members)
   const highlightKey = useLedgerStore(s => s.highlightKey)
+  const revision = useLedgerStore(s => s.revision)
   const openEntry = useLedgerStore(s => s.openEntry)
   const selected = useTransactionsStore(s => s.selected)
   const toggleSelected = useTransactionsStore(s => s.toggleSelected)
   const setSelected = useTransactionsStore(s => s.setSelected)
+  const sort = useTransactionsStore(s => s.sort)
+  const setSort = useTransactionsStore(s => s.setSort)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  // "Always put X in Y?" after sorting one imported row by hand
-  const [prompt, setPrompt] = useState<{ merchant: string; categoryId: string; busy: boolean; done: string | null; error: string | null } | null>(null)
+  // "Always put X in Y?" after sorting imported rows by hand: one rule per merchant
+  const [prompt, setPrompt] = useState<{ merchants: string[]; categoryId: string; busy: boolean; done: string | null; error: string | null } | null>(null)
+  // Known rules, so a merchant a rule already sorts there is not offered again
+  const [rules, setRules] = useState<RuleSummary[]>([])
+  const [menu, setMenu] = useState<RowMenuTarget | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    window.api.listRules()
+      .then(list => { if (alive) setRules(list) })
+      .catch(err => console.error('[rules] list failed:', err))
+    return () => { alive = false }
+  }, [revision])
+
+  // "Rule saved" closes itself; the question waits for an answer
+  const done = prompt?.done ?? null
+  useEffect(() => {
+    if (!done) return
+    const timer = setTimeout(() => setPrompt(null), DONE_MS)
+    return () => clearTimeout(timer)
+  }, [done])
 
   const selectable = rows.filter(r => !r.transferId)
+  const direction = (key: LogSortKey) => (sort.key === key ? sort.direction : null)
   const allTicked = selectable.length > 0 && selectable.every(r => selected.includes(r.id))
+  // Last ticked row: Shift+click ticks everything between it and the next one
+  const anchor = useRef<string | null>(null)
+
+  function tick(id: string, shift: boolean) {
+    const range = shift ? rangeKeys(selectable.map(r => r.id), anchor.current, id) : null
+    anchor.current = id
+    if (!range) return toggleSelected(id)
+    const on = !selected.includes(id)
+    setSelected(on ? [...new Set([...selected, ...range])] : selected.filter(x => !range.includes(x)))
+  }
 
   async function applyCategory(ids: string[], categoryId: string) {
     setBusy(true)
@@ -55,9 +96,27 @@ export function TransactionList({ rows }: TransactionListProps) {
     try {
       await window.api.setCategory(ids, categoryId)
       setSelected([])
-      const row = ids.length === 1 ? rows.find(r => r.id === ids[0]) : undefined
-      const merchant = row?.importBatchId ? merchantText(row.description) : ''
-      setPrompt(merchant ? { merchant, categoryId, busy: false, done: null, error: null } : null)
+      const merchants = ruleMerchants(rows.filter(r => ids.includes(r.id)), rules, categoryId)
+      setPrompt(merchants.length > 0 ? { merchants, categoryId, busy: false, done: null, error: null } : null)
+      await useLedgerStore.getState().changed()
+    } catch (err) {
+      setError(ipcErrorMessage(err, t))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /** Picked for one row or the ticked ones: a category, or a transfer to/from one of my accounts (the other sides are written too) */
+  async function pick(ids: string[], value: string) {
+    const target = parseTarget(value)
+    if (target.kind === 'category') return applyCategory(ids, target.categoryId)
+    setBusy(true)
+    setError(null)
+    setPrompt(null)
+    try {
+      const [transferId] = await window.api.makeTransfer(ids, target.toAccountId)
+      setSelected([])
+      useLedgerStore.setState({ highlightKey: transferId })
       await useLedgerStore.getState().changed()
     } catch (err) {
       setError(ipcErrorMessage(err, t))
@@ -80,31 +139,90 @@ export function TransactionList({ rows }: TransactionListProps) {
     }
   }
 
+  async function applyPayee(ids: string[], payee: string | null) {
+    setBusy(true)
+    setError(null)
+    try {
+      await window.api.setPayee(ids, payee)
+      setSelected([])
+      await useLedgerStore.getState().changed()
+    } catch (err) {
+      setError(ipcErrorMessage(err, t))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const dismissPrompt = useCallback(() => setPrompt(null), [])
+  const selectedRows = rows.filter(r => selected.includes(r.id))
+  const sharedPayee = selectedRows.every(r => r.payee === selectedRows[0]?.payee) ? (selectedRows[0]?.payee ?? '') : ''
+
   async function acceptRule() {
     if (!prompt) return
+    const { merchants, categoryId } = prompt
     setPrompt({ ...prompt, busy: true, error: null })
+    let saved = 0
+    let sorted = 0
     try {
-      const { appliedCount } = await window.api.createRule({ pattern: prompt.merchant, categoryId: prompt.categoryId, applyToUncategorised: true })
-      setPrompt({ ...prompt, busy: false, done: appliedCount > 0 ? t('rules.saved_more', { count: appliedCount }) : t('rules.saved') })
-      if (appliedCount > 0) await useLedgerStore.getState().changed()
+      for (const pattern of merchants) {
+        const { appliedCount } = await window.api.createRule({ pattern, categoryId, applyToUncategorised: true })
+        saved++
+        sorted += appliedCount
+      }
+      const one = merchants.length === 1
+      setPrompt({
+        ...prompt,
+        busy: false,
+        done: sorted > 0
+          ? (one ? t('rules.saved_more', { count: sorted }) : t('rules.saved_many_sorted', { rules: saved, count: sorted }))
+          : (one ? t('rules.saved') : t('rules.saved_many', { count: saved })),
+      })
     } catch (err) {
-      setPrompt({ ...prompt, busy: false, error: ipcErrorMessage(err, t) })
+      const error = ipcErrorMessage(err, t)
+      // The ones saved stay; offer the rest again
+      setPrompt({
+        ...prompt,
+        merchants: merchants.slice(saved),
+        busy: false,
+        error: saved > 0 ? `${t('rules.saved_partly', { saved, total: merchants.length })} ${error}` : error,
+      })
     }
+    if (saved > 0) await useLedgerStore.getState().changed()
+  }
+
+  /** Right-click at the pointer; the Menu key / Shift+F10 (no pointer position) opens it at the focused control */
+  function openMenu(e: ReactMouseEvent<HTMLElement>, row: TransactionRow) {
+    e.preventDefault()
+    const focused = document.activeElement
+    const from = focused && e.currentTarget.contains(focused) ? focused : e.currentTarget
+    const box = e.clientX === 0 && e.clientY === 0 ? from.getBoundingClientRect() : null
+    setMenu({ row, x: box ? box.left : e.clientX, y: box ? box.bottom : e.clientY })
   }
 
   return (
     <>
       {prompt && (
         <RulePrompt
-          merchant={prompt.merchant}
+          merchants={prompt.merchants}
           categoryName={findCategory(categories, prompt.categoryId)?.name ?? ''}
           busy={prompt.busy}
           done={prompt.done}
           error={prompt.error}
+          floating
           onAccept={() => void acceptRule()}
-          onDismiss={() => setPrompt(null)}
+          onDismiss={dismissPrompt}
         />
       )}
+      <RowContextMenu
+        target={menu}
+        selectedRows={selectedRows}
+        rules={rules}
+        onClose={() => setMenu(null)}
+        onPick={(ids, value) => void pick(ids, value)}
+        onMember={(ids, value) => void applyMember(ids, value)}
+        onTick={id => tick(id, false)}
+        onError={setError}
+      />
       {selected.length > 0 && (
         <div className="card mb-3 flex flex-wrap items-center gap-3 px-3 py-2" role="toolbar" aria-label={t('log.bulk_label')}>
           <span className="text-sm font-medium text-fg">{t('log.selected', { count: selected.length })}</span>
@@ -112,12 +230,16 @@ export function TransactionList({ rows }: TransactionListProps) {
             <CategoryPicker
               categories={categories}
               value={null}
-              kind="ANY"
+              kind={kindForAmounts(selectedRows.map(r => r.amountCents))}
               ariaLabel={t('log.set_category')}
               placeholder={t('log.set_category')}
-              onChange={id => void applyCategory(selected, id)}
+              transferTargets={bulkTransferAccounts(accounts, selectedRows)}
+              incoming={selectedRows.length > 0 && selectedRows.every(r => r.amountCents > 0)}
+              onChange={value => void pick(selected, value)}
+              creatable
             />
           </div>
+          <BulkPayee count={selected.length} initial={sharedPayee} disabled={busy} onApply={payee => void applyPayee(selected, payee)} />
           {activeMembers(members).length > 0 && (
             <SelectMenu<string>
               value={null}
@@ -148,10 +270,10 @@ export function TransactionList({ rows }: TransactionListProps) {
             disabled={selectable.length === 0}
             onChange={() => setSelected(allTicked ? [] : selectable.map(r => r.id))}
           />
-          <div>{t('log.col_date')}</div>
-          <div>{t('log.col_description')}</div>
-          <div>{t('log.col_category')}</div>
-          <div className="text-right">{t('log.col_amount')}</div>
+          <SortHeader direction={direction('date')} onSort={() => setSort('date')}>{t('log.col_date')}</SortHeader>
+          <SortHeader direction={direction('description')} onSort={() => setSort('description')}>{t('log.col_description')}</SortHeader>
+          <SortHeader direction={direction('category')} onSort={() => setSort('category')}>{t('log.col_category')}</SortHeader>
+          <SortHeader direction={direction('amount')} onSort={() => setSort('amount')} align="right">{t('log.col_amount')}</SortHeader>
           <div />
         </ListHeader>
         {rows.map(row => {
@@ -163,10 +285,17 @@ export function TransactionList({ rows }: TransactionListProps) {
               cols={COLS}
               highlighted={highlightKey !== null && (row.id === highlightKey || row.transferId === highlightKey)}
               onOpen={() => openEntry({ mode: 'edit', row })}
+              onContextMenu={e => openMenu(e, row)}
             >
               <div onClick={e => e.stopPropagation()}>
                 {!row.transferId && (
-                  <input type="checkbox" aria-label={t('log.select_row', { name: title })} checked={ticked} onChange={() => toggleSelected(row.id)} />
+                  <input
+                    type="checkbox"
+                    aria-label={t('log.select_row', { name: title })}
+                    checked={ticked}
+                    onMouseDown={keepTextUnselected}
+                    onChange={e => tick(row.id, (e.nativeEvent as MouseEvent).shiftKey)}
+                  />
                 )}
               </div>
               <div className="flex items-center gap-1 text-sm tabular-nums text-fg">
@@ -193,12 +322,16 @@ export function TransactionList({ rows }: TransactionListProps) {
                   <CategoryPicker
                     categories={categories}
                     value={row.categoryId}
-                    kind="ANY"
+                    kind={kindForAmount(row.amountCents)}
                     ariaLabel={t('log.category_of', { name: title })}
                     placeholder={t('log.to_categorise')}
-                    onChange={id => void applyCategory([row.id], id)}
+                    transferTargets={transferAccounts(accounts, row.accountId, row.amountCents < 0)}
+                    incoming={row.amountCents > 0}
+                    onChange={value => void pick([row.id], value)}
+                    creatable
+                    needsCategory={!row.categoryId}
                     density="compact"
-                    triggerClassName={cx('h-8 w-full text-xs', !row.categoryId && 'border-amber-500 text-amber-700')}
+                    triggerClassName="h-8 w-full text-xs"
                   />
                 )}
               </div>

@@ -36,6 +36,8 @@ export interface SelectMenuProps<T extends string | number> {
   onCreate?: (query: string) => void
   /** Text of that row, e.g. `Create «Οπωροπωλείο»` */
   createLabel?: (query: string) => ReactNode
+  /** Opens the list as soon as it mounts (a picker shown as the next step of a menu) */
+  defaultOpen?: boolean
 }
 
 const isChoosable = (o: { disabled?: boolean; kind?: string }) => !o.disabled && o.kind !== 'heading'
@@ -94,6 +96,7 @@ export function SelectMenu<T extends string | number>({
   density = 'default',
   onCreate,
   createLabel,
+  defaultOpen = false,
 }: SelectMenuProps<T>) {
   const { t } = useTranslation()
   const anchorRef = useRef<HTMLButtonElement>(null)
@@ -109,6 +112,11 @@ export function SelectMenu<T extends string | number>({
   // The create row sits after the options and takes part in arrow-key navigation
   const createIndex = creatable ? shown.length : -1
   const navigable = creatable ? [...shown, { kind: 'option' as const }] : shown
+
+  // Mount only: a later change of the prop must not reopen it
+  useEffect(() => {
+    if (defaultOpen) open()
+  }, [])
 
   // Open on the current choice, not at the top of a long list
   useEffect(() => {

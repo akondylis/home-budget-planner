@@ -24,13 +24,23 @@ the right category — fix a wrong merchant rule in seconds instead of re-sortin
   Spending". A name the group already has → the error plus **Merge into the existing one instead**.
 - **Merge into…:** searchable category picker (the source left out), then "12 transactions and 2 rules move to
   *Καφετέριες*. *Καφέδες* is archived." Primary **Merge**; a success banner repeats the counts.
-- **Merchant rules tab:** search (pattern, payee, category; accents and Greek/Latin ignored), category filter,
-  **All / Yours / Starter**. Rows: pattern (mono) → category, a *Starter* badge, then match kind, "shown as …",
-  account or "All accounts", "used 5 times"; edit (pencil) and delete (trash, "Rows keep their category; only
-  future imports change").
-- **Add rule / edit:** bank text (the stored, folded form is shown under it: "Matched as “sklavenitis”"), match
-  (Contains / Starts with / Exactly), category, payee name, accounts; a new rule offers "Also sort the rows still
-  waiting…" (on by default) and reports how many it sorted.
+- **Merchant rules tab:** intro + context line ("48 rules · 6 of yours · used 312 times"), then **Which rule catches a
+  bank text?**: paste the statement text and see the rule an import would use ("Caught by: Contains «sklavenitis» →
+  Groceries" with *Show rule* / *Edit rule*), or "No rule catches this text" with *Add rule for it* (pattern
+  pre-filled). Below: search (pattern, payee, category; accents and Greek/Latin ignored), category filter,
+  **All / Yours / Starter**, *Expand all / Collapse all*. Rules are grouped **one folding card per category** (tree
+  order; summary: group · N rules · N of yours · used N times); cards with your own rules start open, starter-only
+  ones folded, and every card with a hit opens while searching. Rows read "Contains **sklavenitis**", a *Starter*
+  badge, then "shown as …", account or "All accounts", "used 5 times"; click or pencil edits, trash deletes ("Rows
+  keep their category; only future imports change").
+- **Add rule / edit** (wide dialog, reads as a sentence): **When the bank text** [Contains | Starts with | Exactly]
+  [text] (the stored, folded form under it: "Matched as “sklavenitis”"), **put it in category** [picker]. A live
+  note says when another rule already catches the text (starter: "your rule will take over"; yours: "change that
+  rule instead"). *More options* (folded unless set): display name and accounts. A new rule offers "Also sort the
+  rows still waiting…" (on by default) and reports how many it sorted; the saved rule's card opens and the row is
+  highlighted.
+- **Rules from the log:** besides the rule prompt (one row or a bulk pick → one rule per merchant), right-clicking a
+  log row offers *Create a rule from this…*: the same dialog, pattern and category taken from the row.
 - **States:** empty group ("No categories in this group yet."), no rules (explains they are learned from "Always put
   X in Y?"), no search match (with **Clear all**), errors in red under the list or field; the item just saved is
   highlighted.
@@ -60,9 +70,9 @@ the right category — fix a wrong merchant rule in seconds instead of re-sortin
 | `src/main/services/categories.ts` | Tree with counts, create/update, archive/restore, move, reorder, merge, delete |
 | `src/main/services/rules.ts` | Rule list (account name, learned), create/update (account scope)/delete |
 | `src/renderer/src/pages/CategoriesScreen.tsx` | Page, back button, tabs |
-| `src/renderer/src/components/categories/` | `CategoriesTab`, `CategoryGroupCard`, `InlineName`, `GroupForm`, `MoveCategoryDialog`, `MergeCategoryDialog`, `RulesTab`, `RuleForm` |
+| `src/renderer/src/components/categories/` | `CategoriesTab`, `CategoryGroupCard`, `InlineName`, `GroupForm`, `MoveCategoryDialog`, `MergeCategoryDialog`, `RulesTab`, `RuleGroupSection`, `RuleTester`, `RuleForm` |
 | `src/renderer/src/components/ui/ActionMenu.tsx` | "More" menu for row actions (↑/↓, Enter, Esc; disabled items show why) |
-| `src/renderer/src/lib/categories.ts` | Archived split, reorder, rule search and filters, pattern preview |
+| `src/renderer/src/lib/categories.ts` | Archived split, reorder, rule search and filters, pattern preview, rule grouping, `findCatchingRule` (uses `src/shared/rule-match.ts`, the import's own matcher) |
 
 ## IPC
 
@@ -83,5 +93,5 @@ the right category — fix a wrong merchant rule in seconds instead of re-sortin
 
 `src/main/__tests__/categories.test.ts` (counts, move and type, name clashes with archived twins, reorder, merge with
 a duplicate rule, restore with group, delete rules), `rules.test.ts` (account scope, learned flag),
-`src/renderer/src/lib/categories.test.ts` (archived split, reorder, rule search across scripts, filters), and the
+`src/renderer/src/lib/categories.test.ts` (archived split, reorder, rule search across scripts, filters, catching rule, grouping), and the
 `ActionMenu` block in `components/ui/ui.test.tsx`.

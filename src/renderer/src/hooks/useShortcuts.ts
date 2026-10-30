@@ -5,6 +5,7 @@ import { useUiStore } from '../store/ui'
 export type ShortcutAction =
   | 'commandPalette'
   | 'addTransaction'
+  | 'searchTransactions'
   | 'print'
   | 'navBack'
   | 'navForward'
@@ -28,6 +29,7 @@ export interface ShortcutDef {
 export const SHORTCUTS: readonly ShortcutDef[] = [
   { action: 'commandPalette', group: 'general', keys: [['Ctrl', 'K']] },
   { action: 'addTransaction', group: 'general', keys: [['Ctrl', 'N']] },
+  { action: 'searchTransactions', group: 'general', keys: [['Ctrl', 'F']] },
   { action: 'print', group: 'general', keys: [['Ctrl', 'P']] },
   { action: 'navBack', group: 'general', keys: [['Alt', '←']] },
   { action: 'navForward', group: 'general', keys: [['Alt', '→']] },
@@ -73,6 +75,7 @@ export function matchShortcut(e: KeyLike): ShortcutAction | null {
   if (e.shiftKey) return null
   if (e.code === 'KeyK') return 'commandPalette'
   if (e.code === 'KeyN') return 'addTransaction'
+  if (e.code === 'KeyF') return 'searchTransactions'
   if (e.code === 'KeyP') return 'print'
   return null
 }

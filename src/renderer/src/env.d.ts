@@ -45,9 +45,11 @@ interface Window {
     updateTransaction: (id: string, input: import('../../shared/ledger').TransactionInput) => Promise<void>
     setCategory:       (ids: string[], categoryId: string | null) => Promise<number>
     setMember:         (ids: string[], memberId: string | null) => Promise<number>
+    setPayee:          (ids: string[], payee: string | null) => Promise<number>
     createTransfer:    (input: import('../../shared/ledger').TransferInput) => Promise<string>
     updateTransfer:    (transferId: string, input: import('../../shared/ledger').TransferInput) => Promise<void>
     linkTransfer:      (idA: string, idB: string) => Promise<string>
+    makeTransfer:      (ids: string[], otherAccountId: string) => Promise<string[]>
     deleteTransaction: (id: string) => Promise<void>
 
     pickStatement:     (labels: { title: string; filterName: string }) => Promise<import('../../shared/statement-import').PickedFile | null>

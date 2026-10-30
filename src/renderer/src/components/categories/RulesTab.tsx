@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Banner, Button, ConfirmDialog, IconButton, Input, ListCard, MetaLine, Segmented, Spinner, cx } from '../ui'
+import { Banner, Button, ConfirmDialog, Input, ListCard, MetaLine, Segmented, Spinner } from '../ui'
 import { Icon } from '../shell/icons'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { RuleForm } from './RuleForm'
+import { RuleGroupSection } from './RuleGroupSection'
+import { RuleTester } from './RuleTester'
 import { useLedgerStore } from '../../store/ledger'
-import { EMPTY_RULE_FILTER, filterRules, type RuleFilter, type RuleOrigin } from '../../lib/categories'
+import { EMPTY_RULE_FILTER, filterRules, groupRules, type RuleFilter, type RuleOrigin } from '../../lib/categories'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
 import type { RuleSummary } from '../../../../shared/statement-import'
 
@@ -18,14 +20,19 @@ export function RulesTab() {
   const revision = useLedgerStore(s => s.revision)
   const [rules, setRules] = useState<RuleSummary[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<RuleFilter>(EMPTY_RULE_FILTER)
+  const [filter, setFilterState] = useState<RuleFilter>(EMPTY_RULE_FILTER)
+  // Sections the user opened or folded; the rest follow the default (see sectionOpen)
+  const [toggled, setToggled] = useState<Record<string, boolean>>({})
   // undefined = closed, null = a new rule
   const [editing, setEditing] = useState<RuleSummary | null | undefined>(undefined)
+  const [newPattern, setNewPattern] = useState('')
   const [deleting, setDeleting] = useState<RuleSummary | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
+  // A rule to open, scroll to and highlight once it is in the list
+  const [focusId, setFocusId] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -34,6 +41,30 @@ export function RulesTab() {
       .catch(err => { if (alive) setLoadError(ipcErrorMessage(err, t)) })
     return () => { alive = false }
   }, [revision, t])
+
+  useEffect(() => {
+    const rule = focusId ? rules?.find(r => r.id === focusId) : undefined
+    if (!rule) return
+    setToggled(s => ({ ...s, [rule.categoryId]: true }))
+    setHighlightId(rule.id)
+    setFocusId(null)
+    requestAnimationFrame(() => document.getElementById(`rule-${rule.id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+  }, [focusId, rules])
+
+  function setFilter(update: (f: RuleFilter) => RuleFilter) {
+    setFilterState(update)
+    setToggled({})
+  }
+
+  function showRule(rule: RuleSummary) {
+    if (!filterRules([rule], filter).length) setFilterState(EMPTY_RULE_FILTER)
+    setFocusId(rule.id)
+  }
+
+  function addRule(pattern = '') {
+    setNewPattern(pattern)
+    setEditing(null)
+  }
 
   async function remove(rule: RuleSummary) {
     setBusy(true)
@@ -53,25 +84,45 @@ export function RulesTab() {
   if (loadError) return <Banner tone="warning">{loadError}</Banner>
   if (!rules) return <div className="flex justify-center py-12"><Spinner /></div>
 
-  const shown = filterRules(rules, filter)
   const filtered = filter.query !== '' || filter.categoryId !== null || filter.origin !== 'ALL'
+  const sections = groupRules(filterRules(rules, filter), categories)
+  // Searching opens every section that has a hit; otherwise only the ones with the household's own rules
+  const sectionOpen = (categoryId: string, learnedCount: number) => toggled[categoryId] ?? (filtered || learnedCount > 0)
+  const allOpen = sections.length > 0 && sections.every(s => sectionOpen(s.categoryId, s.learnedCount))
+  const learned = rules.filter(r => r.learned).length
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-fg-muted">{t('rules.intro')}</p>
-        <Button variant="primary" icon="plus" onClick={() => setEditing(null)}>{t('rules.add')}</Button>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className="text-sm text-fg">{t('rules.intro')}</p>
+          {rules.length > 0 && (
+            <MetaLine
+              parts={[
+                t('rules.summary_total', { count: rules.length }),
+                t('rules.summary_yours', { count: learned }),
+                t('rules.hits', { count: rules.reduce((sum, r) => sum + r.hitCount, 0) }),
+              ]}
+            />
+          )}
+        </div>
+        <Button variant="primary" icon="plus" onClick={() => addRule()}>{t('rules.add')}</Button>
       </div>
+
+      {notice && <Banner tone="success">{notice}</Banner>}
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+
+      {rules.length > 0 && <RuleTester rules={rules} onShow={showRule} onEdit={setEditing} onAddFor={addRule} />}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">
           <Icon name="search" size={16} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
           <Input
             value={filter.query}
-            onChange={e => setFilter(f => ({ ...f, query: e.target.value }))}
+            onChange={e => { const query = e.target.value; setFilter(f => ({ ...f, query })) }}
             placeholder={t('rules.search')}
             aria-label={t('rules.search')}
-            className="pl-8"
+            className="w-full pl-8"
           />
         </div>
         <CategoryPicker
@@ -93,56 +144,54 @@ export function RulesTab() {
             { value: 'STARTER', label: t('rules.origin_starter') },
           ]}
         />
+        {sections.length > 1 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={allOpen ? 'arrow-up' : 'arrow-down'}
+            onClick={() => setToggled(Object.fromEntries(sections.map(s => [s.categoryId, !allOpen])))}
+          >
+            {allOpen ? t('rules.collapse_all') : t('rules.expand_all')}
+          </Button>
+        )}
       </div>
 
-      {notice && <Banner tone="success">{notice}</Banner>}
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-
-      <ListCard>
-        {rules.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-fg-muted">{t('rules.empty')}</p>
-        ) : shown.length === 0 ? (
+      {rules.length === 0 ? (
+        <ListCard><p className="px-4 py-8 text-center text-sm text-fg-muted">{t('rules.empty')}</p></ListCard>
+      ) : sections.length === 0 ? (
+        <ListCard>
           <div className="flex flex-col items-center gap-2 px-4 py-8 text-sm text-fg-muted">
             <p>{t('rules.no_match')}</p>
-            {filtered && <Button size="sm" icon="close" onClick={() => setFilter(EMPTY_RULE_FILTER)}>{t('ui.filter_clear_all')}</Button>}
+            {filtered && <Button size="sm" icon="close" onClick={() => setFilter(() => EMPTY_RULE_FILTER)}>{t('ui.filter_clear_all')}</Button>}
           </div>
-        ) : (
-          <ul className="divide-y divide-line">
-            {shown.map(r => (
-              <li key={r.id} className={cx('flex items-center gap-3 px-4 py-2.5', highlightId === r.id && 'bg-accent/5')}>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="break-all font-mono text-fg">{r.pattern}</span>
-                    <Icon name="arrow-right" size={14} className="shrink-0 text-gray-500" />
-                    <span className="font-medium text-fg">{r.categoryName}</span>
-                    {!r.learned && <Badge tone="neutral">{t('rules.starter')}</Badge>}
-                  </div>
-                  <MetaLine
-                    parts={[
-                      t(`rules.match_kind.${r.match}`),
-                      r.payee && t('rules.payee_meta', { payee: r.payee }),
-                      r.accountName ?? t('rules.all_accounts'),
-                      t('rules.hits', { count: r.hitCount }),
-                    ]}
-                  />
-                </div>
-                <IconButton icon="pencil" size="sm" label={t('rules.edit', { pattern: r.pattern })} onClick={() => setEditing(r)} />
-                <IconButton icon="trash" size="sm" variant="danger" label={t('rules.delete', { pattern: r.pattern })} onClick={() => setDeleting(r)} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </ListCard>
+        </ListCard>
+      ) : (
+        <div className="space-y-2">
+          {sections.map(s => (
+            <RuleGroupSection
+              key={s.categoryId}
+              group={s}
+              open={sectionOpen(s.categoryId, s.learnedCount)}
+              onToggle={() => setToggled(prev => ({ ...prev, [s.categoryId]: !sectionOpen(s.categoryId, s.learnedCount) }))}
+              highlightId={highlightId}
+              onEdit={setEditing}
+              onDelete={setDeleting}
+            />
+          ))}
+        </div>
+      )}
 
       {editing !== undefined && (
         <RuleForm
           rule={editing}
+          rules={rules}
+          initialPattern={newPattern}
           defaultCategoryId={filter.categoryId}
           onClose={() => setEditing(undefined)}
           onSaved={(id, sorted) => {
             const isNew = editing === null
             setEditing(undefined)
-            setHighlightId(id)
+            setFocusId(id)
             setNotice(isNew ? t('rules.added_notice', { count: sorted }) : t('rules.saved_notice'))
             void useLedgerStore.getState().changed()
           }}

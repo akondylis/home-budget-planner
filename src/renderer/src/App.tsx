@@ -101,6 +101,7 @@ export default function App() {
   const commands: Record<ShortcutAction, () => void> = {
     commandPalette: () => useUiStore.getState().setPaletteOpen(!useUiStore.getState().paletteOpen),
     addTransaction,
+    searchTransactions,
     // The page on screen prints its own report; elsewhere the monthly worksheet
     print: () => {
       const target = useUiStore.getState().printTarget
@@ -123,6 +124,13 @@ export default function App() {
     const ledger = useLedgerStore.getState()
     if (activeAccounts(ledger.accounts).length === 0) setView('accounts')
     else ledger.openEntry()
+  }
+
+  /** Ctrl+F: the log, with the cursor in its search box */
+  function searchTransactions() {
+    if (activeAccounts(useLedgerStore.getState().accounts).length === 0) return setView('accounts')
+    setView('transactions')
+    useTransactionsStore.getState().focusSearch()
   }
 
   // Statements need an account to go into: Accounts (Quick setup) comes first

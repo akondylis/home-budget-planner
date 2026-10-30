@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { SelectMenu, type SelectMenuOption } from '../ui'
+import { SelectMenu, cx, type SelectMenuOption } from '../ui'
+import { QuickCategoryDialog } from '../categories/QuickCategoryDialog'
 import { groupsFor, type PickerKind } from '../../lib/ledger'
-import type { CategoryNode } from '../../../../shared/ledger'
+import { transferOptions } from '../../lib/category-target'
+import type { AccountSummary, CategoryNode } from '../../../../shared/ledger'
 
 export interface CategoryPickerProps {
   categories: CategoryNode[]
@@ -16,11 +19,21 @@ export interface CategoryPickerProps {
   groupsSelectable?: boolean
   /** Options above the groups, e.g. "All categories" */
   leading?: SelectMenuOption<string>[]
+  /** Own accounts the row can move to/from instead; picked values read with `parseTarget()` */
+  transferTargets?: AccountSummary[]
+  /** Money coming in: transfers read "From …" */
+  incoming?: boolean
   triggerClassName?: string
   /** `compact` inside dense tables (import review, inline edit) */
   density?: 'default' | 'compact'
-  /** Offers "Create «…»" when the search finds no such category; gets the typed name */
-  onCreate?: (name: string) => void
+  /** Offers "Create «…»" when the search finds no such category, then picks the new one */
+  creatable?: boolean
+  /** Group preselected in the create dialog, e.g. the one of a suggestion */
+  createGroupId?: string | null
+  /** Marks the trigger amber: the row still waits for a category */
+  needsCategory?: boolean
+  /** Opens the list as soon as it mounts */
+  defaultOpen?: boolean
 }
 
 /** The picker's list: each group as a section heading (or a selectable "All in …" row) over its categories */
@@ -49,7 +62,11 @@ export function categoryOptions(
   return options
 }
 
-/** Searchable category dropdown, grouped under each group's name (Bills, Spending…) */
+/**
+ * Searchable category dropdown, grouped under each group's name (Bills, Spending…). Every screen
+ * that assigns a category uses it the same way: groups that fit the money's direction, transfers
+ * to own accounts where the row can be one, and a new category without leaving the screen.
+ */
 export function CategoryPicker({
   categories,
   value,
@@ -59,23 +76,46 @@ export function CategoryPicker({
   placeholder,
   groupsSelectable = false,
   leading = [],
+  transferTargets = [],
+  incoming = false,
   triggerClassName = 'w-full',
   density,
-  onCreate,
+  creatable = false,
+  createGroupId,
+  needsCategory = false,
+  defaultOpen,
 }: CategoryPickerProps) {
   const { t } = useTranslation()
+  // A category typed in the search box that does not exist yet
+  const [creating, setCreating] = useState<string | null>(null)
   return (
-    <SelectMenu
-      value={value}
-      options={categoryOptions(categories, kind, groupsSelectable, leading, t)}
-      onChange={onChange}
-      ariaLabel={ariaLabel}
-      placeholder={<span className="text-fg-muted">{placeholder ?? t('categories.choose')}</span>}
-      searchable
-      triggerClassName={triggerClassName}
-      density={density}
-      onCreate={onCreate}
-      createLabel={name => t('categories.create_named', { name })}
-    />
+    <>
+      <SelectMenu
+        value={value}
+        options={categoryOptions(categories, kind, groupsSelectable, [...leading, ...transferOptions(transferTargets, incoming, t)], t)}
+        onChange={onChange}
+        ariaLabel={ariaLabel}
+        placeholder={<span className="text-fg-muted">{placeholder ?? t('categories.choose')}</span>}
+        searchable
+        triggerClassName={cx(triggerClassName, needsCategory && 'border-amber-500 text-amber-700')}
+        density={density}
+        onCreate={creatable ? setCreating : undefined}
+        createLabel={name => t('categories.create_named', { name })}
+        defaultOpen={defaultOpen}
+      />
+      {creating !== null && (
+        <QuickCategoryDialog
+          categories={categories}
+          initialName={creating}
+          kind={kind}
+          groupId={createGroupId}
+          onClose={() => setCreating(null)}
+          onCreated={id => {
+            setCreating(null)
+            onChange(id)
+          }}
+        />
+      )}
+    </>
   )
 }

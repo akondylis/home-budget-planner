@@ -34,7 +34,8 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 - **Entering by hand**: the user types a positive amount and picks Expense or Income; the sign is stored from that.
   Income and expense rows need a category; a transfer never has one.
 - **Transfers** are written as two rows in one database transaction. Deleting one side deletes a hand-entered other
-  side; an imported other side stays (it is on a statement) and goes back to "to categorise".
+  side; an imported other side stays (it is on a statement) and goes back to "to categorise". A saved row can be
+  turned into a transfer: it loses its category and member, and the other side is written in the row's import.
 - **Meal-voucher cards** (Edenred, Up Hellas; kind `MEAL_VOUCHER`): the employer's top-up is income in **Meal
   vouchers** (created with the first card when missing), food bought with the card is an ordinary expense. Money never
   leaves the card by transfer (`VOUCHER_NO_TRANSFER_OUT`; transfers in are allowed), it is never imported, and once
@@ -42,7 +43,7 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
   the accounts total, and an expense that takes it below zero is warned about, not refused. Feature doc:
   [features/meal-vouchers.md](features/meal-vouchers.md).
 - **Imported rows** keep their bank text and fingerprint when edited, so a later import still recognises them.
-- **Statement import** never doubles a row: same bank reference or same fingerprint (account, date, cents, bank text
+- **Statement import** never doubles a row: same bank reference and amount (a bank can give interest and its tax one reference), or same fingerprint (account, date, cents, bank text
   and its occurrence number inside the file) → already imported; a hand-entered row with the same amount ±3 days →
   possible duplicate (Link keeps one row); the opposite amount in another own account ±5 days → transfer. Code and
   rationale: `src/main/services/import/` (`fingerprint.ts`, `dedupe.ts`, `transfer-match.ts`). Undo removes the rows

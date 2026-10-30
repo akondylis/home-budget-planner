@@ -162,6 +162,10 @@
           "channel": "transaction:setMember"
         },
         {
+          "api": "setPayee",
+          "channel": "transaction:setPayee"
+        },
+        {
           "api": "createTransfer",
           "channel": "transaction:createTransfer"
         },
@@ -172,6 +176,10 @@
         {
           "api": "linkTransfer",
           "channel": "transaction:linkTransfer"
+        },
+        {
+          "api": "makeTransfer",
+          "channel": "transaction:makeTransfer"
         },
         {
           "api": "deleteTransaction",

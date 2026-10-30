@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  bulkTransferAccounts,
   canSendTransfer,
   centsToInput,
   defaultAccountId,
@@ -8,7 +9,11 @@ import {
   findCategory,
   groupsFor,
   isImportable,
+  kindForAmount,
+  kindForAmounts,
   parseAccountDraft,
+  ruleMerchants,
+  transferAccounts,
   validateEntry,
   voucherShortfall,
   type EntryDraft,
@@ -48,6 +53,48 @@ describe('categories for a picker', () => {
     expect(findCategory(tree, 'power')?.type).toBe('BILL')
     expect(findCategory(tree, 'bills')?.id).toBe('bills')
     expect(findCategory(tree, null)).toBeNull()
+  })
+
+  it('should narrow the list by the direction of the money', () => {
+    expect(kindForAmount(500)).toBe('INCOME')
+    expect(kindForAmount(-500)).toBe('EXPENSE')
+    expect(kindForAmounts([100, 200])).toBe('INCOME')
+    expect(kindForAmounts([-100, -200])).toBe('EXPENSE')
+    expect(kindForAmounts([100, -200])).toBe('ANY')
+    expect(kindForAmounts([])).toBe('ANY')
+  })
+})
+
+describe('transferAccounts', () => {
+  const accounts = [
+    account('Piraeus', 'CURRENT'),
+    account('Alpha', 'SAVINGS'),
+    account('Wallet', 'CASH'),
+    account('Old', 'CURRENT', true),
+    account('Edenred', 'MEAL_VOUCHER'),
+  ]
+  const names = (list: AccountSummary[]) => list.map(a => a.id)
+
+  it('offers every other active account, cash first', () => {
+    expect(names(transferAccounts(accounts, 'Piraeus', true))).toEqual(['Wallet', 'Alpha', 'Edenred'])
+  })
+
+  it('never takes money out of a meal-voucher account', () => {
+    expect(names(transferAccounts(accounts, 'Piraeus', false))).toEqual(['Wallet', 'Alpha'])
+    expect(transferAccounts(accounts, 'Edenred', true)).toEqual([])
+    expect(names(transferAccounts(accounts, 'Edenred', false))).toEqual(['Wallet', 'Alpha', 'Piraeus'])
+  })
+
+  it('offers several rows only the accounts every one of them can use', () => {
+    const rows = [{ accountId: 'Piraeus', amountCents: -100 }, { accountId: 'Alpha', amountCents: -200 }]
+    expect(names(bulkTransferAccounts(accounts, rows))).toEqual(['Wallet', 'Edenred'])
+    expect(names(bulkTransferAccounts(accounts, [{ accountId: 'Piraeus', amountCents: 100 }]))).toEqual(['Wallet', 'Alpha'])
+  })
+
+  it('offers no transfer when money goes both ways, or out of a voucher card', () => {
+    expect(bulkTransferAccounts(accounts, [{ accountId: 'Piraeus', amountCents: -100 }, { accountId: 'Piraeus', amountCents: 100 }])).toEqual([])
+    expect(bulkTransferAccounts(accounts, [{ accountId: 'Piraeus', amountCents: -100 }, { accountId: 'Edenred', amountCents: -100 }])).toEqual([])
+    expect(bulkTransferAccounts(accounts, [])).toEqual([])
   })
 })
 
@@ -103,6 +150,13 @@ describe('draftFromRow', () => {
   it('should turn a negative row into an expense with a plain amount', () => {
     expect(draftFromRow(row)).toMatchObject({ kind: 'EXPENSE', amount: '1234,05', accountId: 'bank', payee: 'Lidl', memberId: 'm1' })
     expect(centsToInput(5)).toBe('0,05')
+  })
+
+  it('should name an imported row without a payee after the merchant in its bank text', () => {
+    const imported = { ...row, payee: null, description: 'POS ΒΑΣΙΛΟΠΟΥΛΟΣ ΚΗΦΙΣΙΑ 4411', importBatchId: 'b1' }
+    expect(draftFromRow(imported).payee).toBe('ΒΑΣΙΛΟΠΟΥΛΟΣ ΚΗΦΙΣΙΑ')
+    expect(draftFromRow({ ...imported, payee: 'Βασιλόπουλος' }).payee).toBe('Βασιλόπουλος')
+    expect(draftFromRow({ ...imported, transferId: 't', transferAccountId: 'cash' }).payee).toBe('')
   })
 
   it('should read both sides of a transfer as from → to', () => {
@@ -175,5 +229,27 @@ describe('Ctrl+N', () => {
   it('should add a transaction on any keyboard layout', () => {
     expect(matchShortcut({ key: 'ν', code: 'KeyN', ctrlKey: true, metaKey: false, shiftKey: false, altKey: false })).toBe('addTransaction')
     expect(matchShortcut({ key: 'N', code: 'KeyN', ctrlKey: true, metaKey: false, shiftKey: true, altKey: false })).toBeNull()
+  })
+})
+
+describe('ruleMerchants', () => {
+  const imported = (description: string, accountId = 'a1') => ({ description, accountId, importBatchId: 'b1' })
+
+  it('offers each imported merchant once, in order', () => {
+    const rows = [imported('POS ΒΑΣΙΛΟΠΟΥΛΟΣ 4411'), imported('ΣΚΛΑΒΕΝΙΤΗΣ 12'), imported('POS ΒΑΣΙΛΟΠΟΥΛΟΣ 9876')]
+    expect(ruleMerchants(rows, [], 'food')).toEqual(['ΒΑΣΙΛΟΠΟΥΛΟΣ', 'ΣΚΛΑΒΕΝΙΤΗΣ'])
+  })
+
+  it('skips rows typed in by hand and rows without bank text', () => {
+    const rows = [{ description: 'ΒΑΣΙΛΟΠΟΥΛΟΣ', accountId: 'a1', importBatchId: null }, imported('1234')]
+    expect(ruleMerchants(rows, [], 'food')).toEqual([])
+  })
+
+  it('skips a merchant a rule already puts in that category, but not in another one', () => {
+    const rule = { pattern: 'vasilopoulos', match: 'CONTAINS' as const, accountId: null, categoryId: 'food' }
+    const rows = [imported('POS ΒΑΣΙΛΟΠΟΥΛΟΣ 4411')]
+    expect(ruleMerchants(rows, [rule], 'food')).toEqual([])
+    expect(ruleMerchants(rows, [rule], 'home')).toEqual(['ΒΑΣΙΛΟΠΟΥΛΟΣ'])
+    expect(ruleMerchants(rows, [{ ...rule, accountId: 'a2' }], 'food')).toEqual(['ΒΑΣΙΛΟΠΟΥΛΟΣ'])
   })
 })

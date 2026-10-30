@@ -205,9 +205,22 @@ export interface TransactionFilter {
   importBatchId?: string
   /** A member id, or HOUSEHOLD ('household') for rows that are for no one parent */
   memberId?: string
+  /** Free text (payee, bank text, note, category, account) or an amount; accent- and case-insensitive */
+  query?: string
+  /** Default: date, newest first */
+  sort?: LogSortKey
+  direction?: SortDirection
   /** 1-based */
   page?: number
   pageSize?: number
+}
+
+export const LOG_SORT_KEYS = ['date', 'description', 'category', 'amount'] as const
+export type LogSortKey = (typeof LOG_SORT_KEYS)[number]
+export type SortDirection = 'asc' | 'desc'
+export interface LogSort {
+  key: LogSortKey
+  direction: SortDirection
 }
 
 export interface TransactionPage {

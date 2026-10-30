@@ -49,9 +49,11 @@ contextBridge.exposeInMainWorld('api', {
   updateTransaction: (id: string, input: unknown)     => ipcRenderer.invoke('transaction:update', id, input),
   setCategory:       (ids: string[], categoryId: string | null) => ipcRenderer.invoke('transaction:setCategory', ids, categoryId),
   setMember:         (ids: string[], memberId: string | null)   => ipcRenderer.invoke('transaction:setMember', ids, memberId),
+  setPayee:          (ids: string[], payee: string | null)      => ipcRenderer.invoke('transaction:setPayee', ids, payee),
   createTransfer:    (input: unknown)                 => ipcRenderer.invoke('transaction:createTransfer', input),
   updateTransfer:    (transferId: string, input: unknown) => ipcRenderer.invoke('transaction:updateTransfer', transferId, input),
   linkTransfer:      (idA: string, idB: string)       => ipcRenderer.invoke('transaction:linkTransfer', idA, idB),
+  makeTransfer:      (ids: string[], otherAccountId: string) => ipcRenderer.invoke('transaction:makeTransfer', ids, otherAccountId),
   deleteTransaction: (id: string)                     => ipcRenderer.invoke('transaction:delete', id),
 
   // ── Statement import ────────────────────────────────────────────────────────

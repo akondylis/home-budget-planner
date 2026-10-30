@@ -5,18 +5,18 @@ import {
   guessHeaderRow,
   headerOptions,
   initialChoices,
+  keepsMatch,
   missingFields,
   offersRule,
   reviewCounts,
+  shownStatus,
   sortRows,
   toColumnMapping,
   toDecisions,
-  transferAccounts,
   type MappingForm,
 } from './import-review'
 import { merchantText, payeeKey } from '../../../shared/payee-key'
 import type { PreviewRow } from '../../../shared/statement-import'
-import type { AccountSummary } from '../../../shared/ledger'
 
 let nextLine = 2
 function row(patch: Partial<PreviewRow>): PreviewRow {
@@ -46,7 +46,7 @@ describe('import review', () => {
   const unsorted = row({})
   const known = row({ status: 'ALREADY_IMPORTED' })
   const twin = row({ status: 'POSSIBLE_DUPLICATE', duplicateOf: { id: 'h', bookedAt: '2026-09-30', amountCents: -1000, payee: 'Shop' } })
-  const pair = row({ status: 'TRANSFER_MATCH', transferWith: { id: 'o', accountId: 'card', accountName: 'Card', bookedAt: '2026-10-02' } })
+  const pair = row({ status: 'TRANSFER_MATCH', transferWith: { id: 'o', accountId: 'card', accountName: 'Card', bookedAt: '2026-10-02', amountCents: 1000, description: 'PAYMENT' } })
   const atm = row({ transferHint: 'ATM', description: 'ΑΝΑΛΗΨΗ ATM' })
   const broken = row({ status: 'INVALID', problem: 'DATE', bookedAt: null })
   const rows = [fresh, unsorted, known, twin, pair, atm, broken]
@@ -63,6 +63,19 @@ describe('import review', () => {
       { line: broken.line, action: 'SKIP' },
     ])
     expect(reviewCounts(rows, choices)).toEqual({ included: 4, toCategorise: 1 })
+  })
+
+  it('should let the user change a suggested transfer match to a category or another account', () => {
+    const matched = initialChoices([pair], null)[pair.line]
+    expect([keepsMatch(pair, matched), shownStatus(pair, matched)]).toEqual([true, 'TRANSFER_MATCH'])
+
+    const toCategory = { include: true, target: { kind: 'category' as const, categoryId: 'savings' } }
+    expect([keepsMatch(pair, toCategory), shownStatus(pair, toCategory)]).toEqual([false, 'NEW'])
+    expect(toDecisions([pair], { [pair.line]: toCategory })).toEqual([{ line: pair.line, action: 'IMPORT', categoryId: 'savings' }])
+
+    const toAccount = { include: true, target: { kind: 'transfer' as const, toAccountId: 'alpha' } }
+    expect(shownStatus(pair, toAccount)).toBe('NEW')
+    expect(toDecisions([pair], { [pair.line]: toAccount })).toEqual([{ line: pair.line, action: 'TRANSFER', toAccountId: 'alpha' }])
   })
 
   it('should leave an ATM withdrawal to categorise when there is no Cash account', () => {
@@ -165,27 +178,5 @@ describe('sortRows', () => {
   it('sorts by amount both ways, rows without an amount last', () => {
     expect(lines(sortRows(rows, { key: 'amount', direction: 'asc' }, 'el'))).toEqual(lines([a, c, b]))
     expect(lines(sortRows(rows, { key: 'amount', direction: 'desc' }, 'el'))).toEqual(lines([c, a, b]))
-  })
-})
-
-describe('transferAccounts', () => {
-  const account = (id: string, kind: AccountSummary['kind'], archived = false) => ({ id, name: id, kind, archived }) as AccountSummary
-  const accounts = [
-    account('Piraeus', 'CURRENT'),
-    account('Alpha', 'SAVINGS'),
-    account('Wallet', 'CASH'),
-    account('Old', 'CURRENT', true),
-    account('Edenred', 'MEAL_VOUCHER'),
-  ]
-  const names = (list: AccountSummary[]) => list.map(a => a.id)
-
-  it('offers every other active account, cash first', () => {
-    expect(names(transferAccounts(accounts, 'Piraeus', true))).toEqual(['Wallet', 'Alpha', 'Edenred'])
-  })
-
-  it('never takes money out of a meal-voucher account', () => {
-    expect(names(transferAccounts(accounts, 'Piraeus', false))).toEqual(['Wallet', 'Alpha'])
-    expect(transferAccounts(accounts, 'Edenred', true)).toEqual([])
-    expect(names(transferAccounts(accounts, 'Edenred', false))).toEqual(['Wallet', 'Alpha', 'Piraeus'])
   })
 })

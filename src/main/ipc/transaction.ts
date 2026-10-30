@@ -6,8 +6,10 @@ import {
   linkTransfer,
   listPayeeSuggestions,
   listTransactions,
+  makeTransfers,
   setCategory,
   setMember,
+  setPayee,
   updateTransaction,
   updateTransfer,
 } from '../services/transactions'
@@ -30,6 +32,9 @@ export function registerTransactionHandlers(): void {
   /** Throws: 'INVALID_INPUT', 'MEMBER_NOT_FOUND' */
   ipcMain.handle('transaction:setMember', (_e, ids: unknown, memberId: unknown) => setMember(ids, memberId))
 
+  /** Throws: 'INVALID_INPUT' */
+  ipcMain.handle('transaction:setPayee', (_e, ids: unknown, payee: unknown) => setPayee(ids, payee))
+
   /** Throws: 'INVALID_INPUT', 'INVALID_AMOUNT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND', 'MEMBER_NOT_FOUND' */
   ipcMain.handle('transaction:createTransfer', (_e, input: unknown) => createTransfer(input))
 
@@ -38,6 +43,9 @@ export function registerTransactionHandlers(): void {
 
   /** Throws: 'TRANSACTION_NOT_FOUND', 'TRANSFER_MISMATCH' */
   ipcMain.handle('transaction:linkTransfer', (_e, idA: unknown, idB: unknown) => linkTransfer(idA, idB))
+
+  /** Throws: 'INVALID_INPUT', 'TRANSACTION_NOT_FOUND', 'TRANSFER_MISMATCH', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND', 'VOUCHER_NO_TRANSFER_OUT' */
+  ipcMain.handle('transaction:makeTransfer', (_e, ids: unknown, otherAccountId: unknown) => makeTransfers(ids, otherAccountId))
 
   /** Throws: 'TRANSACTION_NOT_FOUND' */
   ipcMain.handle('transaction:delete', (_e, id: unknown) => deleteTransaction(id))

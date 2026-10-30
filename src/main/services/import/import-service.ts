@@ -19,7 +19,7 @@ import { readStatement } from './read-statement'
 import { buildPreview } from './build-preview'
 import { fileHash, payeeKey } from './fingerprint'
 import { sortRules } from './apply-rules'
-import { TWIN_WINDOW_DAYS } from './dedupe'
+import { refKey, TWIN_WINDOW_DAYS } from './dedupe'
 import { TRANSFER_WINDOW_DAYS } from './transfer-match'
 import { parseSavedMapping } from './profiles'
 import { closingBalance, type StatementBalance } from './reconcile'
@@ -80,7 +80,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
   const [known, manual, others, rules, categorised, sameBatch] = await Promise.all([
     prisma.transaction.findMany({
       where: { accountId, OR: [{ fingerprint: { not: null } }, { bankReference: { not: null } }] },
-      select: { fingerprint: true, bankReference: true },
+      select: { fingerprint: true, bankReference: true, amountCents: true },
     }),
     prisma.transaction.findMany({
       where: {
@@ -95,7 +95,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
         accountId: { not: accountId }, transferId: null, account: { archivedAt: null, kind: { not: 'MEAL_VOUCHER' } },
         bookedAt: { gte: shift(from, -TRANSFER_WINDOW_DAYS), lte: shift(to, TRANSFER_WINDOW_DAYS) },
       },
-      select: { id: true, accountId: true, bookedAt: true, amountCents: true, account: { select: { name: true } } },
+      select: { id: true, accountId: true, bookedAt: true, amountCents: true, description: true, payee: true, account: { select: { name: true } } },
     }),
     prisma.categoryRule.findMany({ where: { category: { archivedAt: null } } }),
     prisma.transaction.findMany({
@@ -115,10 +115,11 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
 
   const { rows, summary } = buildPreview(accountId, read.rows, {
     fingerprints: new Set(known.map(k => k.fingerprint).filter((f): f is string => f !== null)),
-    bankReferences: new Set(known.map(k => k.bankReference).filter((r): r is string => r !== null)),
+    bankReferences: new Set(known.flatMap(k => (k.bankReference ? [refKey(k.bankReference, k.amountCents)] : []))),
     manual: manual.map(m => ({ ...m, bookedAt: dateToDateOnly(m.bookedAt) })),
     transferCandidates: others.map(o => ({
       id: o.id, accountId: o.accountId, accountName: o.account.name, bookedAt: dateToDateOnly(o.bookedAt), amountCents: o.amountCents,
+      description: o.description || o.payee || '',
     })),
     rules: sortRules(rules),
     history,
@@ -195,8 +196,8 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
   const { accountId } = preview
   const usedRules = new Map<string, number>()
 
-  // Accounts that receive the other side of a transfer (an ATM withdrawal → Cash)
-  const targets = [...new Set(plan.map(p => p.action === 'TRANSFER' && !p.row.transferWith ? p.toAccountId : null).filter((id): id is string => id !== null))]
+  // Accounts that receive the other side of a transfer (an ATM withdrawal → Cash, or a suggested match the user changed)
+  const targets = [...new Set(plan.map(p => (p.action === 'TRANSFER' ? p.toAccountId : null)).filter((id): id is string => id !== null))]
   if (targets.includes(accountId)) throw new Error('SAME_ACCOUNT')
   if (targets.length) {
     const found = await prisma.account.count({ where: { id: { in: targets }, archivedAt: null } })
@@ -225,7 +226,10 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
 
     for (const { row, action, categoryId, payee, toAccountId } of plan) {
       const clash = await tx.transaction.findFirst({
-        where: { accountId, OR: [{ fingerprint: row.fingerprint }, ...(row.bankReference ? [{ bankReference: row.bankReference }] : [])] },
+        where: {
+          accountId,
+          OR: [{ fingerprint: row.fingerprint }, ...(row.bankReference ? [{ bankReference: row.bankReference, amountCents: row.amountCents! }] : [])],
+        },
         select: { id: true },
       })
       if (clash) continue
@@ -248,7 +252,8 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
       }
 
       if (action === 'TRANSFER') {
-        const other = row.transferWith ? await tx.transaction.findUnique({ where: { id: row.transferWith.id } }) : null
+        // A chosen account wins over the suggested match
+        const other = row.transferWith && !toAccountId ? await tx.transaction.findUnique({ where: { id: row.transferWith.id } }) : null
         if (other && other.transferId === null && other.amountCents === -row.amountCents!) {
           const transferId = randomUUID()
           await tx.transaction.update({ where: { id: other.id }, data: { transferId, categoryId: null } })
@@ -258,7 +263,7 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
           imported++
           continue
         }
-        if (!row.transferWith && toAccountId) {
+        if (toAccountId) {
           // The other side has no statement of its own: write it too, as part of this import
           const transferId = randomUUID()
           const bookedAt = dateOnlyToDate(row.bookedAt!)

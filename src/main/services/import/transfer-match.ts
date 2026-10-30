@@ -15,6 +15,7 @@ export interface TransferCandidate {
   accountName: string
   bookedAt: string
   amountCents: number
+  description: string
 }
 
 /**

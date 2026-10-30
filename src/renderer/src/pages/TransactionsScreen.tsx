@@ -52,7 +52,7 @@ export function TransactionsScreen({ onGoToAccounts, onImport, onManageCategorie
   }, [])
 
   const open = activeAccounts(accounts)
-  const filtered = filter.accountId !== null || filter.categoryType !== null || filter.categoryId !== null || filter.uncategorised || filter.importBatchId !== null
+  const filtered = filter.accountId !== null || filter.categoryType !== null || filter.categoryId !== null || filter.uncategorised || filter.importBatchId !== null || filter.query.trim() !== ''
   const account = open.find(a => a.id === filter.accountId)
   const addKeys = keysOf('addTransaction')?.[0]?.join('+')
   const justImported = lastImport !== null && lastImport.batchId === filter.importBatchId

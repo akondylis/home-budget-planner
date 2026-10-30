@@ -51,11 +51,12 @@ export interface PaletteSection {
 }
 
 // Shortcuts that make sense as a command (Ctrl+K itself would only close the palette)
-const PALETTE_SHORTCUTS = ['addTransaction', 'print', 'toggleSidebar', 'swapSidebar', 'zoomIn', 'zoomOut', 'zoomReset', 'showShortcuts'] as const
+const PALETTE_SHORTCUTS = ['addTransaction', 'searchTransactions', 'print', 'toggleSidebar', 'swapSidebar', 'zoomIn', 'zoomOut', 'zoomReset', 'showShortcuts'] as const
 export type PaletteShortcut = (typeof PALETTE_SHORTCUTS)[number]
 
 const SHORTCUT_ICON: Record<PaletteShortcut, IconName> = {
   addTransaction: 'plus',
+  searchTransactions: 'search',
   print: 'printer',
   toggleSidebar: 'sidebar',
   swapSidebar: 'swap',

@@ -136,6 +136,46 @@ describe('statement import', () => {
     expect(await balanceOf(cardId)).toBe(30000 - 1399)
   })
 
+  it('should keep interest and its tax apart when the bank gives them one reference', async () => {
+    const { bankId } = await setup()
+    const withRefs = new TextEncoder().encode([
+      'Ημερομηνία;Περιγραφή;Αρ. Συναλλαγής;Ποσό',
+      '01/07/2026;ΦΟΡΟΣ ΠΙΣΤ/ΚΩΝ ΤΟΚΩΝ;202606300991021637;-4,64',
+      '01/07/2026;ΠΙΣΤΩΤΙΚΟΙ ΤΟΚΟΙ;202606300991021637;30,92',
+    ].join('\r\n'))
+    const first = await preview(bankId, withRefs)
+    expect(first.rows.map(r => r.status)).toEqual(['NEW', 'NEW'])
+    await commitImport({ previewId: first.previewId })
+    expect(await balanceOf(bankId)).toBe(100_000 - 464 + 3092)
+
+    const again = await preview(bankId, withRefs, 'again.csv')
+    expect(again.rows.map(r => r.status)).toEqual(['ALREADY_IMPORTED', 'ALREADY_IMPORTED'])
+  })
+
+  it('should let the user turn a suggested transfer match into a categorised row or another account', async () => {
+    const { bankId, cardId, cashId } = await setup()
+    const bank = await preview(bankId, csv(['27/08/2026;Revolut* Dubli IR;-200,00', '28/08/2026;Revolut* Dubli IR;-50,00']))
+    await commitImport({ previewId: bank.previewId })
+
+    const card = await preview(cardId, csv(['01/09/2026;CHILDREN SAVING;-200,00', '01/09/2026;ΚΑΤΑΘΕΣΗ;-50,00']))
+    expect(card.rows[0]).toMatchObject({
+      status: 'TRANSFER_MATCH',
+      transferWith: { accountName: 'Eurobank', bookedAt: '2026-08-27', amountCents: -20000, description: 'Revolut* Dubli IR' },
+    })
+    expect(card.rows[1].status).toBe('TRANSFER_MATCH')
+    const income = await prisma.category.findFirst({ where: { type: 'INCOME', parentId: { not: null } } })
+    await commitImport({ previewId: card.previewId, decisions: [
+      { line: 2, action: 'IMPORT', categoryId: income!.id },
+      { line: 3, action: 'TRANSFER', toAccountId: cashId },
+    ] })
+
+    const bankRows = (await listTransactions({ accountId: bankId })).rows
+    expect(bankRows.every(r => r.transferId === null)).toBe(true)
+    const cardRows = (await listTransactions({ accountId: cardId })).rows
+    expect(cardRows.find(r => r.amountCents === 20000)).toMatchObject({ categoryId: income!.id, transferId: null })
+    expect(await balanceOf(cashId)).toBe(-5000)
+  })
+
   it('should take the category and payee the user chose over the suggestion', async () => {
     const { bankId } = await setup()
     const kids = await prisma.category.findFirst({ where: { name: 'Παιδιά' } })

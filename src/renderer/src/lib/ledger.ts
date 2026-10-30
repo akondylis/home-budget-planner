@@ -4,6 +4,8 @@
 import type { IconName } from '../components/shell/icons'
 import { parseMoney } from '../../../shared/money'
 import { isDateOnly } from '../../../shared/date-only'
+import { merchantText, payeeKey } from '../../../shared/payee-key'
+import { ruleMatches, type RuleLike } from '../../../shared/rule-match'
 import type {
   AccountInput,
   AccountKind,
@@ -58,6 +60,45 @@ export function fitsKind(type: CategoryType, kind: PickerKind): boolean {
 /** Groups a picker offers (those with categories in them) */
 export function groupsFor(tree: CategoryNode[], kind: PickerKind): CategoryNode[] {
   return tree.filter(g => fitsKind(g.type, kind) && g.children.length > 0)
+}
+
+/** The groups that fit a row: income groups for money in, everything else for money out */
+export function kindForAmount(amountCents: number): PickerKind {
+  return amountCents > 0 ? 'INCOME' : 'EXPENSE'
+}
+
+/** For several rows at once: one direction narrows the list, mixed (or none) offers every group */
+export function kindForAmounts(amounts: number[]): PickerKind {
+  if (amounts.length === 0) return 'ANY'
+  if (amounts.every(a => a > 0)) return 'INCOME'
+  if (amounts.every(a => a <= 0)) return 'EXPENSE'
+  return 'ANY'
+}
+
+/**
+ * Own accounts a row can move money to (`outgoing`) or from: every active account but its own,
+ * cash first. Money never leaves a meal-voucher account by transfer.
+ */
+export function transferAccounts(accounts: AccountSummary[], fromAccountId: string, outgoing: boolean): AccountSummary[] {
+  const source = accounts.find(a => a.id === fromAccountId)
+  if (outgoing && source?.kind === 'MEAL_VOUCHER') return []
+  return accounts
+    .filter(a => !a.archived && a.id !== fromAccountId && (outgoing || a.kind !== 'MEAL_VOUCHER'))
+    .sort((a, b) => Number(b.kind === 'CASH') - Number(a.kind === 'CASH') || a.name.localeCompare(b.name))
+}
+
+/** For several rows at once: accounts every row can move to (or from); none when money goes both ways */
+export function bulkTransferAccounts(accounts: AccountSummary[], rows: { accountId: string; amountCents: number }[]): AccountSummary[] {
+  if (rows.length === 0 || rows.some(r => r.amountCents === 0)) return []
+  const outgoing = rows[0].amountCents < 0
+  if (rows.some(r => r.amountCents < 0 !== outgoing)) return []
+  return [...new Set(rows.map(r => r.accountId))].reduce(
+    (common, accountId) => {
+      const fits = new Set(transferAccounts(accounts, accountId, outgoing).map(a => a.id))
+      return common.filter(a => fits.has(a.id))
+    },
+    transferAccounts(accounts, rows[0].accountId, outgoing),
+  )
 }
 
 export function findCategory(tree: CategoryNode[], id: string | null | undefined): CategoryNode | null {
@@ -138,7 +179,8 @@ export function draftFromRow(row: TransactionRow): EntryDraft {
     accountId: transfer && !outgoing ? otherId : row.accountId,
     toAccountId: transfer ? (outgoing ? otherId : row.accountId) : '',
     categoryId: row.categoryId,
-    payee: row.payee ?? '',
+    // An imported row without a payee opens with the merchant from its bank text, as the list names it
+    payee: row.payee ?? (transfer ? '' : merchantText(row.description)),
     note: row.note ?? '',
     bookedAt: row.bookedAt,
     memberId: row.memberId,
@@ -223,4 +265,27 @@ export function parseAccountDraft(draft: AccountDraft, requireHolder = false): {
       cards: cards.map(c => ({ ...(c.id ? { id: c.id } : {}), last4: c.last4, holderMemberId: c.holderMemberId })),
     },
   }
+}
+
+/**
+ * Merchants to offer "Always put X in Y?" for after rows were put in `categoryId`: the distinct
+ * merchant text of the imported ones, minus those a rule already puts in that category
+ */
+export function ruleMerchants(
+  rows: Pick<TransactionRow, 'description' | 'importBatchId' | 'accountId'>[],
+  rules: Pick<RuleLike, 'pattern' | 'match' | 'accountId' | 'categoryId'>[],
+  categoryId: string,
+): string[] {
+  const seen = new Set<string>()
+  const merchants: string[] = []
+  for (const row of rows) {
+    if (!row.importBatchId) continue
+    const merchant = merchantText(row.description)
+    const key = payeeKey(row.description)
+    if (!merchant || !key || seen.has(key)) continue
+    seen.add(key)
+    const covered = rules.some(r => r.categoryId === categoryId && (r.accountId === null || r.accountId === row.accountId) && ruleMatches(r, key))
+    if (!covered) merchants.push(merchant)
+  }
+  return merchants
 }

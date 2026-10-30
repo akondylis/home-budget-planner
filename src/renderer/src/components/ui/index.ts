@@ -6,6 +6,7 @@ export { Badge, type BadgeProps, type BadgeTone } from './Badge'
 export { Banner, type BannerProps, type BannerTone } from './Banner'
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button'
 export { CollapsibleCard, type CollapsibleCardProps } from './CollapsibleCard'
+export { ContextMenu, type ContextMenuProps } from './ContextMenu'
 export { ConfirmDialog, type ConfirmDialogProps, type ConfirmTone } from './ConfirmDialog'
 export { CopyButton, type CopyButtonProps } from './CopyButton'
 export { DateInput, shiftDay, type DateInputProps } from './DateInput'
@@ -38,6 +39,7 @@ export {
   type MetaPart,
   type SortHeaderProps,
 } from './List'
+export { MenuList, type MenuListProps } from './MenuList'
 export { Meter, type MeterProps, type MeterTone } from './Meter'
 export { Modal, type ModalProps, type ModalSize } from './Modal'
 export { MultiSelectDropdown, type MultiSelectDropdownProps } from './MultiSelectDropdown'
