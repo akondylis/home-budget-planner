@@ -108,6 +108,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // ── Overview ────────────────────────────────────────────────────────────────
   getOverview:       (month: string)                  => ipcRenderer.invoke('overview:get', month),
+  getProjection:     (months: number)                 => ipcRenderer.invoke('projection:get', months),
 
   // ── Notifications ───────────────────────────────────────────────────────────
   listNotifications:        ()               => ipcRenderer.invoke('notification:list'),

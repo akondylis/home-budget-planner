@@ -99,6 +99,7 @@ interface Window {
     recordDebtCash:        (input: { debtId: string; accountId: string; bookedAt: string; amountCents: number; createdByMemberId?: string | null }) => Promise<string>
 
     getOverview:       (month: string) => Promise<import('../../shared/overview').OverviewMonth>
+    getProjection:     (months: number) => Promise<import('../../shared/projection').Projection>
 
     listNotifications:        () => Promise<import('../../shared/notifications').AppNotification[]>
     markNotificationsRead:    (keys: string[]) => Promise<void>

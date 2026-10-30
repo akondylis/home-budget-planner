@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { DEFAULT_DATE_FORMAT, getDateFormat, setDateFormat, type DateFormat } from '../lib/date-format'
 import { ACCOUNT_GROUP_BYS, EMPTY_ACCOUNT_FILTER, type AccountFilter, type AccountGroupBy } from '../lib/account-groups'
+import { DEFAULT_HORIZON, HORIZONS, type Horizon } from '../../../shared/projection'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type SidebarPosition = 'left' | 'right'
@@ -36,6 +37,8 @@ type UiStore = {
   accountsGroupBy: AccountGroupBy
   // Accounts screen filters; per session, so a forgotten filter never hides an account after a restart
   accountsFilter: AccountFilter
+  // Months the Projections page looks ahead; remembered per PC
+  projectionMonths: Horizon
   setTheme: (theme: ThemeMode) => void
   setSidebarPosition: (position: SidebarPosition) => void
   setSidebarCollapsed: (collapsed: boolean) => void
@@ -56,6 +59,7 @@ type UiStore = {
   setAccountsGroupBy: (by: AccountGroupBy) => void
   setAccountsFilter: (patch: Partial<AccountFilter>) => void
   clearAccountsFilter: () => void
+  setProjectionMonths: (months: Horizon) => void
 }
 
 export const UI_PREFS_KEY = 'ui-prefs'
@@ -99,6 +103,7 @@ export const useUiStore = create<UiStore>()(
       currentMemberId: null,
       accountsGroupBy: 'none',
       accountsFilter: EMPTY_ACCOUNT_FILTER,
+      projectionMonths: DEFAULT_HORIZON,
       setTheme: theme => set({ theme }),
       setSidebarPosition: sidebarPosition => set({ sidebarPosition }),
       setSidebarCollapsed: sidebarCollapsed => set({ sidebarCollapsed }),
@@ -128,6 +133,7 @@ export const useUiStore = create<UiStore>()(
       setAccountsGroupBy: accountsGroupBy => set({ accountsGroupBy }),
       setAccountsFilter: patch => set(s => ({ accountsFilter: { ...s.accountsFilter, ...patch } })),
       clearAccountsFilter: () => set({ accountsFilter: EMPTY_ACCOUNT_FILTER }),
+      setProjectionMonths: projectionMonths => set({ projectionMonths }),
     }),
     {
       name: UI_PREFS_KEY,
@@ -141,12 +147,19 @@ export const useUiStore = create<UiStore>()(
         tourSeen: s.tourSeen,
         currentMemberId: s.currentMemberId,
         accountsGroupBy: s.accountsGroupBy,
+        projectionMonths: s.projectionMonths,
       }),
-      // A stored value from a newer or older build falls back to no grouping
+      // A stored value from a newer or older build falls back to the default
       merge: (stored, current) => {
         const prefs = (stored ?? {}) as Partial<UiStore>
         const groupBy = prefs.accountsGroupBy
-        return { ...current, ...prefs, accountsGroupBy: groupBy && ACCOUNT_GROUP_BYS.includes(groupBy) ? groupBy : 'none' }
+        const months = prefs.projectionMonths
+        return {
+          ...current,
+          ...prefs,
+          accountsGroupBy: groupBy && ACCOUNT_GROUP_BYS.includes(groupBy) ? groupBy : 'none',
+          projectionMonths: months && HORIZONS.includes(months) ? months : DEFAULT_HORIZON,
+        }
       },
     },
   ),

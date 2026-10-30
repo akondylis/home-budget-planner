@@ -44,7 +44,7 @@ const config: Config = {
         'fg-muted': token('c-text-secondary'),
         'fg-subtle': token('c-text-muted'),
         glass: token('c-glass'),
-        chart: { income: token('c-chart-income'), expense: token('c-chart-expense') },
+        chart: { income: token('c-chart-income'), expense: token('c-chart-expense'), balance: token('c-chart-balance'), negative: token('c-chart-negative') },
         toast: {
           DEFAULT: token('c-toast-bg'),
           fg: token('c-toast-fg'),

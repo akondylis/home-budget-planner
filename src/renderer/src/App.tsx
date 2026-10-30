@@ -4,6 +4,7 @@ import { TitleBar } from './components/shell/TitleBar'
 import { Sidebar } from './components/shell/Sidebar'
 import { OverviewScreen } from './pages/OverviewScreen'
 import { PlannedScreen } from './pages/PlannedScreen'
+import { ProjectionsScreen } from './pages/ProjectionsScreen'
 import { AccountsScreen } from './pages/AccountsScreen'
 import { TransactionsScreen } from './pages/TransactionsScreen'
 import { TransactionForm } from './components/transactions/TransactionForm'
@@ -331,6 +332,8 @@ export default function App() {
           />
         )
       case 'recurring': return <RecurringScreen />
+      case 'projections':
+        return <ProjectionsScreen onOpenBudget={openBudget} onOpenAccounts={() => setView('accounts')} onOpenRecurring={() => setView('recurring')} />
       case 'debts': return <DebtsScreen />
       case 'settings': return <SettingsScreen onManageCategories={() => openCategories()} />
       case 'categories':

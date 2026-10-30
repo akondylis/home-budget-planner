@@ -41,6 +41,9 @@
   /* Chart series (income, expense): blue/orange stays distinguishable for colour-blind readers; dark steps are chosen separately, validated against the dark surface */
   --c-chart-income: 37 99 235;
   --c-chart-expense: 234 88 12;
+  /* Projections: the balance line, and its months below zero (validated with the dataviz script, light + dark) */
+  --c-chart-balance: 37 99 235;
+  --c-chart-negative: 220 38 38;
   /* Toast is a dark chip in both themes, so these are not overridden in .dark */
   --c-toast-bg: 38 38 38;
   --c-toast-fg: 255 255 255;
@@ -152,6 +155,8 @@
   --c-warning-bg: var(--amber-100);
   --c-chart-income: 59 130 246;
   --c-chart-expense: 234 88 12;
+  --c-chart-balance: 59 130 246;
+  --c-chart-negative: 239 68 68;
   --gray-50: 11 15 23;
   --gray-100: 26 32 44;
   --gray-200: 42 50 65;
