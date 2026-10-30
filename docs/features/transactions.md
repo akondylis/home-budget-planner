@@ -22,7 +22,8 @@ spending are true. Cash is typed in by hand in seconds; bank and card rows come 
   or × clears it.
 - **Sorting:** click Date, Description, Category or Amount; again to flip. Amount starts with the biggest expense;
   transfers and rows to categorise stay last in a category sort.
-- **Log:** month stepper (or all months), account, type and category filters, and **To categorise (n)**. Tiles show
+- **Log:** month stepper (or all months; a date range `01/01 – 30/10` with ✕ when opened from
+  [Reports](reports.md)), account, type and category filters, and **To categorise (n)**. Tiles show
   income, spending and net for the filter; transfers count as neither. Rows: date (a download mark if imported),
   payee or bank text with the account under it, an inline category picker (amber when empty), the signed amount.
   Tick rows for **Set category** (or a transfer to/from an own account when all ticked rows go the same way;

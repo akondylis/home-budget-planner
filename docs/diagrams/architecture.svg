@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="5946" height="1066" viewBox="0 0 5946 1066" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="6282" height="1066" viewBox="0 0 6282 1066" font-family="Segoe UI, Helvetica, Arial, sans-serif">
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#57606a"/></marker></defs>
-<rect width="5946" height="1066" fill="#ffffff"/>
+<rect width="6282" height="1066" fill="#ffffff"/>
 <text x="40" y="58" font-size="28" font-weight="700" fill="#1f2328">Home Budget: how a click reaches the database</text>
 <text x="40" y="84" font-size="14" fill="#57606a">The renderer only calls window.api; each call crosses the preload bridge as a 'domain:action' channel to a thin handler and its service.</text>
 <rect x="40" y="118" width="170" height="300" rx="10" fill="#1f6feb"/>
@@ -346,137 +346,164 @@
 <path d="M4076 852 V895" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <rect x="4262" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
 <rect x="4262" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
-<text x="4280" y="144" font-size="16" font-weight="700" fill="#1f2328">Notifications</text>
-<text x="4280" y="166" font-size="13" fill="#57606a">Sidebar bell (panel)</text>
-<text x="4280" y="184" font-size="13" fill="#57606a">Windows toast click</text>
-<text x="4280" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listNotifications()</text>
-<text x="4280" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.markNotificationsRead()</text>
-<text x="4280" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.markAllNotificationsRead()</text>
-<text x="4280" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.dismissNotification()</text>
-<text x="4280" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.dismissAllNotifications()</text>
+<text x="4280" y="144" font-size="16" font-weight="700" fill="#1f2328">Reports</text>
+<text x="4280" y="166" font-size="13" fill="#57606a">Reports page</text>
+<text x="4280" y="184" font-size="13" fill="#57606a">(sidebar, Ctrl+K)</text>
+<text x="4280" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.reportCategories()</text>
+<text x="4280" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.reportTrend()</text>
+<text x="4280" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.reportMembers()</text>
+<text x="4280" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.reportBalances()</text>
+<text x="4280" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.saveCsv()</text>
 <rect x="4262" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
 <rect x="4262" y="464" width="6" height="238" rx="3" fill="#8250df"/>
-<text x="4280" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:list'</text>
-<text x="4280" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:markRead'</text>
-<text x="4280" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:markAllRead'</text>
-<text x="4280" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:dismiss'</text>
-<text x="4280" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:dismissAll'</text>
+<text x="4280" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'report:categories'</text>
+<text x="4280" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'report:trend'</text>
+<text x="4280" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'report:members'</text>
+<text x="4280" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'report:balances'</text>
+<text x="4280" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'report:saveCsv'</text>
 <rect x="4262" y="748" width="300" height="104" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
 <rect x="4262" y="748" width="6" height="104" rx="3" fill="#bc4c00"/>
-<text x="4280" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/notifications.ts</text>
-<text x="4280" y="796" font-size="13" fill="#57606a">→ services/notifications.ts</text>
-<text x="4280" y="814" font-size="13" fill="#57606a">→ notification-providers.ts</text>
+<text x="4280" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/report.ts</text>
+<text x="4280" y="796" font-size="13" fill="#57606a">→ services/reports.ts</text>
+<text x="4280" y="814" font-size="13" fill="#57606a">→ pdf/pdf-export.ts (CSV)</text>
 <rect x="4262" y="898" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="4412" y="925" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · NotificationState</text>
+<text x="4412" y="925" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Transaction, Account</text>
 <path d="M4412 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M4412 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M4412 852 V895" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <rect x="4598" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
 <rect x="4598" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
-<text x="4616" y="144" font-size="16" font-weight="700" fill="#1f2328">Categories</text>
-<text x="4616" y="166" font-size="13" fill="#57606a">Pickers; Manage categories;</text>
-<text x="4616" y="184" font-size="13" fill="#57606a">Budget (carry over)</text>
-<text x="4616" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listCategories()</text>
-<text x="4616" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createCategory()</text>
-<text x="4616" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateCategory()</text>
-<text x="4616" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.archiveCategory()</text>
-<text x="4616" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.manageCategories()</text>
-<text x="4616" y="293" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.moveCategory()</text>
-<text x="4616" y="310" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.reorderCategories()</text>
-<text x="4616" y="327" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.mergeCategory()</text>
-<text x="4616" y="344" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.deleteCategory()</text>
-<text x="4616" y="361" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setCarryOver()</text>
+<text x="4616" y="144" font-size="16" font-weight="700" fill="#1f2328">Notifications</text>
+<text x="4616" y="166" font-size="13" fill="#57606a">Sidebar bell (panel)</text>
+<text x="4616" y="184" font-size="13" fill="#57606a">Windows toast click</text>
+<text x="4616" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listNotifications()</text>
+<text x="4616" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.markNotificationsRead()</text>
+<text x="4616" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.markAllNotificationsRead()</text>
+<text x="4616" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.dismissNotification()</text>
+<text x="4616" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.dismissAllNotifications()</text>
 <rect x="4598" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
 <rect x="4598" y="464" width="6" height="238" rx="3" fill="#8250df"/>
-<text x="4616" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:list'</text>
-<text x="4616" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:create'</text>
-<text x="4616" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:update'</text>
-<text x="4616" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:archive'</text>
-<text x="4616" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:manage'</text>
-<text x="4616" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:move'</text>
-<text x="4616" y="592" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:reorder'</text>
-<text x="4616" y="609" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:merge'</text>
-<text x="4616" y="626" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:delete'</text>
-<text x="4616" y="643" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:setCarryOver'</text>
+<text x="4616" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:list'</text>
+<text x="4616" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:markRead'</text>
+<text x="4616" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:markAllRead'</text>
+<text x="4616" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:dismiss'</text>
+<text x="4616" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'notification:dismissAll'</text>
 <rect x="4598" y="748" width="300" height="104" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
 <rect x="4598" y="748" width="6" height="104" rx="3" fill="#bc4c00"/>
-<text x="4616" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/category.ts</text>
-<text x="4616" y="796" font-size="13" fill="#57606a">→ services/categories.ts</text>
-<text x="4616" y="814" font-size="13" fill="#57606a">→ services/seed.ts (first run)</text>
+<text x="4616" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/notifications.ts</text>
+<text x="4616" y="796" font-size="13" fill="#57606a">→ services/notifications.ts</text>
+<text x="4616" y="814" font-size="13" fill="#57606a">→ notification-providers.ts</text>
 <rect x="4598" y="898" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="4748" y="925" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Category</text>
+<text x="4748" y="925" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · NotificationState</text>
 <path d="M4748 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M4748 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M4748 852 V895" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <rect x="4934" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
 <rect x="4934" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
-<text x="4952" y="144" font-size="16" font-weight="700" fill="#1f2328">Settings</text>
-<text x="4952" y="166" font-size="13" fill="#57606a">Settings page</text>
-<text x="4952" y="184" font-size="13" fill="#57606a">Title bar badge</text>
-<text x="4952" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.getSettings()</text>
-<text x="4952" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setLanguage()</text>
-<text x="4952" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setDateFormat()</text>
-<text x="4952" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setNotificationSettings()</text>
-<text x="4952" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.getAppInfo()</text>
-<text x="4952" y="293" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openDataDir()</text>
+<text x="4952" y="144" font-size="16" font-weight="700" fill="#1f2328">Categories</text>
+<text x="4952" y="166" font-size="13" fill="#57606a">Pickers; Manage categories;</text>
+<text x="4952" y="184" font-size="13" fill="#57606a">Budget (carry over)</text>
+<text x="4952" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listCategories()</text>
+<text x="4952" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.createCategory()</text>
+<text x="4952" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.updateCategory()</text>
+<text x="4952" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.archiveCategory()</text>
+<text x="4952" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.manageCategories()</text>
+<text x="4952" y="293" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.moveCategory()</text>
+<text x="4952" y="310" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.reorderCategories()</text>
+<text x="4952" y="327" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.mergeCategory()</text>
+<text x="4952" y="344" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.deleteCategory()</text>
+<text x="4952" y="361" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setCarryOver()</text>
 <rect x="4934" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
 <rect x="4934" y="464" width="6" height="238" rx="3" fill="#8250df"/>
-<text x="4952" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:get'</text>
-<text x="4952" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setLanguage'</text>
-<text x="4952" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setDateFormat'</text>
-<text x="4952" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setNotifications'</text>
-<text x="4952" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:appInfo'</text>
-<text x="4952" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:openDataDir'</text>
+<text x="4952" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:list'</text>
+<text x="4952" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:create'</text>
+<text x="4952" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:update'</text>
+<text x="4952" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:archive'</text>
+<text x="4952" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:manage'</text>
+<text x="4952" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:move'</text>
+<text x="4952" y="592" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:reorder'</text>
+<text x="4952" y="609" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:merge'</text>
+<text x="4952" y="626" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:delete'</text>
+<text x="4952" y="643" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'category:setCarryOver'</text>
 <rect x="4934" y="748" width="300" height="104" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
 <rect x="4934" y="748" width="6" height="104" rx="3" fill="#bc4c00"/>
-<text x="4952" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/settings.ts</text>
-<text x="4952" y="796" font-size="13" fill="#57606a">→ services/settings.ts</text>
-<text x="4952" y="814" font-size="13" fill="#57606a">→ user-data.ts (portable)</text>
+<text x="4952" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/category.ts</text>
+<text x="4952" y="796" font-size="13" fill="#57606a">→ services/categories.ts</text>
+<text x="4952" y="814" font-size="13" fill="#57606a">→ services/seed.ts (first run)</text>
 <rect x="4934" y="898" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="5084" y="925" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · AppSettings (Prisma)</text>
+<text x="5084" y="925" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · Category</text>
 <path d="M5084 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M5084 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M5084 852 V895" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <rect x="5270" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
 <rect x="5270" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
-<text x="5288" y="144" font-size="16" font-weight="700" fill="#1f2328">PDF export</text>
-<text x="5288" y="166" font-size="13" fill="#57606a">Report preview modal</text>
-<text x="5288" y="184" font-size="13" fill="#57606a">(Overview, Ctrl+K)</text>
-<text x="5288" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.exportPdf()</text>
-<text x="5288" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openFile()</text>
+<text x="5288" y="144" font-size="16" font-weight="700" fill="#1f2328">Settings</text>
+<text x="5288" y="166" font-size="13" fill="#57606a">Settings page</text>
+<text x="5288" y="184" font-size="13" fill="#57606a">Title bar badge</text>
+<text x="5288" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.getSettings()</text>
+<text x="5288" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setLanguage()</text>
+<text x="5288" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setDateFormat()</text>
+<text x="5288" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setNotificationSettings()</text>
+<text x="5288" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.getAppInfo()</text>
+<text x="5288" y="293" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openDataDir()</text>
 <rect x="5270" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
 <rect x="5270" y="464" width="6" height="238" rx="3" fill="#8250df"/>
-<text x="5288" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'pdf:export'</text>
-<text x="5288" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'shell:openFile'</text>
+<text x="5288" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:get'</text>
+<text x="5288" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setLanguage'</text>
+<text x="5288" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setDateFormat'</text>
+<text x="5288" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:setNotifications'</text>
+<text x="5288" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:appInfo'</text>
+<text x="5288" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'settings:openDataDir'</text>
 <rect x="5270" y="748" width="300" height="104" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
 <rect x="5270" y="748" width="6" height="104" rx="3" fill="#bc4c00"/>
-<text x="5288" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/pdf.ts</text>
-<text x="5288" y="796" font-size="13" fill="#57606a">→ services/pdf/pdf-export.ts</text>
-<text x="5288" y="814" font-size="13" fill="#57606a">→ services/pdf/report-pdf.ts</text>
+<text x="5288" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/settings.ts</text>
+<text x="5288" y="796" font-size="13" fill="#57606a">→ services/settings.ts</text>
+<text x="5288" y="814" font-size="13" fill="#57606a">→ user-data.ts (portable)</text>
 <rect x="5270" y="898" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
-<text x="5420" y="925" font-size="13" text-anchor="middle" fill="#1f2328">File on disk (save dialog)</text>
+<text x="5420" y="925" font-size="13" text-anchor="middle" fill="#1f2328">SQLite · AppSettings (Prisma)</text>
 <path d="M5420 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M5420 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M5420 852 V895" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <rect x="5606" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
 <rect x="5606" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
-<text x="5624" y="144" font-size="16" font-weight="700" fill="#1f2328">Window</text>
-<text x="5624" y="166" font-size="13" fill="#57606a">Theme switch</text>
-<text x="5624" y="184" font-size="13" fill="#57606a">(title bar, Settings)</text>
-<text x="5624" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setTheme()</text>
+<text x="5624" y="144" font-size="16" font-weight="700" fill="#1f2328">PDF export</text>
+<text x="5624" y="166" font-size="13" fill="#57606a">Report preview modal</text>
+<text x="5624" y="184" font-size="13" fill="#57606a">(Overview, Ctrl+K)</text>
+<text x="5624" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.exportPdf()</text>
+<text x="5624" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.openFile()</text>
 <rect x="5606" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
 <rect x="5606" y="464" width="6" height="238" rx="3" fill="#8250df"/>
-<text x="5624" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'window:setTheme'</text>
+<text x="5624" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'pdf:export'</text>
+<text x="5624" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'shell:openFile'</text>
 <rect x="5606" y="748" width="300" height="104" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
 <rect x="5606" y="748" width="6" height="104" rx="3" fill="#bc4c00"/>
-<text x="5624" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/window.ts</text>
-<text x="5624" y="796" font-size="13" fill="#57606a">→ nativeTheme</text>
-<text x="5624" y="814" font-size="13" fill="#57606a">→ title bar colours</text>
-<rect x="5606" y="898" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="5 4"/>
-<text x="5756" y="925" font-size="13" text-anchor="middle" fill="#1f2328">No data stored</text>
+<text x="5624" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/pdf.ts</text>
+<text x="5624" y="796" font-size="13" fill="#57606a">→ services/pdf/pdf-export.ts</text>
+<text x="5624" y="814" font-size="13" fill="#57606a">→ services/pdf/report-pdf.ts</text>
+<rect x="5606" y="898" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="0"/>
+<text x="5756" y="925" font-size="13" text-anchor="middle" fill="#1f2328">File on disk (save dialog)</text>
 <path d="M5756 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M5756 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <path d="M5756 852 V895" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="5942" y="118" width="300" height="300" rx="10" fill="#fff" stroke="#1f6feb" stroke-width="2"/>
+<rect x="5942" y="118" width="6" height="300" rx="3" fill="#1f6feb"/>
+<text x="5960" y="144" font-size="16" font-weight="700" fill="#1f2328">Window</text>
+<text x="5960" y="166" font-size="13" fill="#57606a">Theme switch</text>
+<text x="5960" y="184" font-size="13" fill="#57606a">(title bar, Settings)</text>
+<text x="5960" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.setTheme()</text>
+<rect x="5942" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
+<rect x="5942" y="464" width="6" height="238" rx="3" fill="#8250df"/>
+<text x="5960" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'window:setTheme'</text>
+<rect x="5942" y="748" width="300" height="104" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
+<rect x="5942" y="748" width="6" height="104" rx="3" fill="#bc4c00"/>
+<text x="5960" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/window.ts</text>
+<text x="5960" y="796" font-size="13" fill="#57606a">→ nativeTheme</text>
+<text x="5960" y="814" font-size="13" fill="#57606a">→ title bar colours</text>
+<rect x="5942" y="898" width="300" height="44" rx="10" fill="#fff" stroke="#1a7f37" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="6092" y="925" font-size="13" text-anchor="middle" fill="#1f2328">No data stored</text>
+<path d="M6092 418 V461" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M6092 702 V745" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M6092 852 V895" stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#a)"/>
 <text x="40" y="976" font-size="13" fill="#57606a">Each arrow is one window.api call: preload invokes the channel, the handler unpacks the arguments and calls a service.</text>
 <text x="40" y="996" font-size="13" fill="#57606a">Errors travel back as codes (e.g. PDF_EXPORT_FAILED) and the renderer shows them as error.* text.</text>
 <text x="40" y="1016" font-size="13" fill="#57606a">Zoom (window.api.zoom) uses webFrame inside the preload, with no IPC.</text>

@@ -472,6 +472,27 @@
       ]
     },
     {
+      "id": "report",
+      "title": "Reports",
+      "screen": [
+        "Reports page",
+        "(sidebar, Ctrl+K)"
+      ],
+      "handler": "ipc/report.ts",
+      "service": [
+        "services/reports.ts",
+        "pdf/pdf-export.ts (CSV)"
+      ],
+      "store": "SQLite · Transaction, Account",
+      "calls": [
+        { "api": "reportCategories", "channel": "report:categories" },
+        { "api": "reportTrend", "channel": "report:trend" },
+        { "api": "reportMembers", "channel": "report:members" },
+        { "api": "reportBalances", "channel": "report:balances" },
+        { "api": "saveCsv", "channel": "report:saveCsv" }
+      ]
+    },
+    {
       "id": "notification",
       "title": "Notifications",
       "screen": [

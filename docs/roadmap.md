@@ -6,7 +6,7 @@ As of 2026-10-30 · Andrew Kondylis
 
 The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
 The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
-Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **9 items** are queued
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **8 items** are queued
 in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
 decision.
 
@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-30 | Reports & stats | Reports page with one period bar (presets that end today + custom; compare with the previous period or the same period last year, decided 2026-10-30) and four tabs: by category (spending or income, categories or groups, ranked with share and change), month by month (in, out, net; quarters past 24 months), by member, balances over time; every row opens the log on that period (new date-range filter); PDF and CSV for Excel, no new dependency (decided 2026-10-30) · [reports](features/reports.md) |
 | 2026-10-30 | Projections | Month-end balance for the next 6, 12 or 24 months (12 by default, decided 2026-10-30) from today's money (vouchers apart), bills, instalments and income rules on their dates and the budget plan (the larger of plan and bills per category; a month with no plan repeats this month's, so a one-off never spreads, decided 2026-10-30); lowest point and the month it goes below €0 with **Open budget**; chart + month table with each month's categories · [projections](features/projections.md) |
 | 2026-10-30 | Yearly budget | **Month \| Year** on the Budget page: 12-month plan grid edited in place with what was spent and over marks per month, fills for empty months (from a month's plan, the bills or one amount; never overwrite, decided 2026-10-30); **vs last year** compares actual spending over the same dates (decided 2026-10-30); printable landscape sheet. Pay-period budgeting moved to #20 (decided 2026-10-30) · [budget](features/budget.md) |
 | 2026-10-30 | Debts & loans | Bank loans with interest (monthly schedule, interest before payment) and interest-free card instalments (decided 2026-10-30), plus money owed by or to relatives (both ways, decided 2026-10-30); what is left, payoff date and schedule; instalments are bill rules, so imported rows tick them off and the bell says **Instalment due** (decided 2026-10-30); balance from a statement, extra payments; **Snowball / Avalanche** plan with an extra monthly amount · [debts & loans](features/debts.md) |
@@ -62,7 +63,6 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 12 | Reports & stats | M–L | Spending by category/member/month, trends, year-over-year, balances across accounts over time; charts per `dataviz` skill; Excel/PDF export | Transactions; PDF export with preview | — |
 | 18 | Net worth *(new)* | S–M | Assets − debts, a monthly snapshot and its trend | Accounts, #9 | — |
 | 19 | Card matching *(new)* | S | Read the last 4 digits in statement text and mark which card (and so which parent) paid | Account holders & cards; Statement import | Do Alpha/Eurobank files show the card number? |
 | 13 | More statement formats | S–M | Try one real Alpha Bank and Eurobank export of each type (layouts taken from the old converter, 2026-10-27); Excel (`.xlsx`) exports; more Greek banks | Statement import | Which banks next? |
