@@ -6,8 +6,8 @@
 import { sumMoney } from './money'
 import type { CategoryType } from './ledger'
 
-/** Where "copy last month" takes its amounts from */
-export const COPY_SOURCES = ['PLAN', 'ACTUAL'] as const
+/** Where "copy last month" takes its amounts from; RULES = the bills' monthly cost */
+export const COPY_SOURCES = ['PLAN', 'ACTUAL', 'RULES'] as const
 export type CopySource = (typeof COPY_SOURCES)[number]
 
 /** Money going out: everything but income */
@@ -50,6 +50,8 @@ export interface BudgetCategoryRow {
   leftCents: number
   /** Actual of the month before, for "Set to last month's spending" */
   previousActualCents: number
+  /** Monthly cost of the category's bills and subscriptions (a yearly €480 → €40), offered as the plan */
+  suggestedCents: number
 }
 
 export interface BudgetGroupRow {

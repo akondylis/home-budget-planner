@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { actualFromSum, budgetGroup, budgetRow, computeCarry, roundUpToUnit, summariseBudget } from './budget'
 
 const row = (id: string, plannedCents: number, actualCents: number, carriedInCents = 0) =>
-  budgetRow({ id, name: id, icon: null, archived: false, carryOver: carriedInCents > 0, plannedCents, carriedInCents, actualCents, previousActualCents: 0 })
+  budgetRow({ id, name: id, icon: null, archived: false, carryOver: carriedInCents > 0, plannedCents, carriedInCents, actualCents, previousActualCents: 0, suggestedCents: 0 })
 
 describe('actualFromSum', () => {
   it('should count spending positive on outgoing categories and lower it with a refund', () => {

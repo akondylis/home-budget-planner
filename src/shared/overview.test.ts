@@ -5,7 +5,7 @@ import type { AccountKind, AccountSummary } from './ledger'
 import type { CategoryType } from './ledger'
 
 const row = (id: string, plannedCents: number, actualCents: number) =>
-  budgetRow({ id, name: id, icon: null, archived: false, carryOver: false, plannedCents, carriedInCents: 0, actualCents, previousActualCents: 0 })
+  budgetRow({ id, name: id, icon: null, archived: false, carryOver: false, plannedCents, carriedInCents: 0, actualCents, previousActualCents: 0, suggestedCents: 0 })
 
 const group = (type: CategoryType, categories: ReturnType<typeof row>[]): BudgetGroupRow =>
   budgetGroup({ id: type, name: type, type, icon: null, categories })

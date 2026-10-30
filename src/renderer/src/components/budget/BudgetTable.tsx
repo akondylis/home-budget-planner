@@ -113,6 +113,17 @@ function CategoryRow({ type, row, future, previousLabel, onSetPlanned, onShowTra
         {row.archived
           ? <div className="text-right text-sm"><Money cents={row.plannedCents} /></div>
           : <PlannedCell name={row.name} cents={row.plannedCents} onSave={cents => onSetPlanned(row.id, cents)} />}
+        {!row.archived && row.plannedCents === 0 && row.suggestedCents > 0 && (
+          // The monthly cost of the category's bills (a yearly charge spread over 12), one click from the plan
+          <button
+            type="button"
+            onClick={() => void onSetPlanned(row.id, row.suggestedCents).catch(() => undefined)}
+            title={t('recurring.budget_use_hint', { amount: formatMoney(row.suggestedCents), name: row.name })}
+            className="mt-0.5 block w-full truncate text-right text-xs text-gray-500 hover:text-accent"
+          >
+            {t('recurring.budget_suggested', { amount: formatMoney(row.suggestedCents) })} · <span className="font-medium text-accent">{t('recurring.budget_use')}</span>
+          </button>
+        )}
       </div>
       <div className="text-right text-sm">{future ? <span className="text-gray-500">—</span> : <Money cents={row.actualCents} />}</div>
       <div className={cx('text-right text-sm', over && 'font-medium text-red-700')}>

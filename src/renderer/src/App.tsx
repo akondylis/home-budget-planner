@@ -12,6 +12,8 @@ import { ImportHistory } from './components/import/ImportHistory'
 import { SettingsScreen } from './pages/SettingsScreen'
 import { CategoriesScreen } from './pages/CategoriesScreen'
 import { BudgetScreen } from './pages/BudgetScreen'
+import { RecurringScreen } from './pages/RecurringScreen'
+import { BillForm } from './components/recurring/BillForm'
 import { CommandPalette } from './components/CommandPalette'
 import { AppTour } from './components/tour/AppTour'
 import { WorksheetPreviewModal } from './components/pdf/WorksheetPreviewModal'
@@ -26,6 +28,7 @@ import { activeAccounts, useLedgerStore } from './store/ledger'
 import { EMPTY_FILTER, currentMonth, useTransactionsStore } from './store/transactions'
 import { useImportStore } from './store/import'
 import { useBudgetStore } from './store/budget'
+import { useRecurringStore } from './store/recurring'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
 import { isImportable } from './lib/ledger'
 import { BANKS_SECTION_ID } from './components/banks/BanksSection'
@@ -61,6 +64,7 @@ export default function App() {
   const paletteOpen = useUiStore(s => s.paletteOpen)
   const shortcutsOpen = useUiStore(s => s.shortcutsOpen)
   const entry = useLedgerStore(s => s.entry)
+  const billForm = useRecurringStore(s => s.form)
   const importWizard = useImportStore(s => s.wizard)
   const importHistory = useImportStore(s => s.history)
   // Subscribing re-renders the tree when the date format changes in Settings
@@ -213,6 +217,7 @@ export default function App() {
         break
       case 'categories': openCategories(target.tab); break
       case 'budgetCopy': copyLastMonthsPlan(); break
+      case 'billAdd': useRecurringStore.getState().openForm(); break
     }
   }
 
@@ -247,6 +252,7 @@ export default function App() {
             onManageCategories={() => openCategories()}
           />
         )
+      case 'recurring': return <RecurringScreen />
       case 'settings': return <SettingsScreen onManageCategories={() => openCategories()} />
       case 'categories':
         return (
@@ -301,6 +307,7 @@ export default function App() {
           onShowRows={showImport}
         />
       )}
+      {billForm && <BillForm request={billForm} onClose={() => useRecurringStore.getState().closeForm()} />}
       {entry && <TransactionForm request={entry} onClose={() => useLedgerStore.getState().closeEntry()} />}
       <AppTour />
     </div>

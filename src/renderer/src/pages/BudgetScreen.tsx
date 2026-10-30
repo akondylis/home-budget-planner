@@ -94,6 +94,7 @@ export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManage
   const copy = (source: CopySource) =>
     run(source, async () => {
       const count = await useBudgetStore.getState().copyFromPrevious(source)
+      if (source === 'RULES') return t(count > 0 ? 'budget.rules_done' : 'budget.rules_nothing', { count })
       return t(count > 0 ? 'budget.copy_done' : 'budget.copy_nothing', { count, month: previousLabel })
     })
 
@@ -109,6 +110,7 @@ export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManage
     void useBudgetStore.getState().setCarryOver(categoryId, carryOver).catch(err => setError(ipcErrorMessage(err, t)))
 
   const ready = data !== null && data.month === month
+  const hasBills = ready && data.groups.some(g => g.categories.some(c => c.suggestedCents > 0))
   const plannedCount = ready ? data.groups.reduce((n, g) => n + g.categories.filter(c => c.plannedCents > 0).length, 0) : 0
   const showTable = ready && data.groups.length > 0 && (data.exists || blankMonth === month)
   // Ctrl+P prints this month's budget while the table is showing
@@ -157,6 +159,14 @@ export function BudgetScreen({ onShowTransactions, onShowUncategorised, onManage
                       disabled: !data.previousHasActual,
                       reason: data.previousHasActual ? undefined : t('budget.no_previous_actual', { month: previousLabel }),
                       onSelect: () => void copy('ACTUAL'),
+                    },
+                    {
+                      id: 'fill-rules',
+                      label: t('budget.fill_rules'),
+                      icon: 'repeat',
+                      disabled: !hasBills,
+                      reason: hasBills ? undefined : t('budget.no_rules'),
+                      onSelect: () => void copy('RULES'),
                     },
                     { id: 'clear', label: t('budget.clear'), icon: 'trash', danger: true, disabled: !data.exists, onSelect: () => setConfirmClear(true) },
                   ]}
@@ -242,6 +252,7 @@ function PlanEmptyState({ data, label, previousLabel, busy, onCopy, onBlank }: {
   const { t } = useTranslation()
   const options = [
     data.previousHasPlan && { key: 'PLAN', icon: 'copy' as const, label: t('budget.copy_plan', { month: previousLabel }), run: () => onCopy('PLAN') },
+    data.groups.some(g => g.categories.some(c => c.suggestedCents > 0)) && { key: 'RULES', icon: 'repeat' as const, label: t('budget.from_bills'), run: () => onCopy('RULES') },
     data.previousHasActual && { key: 'ACTUAL', icon: 'receipt' as const, label: t('budget.from_spending', { month: previousLabel }), run: () => onCopy('ACTUAL') },
     { key: 'blank', icon: 'pencil' as const, label: t('budget.start_blank'), run: onBlank },
   ].filter(o => o !== false)

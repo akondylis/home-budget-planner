@@ -78,6 +78,19 @@ contextBridge.exposeInMainWorld('api', {
   copyBudget:        (input: unknown)                 => ipcRenderer.invoke('budget:copy', input),
   clearBudget:       (month: string)                  => ipcRenderer.invoke('budget:clear', month),
 
+  // ── Recurring (subscriptions & bills) ───────────────────────────────────────
+  listBills:         ()                               => ipcRenderer.invoke('recurring:list'),
+  createBill:        (input: unknown)                 => ipcRenderer.invoke('recurring:create', input),
+  updateBill:        (id: string, input: unknown)     => ipcRenderer.invoke('recurring:update', id, input),
+  setBillArchived:   (id: string, archived: boolean)  => ipcRenderer.invoke('recurring:setArchived', id, archived),
+  billOccurrences:   (range: unknown)                 => ipcRenderer.invoke('recurring:occurrences', range),
+  billCandidates:    (input: unknown)                 => ipcRenderer.invoke('recurring:candidates', input),
+  countBillMatches:  (input: unknown)                 => ipcRenderer.invoke('recurring:countMatches', input),
+  markBillPaid:      (input: unknown)                 => ipcRenderer.invoke('recurring:markPaid', input),
+  payBillInCash:     (input: unknown)                 => ipcRenderer.invoke('recurring:payInCash', input),
+  skipBill:          (input: unknown)                 => ipcRenderer.invoke('recurring:skip', input),
+  unmarkBill:        (input: unknown)                 => ipcRenderer.invoke('recurring:unmark', input),
+
   // ── Overview ────────────────────────────────────────────────────────────────
   getOverview:       (month: string)                  => ipcRenderer.invoke('overview:get', month),
 

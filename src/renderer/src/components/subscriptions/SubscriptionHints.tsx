@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button, ListCard, Modal, RowTitle } from '../ui'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { useLedgerStore } from '../../store/ledger'
+import { useRecurringStore } from '../../store/recurring'
 import { findCategory } from '../../lib/ledger'
 import { formatDate } from '../../lib/date-format'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
@@ -14,7 +15,7 @@ export interface SubscriptionHintsProps {
   onClose: () => void
 }
 
-/** "Looks like a subscription": sort each one under Subscriptions, or say it is not one */
+/** "Looks like a subscription": track it as a bill, only sort it under Subscriptions, or say it is not one */
 export function SubscriptionHints({ hints, onClose }: SubscriptionHintsProps) {
   const { t } = useTranslation()
   const categories = useLedgerStore(s => s.categories)
@@ -65,6 +66,19 @@ export function SubscriptionHints({ hints, onClose }: SubscriptionHintsProps) {
                   ]}
                 />
               </div>
+              <Button
+                size="sm"
+                icon="repeat"
+                title={t('recurring.track_hint')}
+                onClick={() => {
+                  // The bill form (mounted by App) opens over the page once this list closes
+                  useRecurringStore.getState().openForm({ mode: 'hint', hint })
+                  onClose()
+                }}
+                disabled={busy !== null}
+              >
+                {t('recurring.track')}
+              </Button>
               <div className="w-52 shrink-0">
                 <CategoryPicker
                   categories={categories}

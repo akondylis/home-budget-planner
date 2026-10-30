@@ -4,6 +4,7 @@ import { Icon, type IconName } from '../components/shell/icons'
 import { Banner, Button, ListCard, PageHeader } from '../components/ui'
 import { OverviewBanners } from '../components/overview/OverviewBanners'
 import { OverviewTiles } from '../components/overview/OverviewTiles'
+import { UpcomingBillsCard } from '../components/overview/UpcomingBillsCard'
 import { useLedgerStore } from '../store/ledger'
 import { currentMonth } from '../store/transactions'
 import { activeMembers } from '../lib/members'
@@ -120,16 +121,7 @@ export function OverviewScreen({ onPrintWorksheet, onGoTo, onShowMonth, onShowUn
           </ListCard>
         )}
 
-        {/* Filled by Subscriptions & bills (#7); until then it says so instead of showing a made-up 0 */}
-        <ListCard className="flex items-start gap-3 p-6">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-fg-muted">
-            <Icon name="calendar" size={16} />
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-fg">{t('overview.upcoming')}</h2>
-            <p className="mt-1 text-sm text-fg-muted">{t('overview.upcoming_empty')}</p>
-          </div>
-        </ListCard>
+        <UpcomingBillsCard data={data} onOpen={() => onGoTo('recurring')} />
       </div>
     </div>
   )

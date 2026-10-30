@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma'
 import { monthRange } from '../../shared/date-only'
-import type { OverviewMonth } from '../../shared/overview'
+import { UPCOMING_DAYS, type OverviewMonth } from '../../shared/overview'
+import { listUnpaid } from './recurring'
 import { getBudgetMonth } from './budgets'
 import { VOUCHER_CATEGORY } from './seed'
 
@@ -25,10 +26,12 @@ export async function countOwnCategories(): Promise<number> {
 export async function getOverview(month: unknown): Promise<OverviewMonth> {
   const budget = await getBudgetMonth(month)
   const notTransfer = { bookedAt: monthRange(budget.month), transferId: null }
-  const [income, expense, ownCategoryCount] = await Promise.all([
+  const [income, expense, ownCategoryCount, upcoming, ruleCount] = await Promise.all([
     prisma.transaction.aggregate({ where: { ...notTransfer, amountCents: { gt: 0 } }, _sum: { amountCents: true } }),
     prisma.transaction.aggregate({ where: { ...notTransfer, amountCents: { lt: 0 } }, _sum: { amountCents: true } }),
     countOwnCategories(),
+    listUnpaid(UPCOMING_DAYS),
+    prisma.recurringRule.count({ where: { archivedAt: null } }),
   ])
   return {
     month: budget.month,
@@ -37,5 +40,7 @@ export async function getOverview(month: unknown): Promise<OverviewMonth> {
     spentCents: 0 - (expense._sum.amountCents ?? 0),
     budget,
     ownCategoryCount,
+    upcoming,
+    hasRules: ruleCount > 0,
   }
 }

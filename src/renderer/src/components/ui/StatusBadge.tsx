@@ -2,13 +2,13 @@ import { useTranslation } from 'react-i18next'
 import type { IconName } from '../shell/icons'
 import type { ReactNode } from 'react'
 import { Badge, type BadgeTone } from './Badge'
+import type { PaymentStatus } from '../../../../shared/recurrence'
 
 /** The one look for anything still in draft or only planned (budget drafts, planned transactions) */
 export const DRAFT_TONE: BadgeTone = 'warning'
 export const DRAFT_ICON: IconName = 'pencil'
 
-/** Lifecycle of a bill, instalment or subscription charge */
-export type PaymentStatus = 'UPCOMING' | 'DUE' | 'OVERDUE' | 'PAID' | 'SKIPPED'
+export type { PaymentStatus }
 
 export const PAYMENT_STATUS_KEYS: Record<PaymentStatus, string> = {
   UPCOMING: 'status.upcoming',

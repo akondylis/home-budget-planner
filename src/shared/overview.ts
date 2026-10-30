@@ -4,6 +4,7 @@
 import { sumMoney } from './money'
 import { isOutgoing, type BudgetCategoryRow, type BudgetGroupRow, type BudgetMonth } from './budget'
 import { isSpendable, type AccountSummary } from './ledger'
+import type { UpcomingBill } from './recurrence'
 
 export interface OverviewMonth {
   /** 'yyyy-MM' */
@@ -15,7 +16,14 @@ export interface OverviewMonth {
   budget: BudgetMonth
   /** Categories the household created itself (the starter list left out); ticks the setup step */
   ownCategoryCount: number
+  /** Unpaid due dates: overdue ones and those in the next UPCOMING_DAYS, oldest first */
+  upcoming: UpcomingBill[]
+  /** Whether any active bill rule exists, for the card's empty state */
+  hasRules: boolean
 }
+
+/** How far ahead the Overview's "Upcoming bills" card looks */
+export const UPCOMING_DAYS = 14
 
 /** Outgoing categories spent past what was available, the furthest over first */
 export function overBudgetCategories(groups: BudgetGroupRow[]): BudgetCategoryRow[] {

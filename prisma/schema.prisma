@@ -8,7 +8,7 @@ generator client {
 }
 
 // Money rule: every amount is an Int of minor units (cents), never Float.
-// Domain models not built yet (Recurring, Debt) are
+// Domain models not built yet (Debt) are
 // drafted in docs/domain-model.md and added per feature.
 
 // ── Models ───────────────────────────────────────────────────────────────────
@@ -68,6 +68,7 @@ model Member {
   transactionsFor     Transaction[] @relation("TransactionMember")
   transactionsEntered Transaction[] @relation("TransactionCreatedBy")
   importBatches       ImportBatch[]
+  recurringRules      RecurringRule[]
   accountsHeld        Account[]     @relation("AccountHolder")
   cardsHeld           Card[]        @relation("CardHolder")
 }
@@ -98,6 +99,7 @@ model Account {
   importBatches       ImportBatch[]
   rules               CategoryRule[]
   cards               Card[]
+  recurringRules      RecurringRule[]
 }
 
 /// A bank or meal-voucher issuer, edited by the user (Settings → Banks). Archived, never deleted.
@@ -150,6 +152,7 @@ model Category {
   transactions Transaction[]
   rules        CategoryRule[]
   budgetLines  BudgetLine[]
+  recurringRules RecurringRule[]
 
   @@unique([parentId, name])
 }
@@ -185,6 +188,8 @@ model Transaction {
   /// Not unique alone: a bank can give the interest and its tax one reference (dedupe keys on reference + amount)
   bankReference     String?
   balanceAfterCents Int?
+  /// The due date this row was marked as paying (by hand); matches found on read are not stored
+  occurrence        RecurringOccurrence?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
@@ -267,4 +272,65 @@ model BudgetLine {
 
   @@unique([budgetId, categoryId])
   @@index([categoryId])
+}
+
+// ── Subscriptions & bills ────────────────────────────────────────────────────
+
+enum RecurringFrequency {
+  WEEK
+  MONTH
+  YEAR
+}
+
+/// A mark set by hand on one due date; a matching transaction found on read needs no row
+enum OccurrenceStatus {
+  PAID
+  SKIPPED
+}
+
+/// A bill, subscription or regular income: every `interval` weeks, months or years from `anchorDate`. Archived, never deleted.
+model RecurringRule {
+  id           String                @id @default(cuid())
+  name         String
+  /// Stored positive; the category type says which way it goes (INCOME in, anything else out)
+  amountCents  Int
+  /// Electricity, water: any amount matches
+  amountVaries Boolean               @default(false)
+  categoryId   String
+  category     Category              @relation(fields: [categoryId], references: [id])
+  /// The account it is paid from (or into); null = any account
+  accountId    String?
+  account      Account?              @relation(fields: [accountId], references: [id])
+  /// Who it is for; null = the household
+  memberId     String?
+  member       Member?               @relation(fields: [memberId], references: [id])
+  frequency    RecurringFrequency
+  /// Every N weeks/months/years (quarterly = MONTH × 3, every two weeks = WEEK × 2)
+  interval     Int                   @default(1)
+  /// The first due date (date only, 12:00 UTC); later dates keep its day of the month, clamped at month end
+  anchorDate   DateTime
+  /// Last day a payment can fall due; null = open-ended
+  endsAt       DateTime?
+  /// Bank text that marks a payment, normalised like CategoryRule.pattern; null = the name
+  matchText    String?
+  archivedAt   DateTime?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  occurrences  RecurringOccurrence[]
+
+  @@index([categoryId])
+}
+
+/// One due date marked by hand: paid with a given transaction (or with none), or skipped
+model RecurringOccurrence {
+  id            String           @id @default(cuid())
+  ruleId        String
+  rule          RecurringRule    @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  dueDate       DateTime
+  status        OccurrenceStatus
+  transactionId String?          @unique
+  transaction   Transaction?     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime         @default(now())
+
+  @@unique([ruleId, dueDate])
 }

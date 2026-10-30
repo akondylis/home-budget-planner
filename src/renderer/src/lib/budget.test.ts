@@ -45,7 +45,7 @@ describe('meter', () => {
 describe('withPlanned', () => {
   it('should change one line and recompute the group and the tiles', () => {
     const row = (id: string, plannedCents: number, actualCents: number) =>
-      budgetRow({ id, name: id, icon: null, archived: false, carryOver: false, plannedCents, carriedInCents: 0, actualCents, previousActualCents: 0 })
+      budgetRow({ id, name: id, icon: null, archived: false, carryOver: false, plannedCents, carriedInCents: 0, actualCents, previousActualCents: 0, suggestedCents: 0 })
     const groups = [
       budgetGroup({ id: 'i', name: 'Income', type: 'INCOME', icon: null, categories: [row('salary', 200_000, 0)] }),
       budgetGroup({ id: 'b', name: 'Bills', type: 'BILL', icon: null, categories: [row('power', 0, 4_000)] }),

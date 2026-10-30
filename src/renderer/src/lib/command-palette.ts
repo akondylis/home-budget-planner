@@ -29,6 +29,7 @@ export type PaletteTarget =
   | { kind: 'banks' }
   | { kind: 'categories'; tab: 'categories' | 'rules' }
   | { kind: 'budgetCopy' }
+  | { kind: 'billAdd' }
 
 export type PaletteGroup = 'actions'
 
@@ -111,6 +112,7 @@ export function buildActions({ t, theme, lang, members = [], currentMemberId = n
     { id: 'import', group: 'actions', title: t('import.command'), keywords: 'import statement csv bank card εισαγωγη κινησεις τραπεζα καρτα', icon: 'download', target: { kind: 'import' } },
     { id: 'importHistory', group: 'actions', title: t('import.history_title'), keywords: 'import history undo statement ιστορικο εισαγωγες αναιρεση', icon: 'undo', target: { kind: 'importHistory' } },
     { id: 'budgetCopy', group: 'actions', title: t('palette.budget_copy'), keywords: 'budget plan copy last month προυπολογισμος πλανο αντιγραφη προηγουμενος μηνας', icon: 'copy', target: { kind: 'budgetCopy' } },
+    { id: 'billAdd', group: 'actions', title: t('recurring.palette_add'), keywords: 'bill subscription recurring rent insurance add new λογαριασμος συνδρομη παγιο ενοικιο ασφαλεια νεος', icon: 'repeat', target: { kind: 'billAdd' } },
     { id: 'worksheet', group: 'actions', title: t('palette.worksheet'), keywords: 'pdf print export budget worksheet εκτυπωση', icon: 'printer', target: { kind: 'worksheet' } },
     { id: 'tour', group: 'actions', title: t('palette.tour'), keywords: 'tour guide help ξεναγηση βοηθεια', icon: 'flag', target: { kind: 'tour' } },
     { id: 'household', group: 'actions', title: t('settings.household'), keywords: 'household members family parents νοικοκυριο μελη οικογενεια γονεις', icon: 'users', target: { kind: 'household' } },

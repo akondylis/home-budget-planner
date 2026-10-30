@@ -5,6 +5,7 @@
 // Layer 1 (same file again) is a banner, decided by the file hash; layer 4 is transfer-match.ts.
 
 import type { RowStatus } from '../../../shared/statement-import'
+import { daysBetween } from '../../../shared/date-only'
 
 export const TWIN_WINDOW_DAYS = 3
 
@@ -41,10 +42,7 @@ export function refKey(bankReference: string, amountCents: number): string {
   return `${bankReference}|${amountCents}`
 }
 
-/** Whole days between two 'yyyy-MM-dd' dates */
-export function daysBetween(a: string, b: string): number {
-  return Math.round(Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000)
-}
+export { daysBetween } from '../../../shared/date-only'
 
 /** One status per row, in file order. Each hand-entered row is offered as a twin at most once (nearest date first). */
 export function classifyRows(rows: DedupeRow[], existing: ExistingRows): DedupeResult[] {

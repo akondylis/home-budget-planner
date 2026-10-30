@@ -50,7 +50,7 @@ describe('labels', () => {
 
 describe('buildBudgetStatement', () => {
   const row = (id: string, plannedCents: number, actualCents: number) =>
-    budgetRow({ id, name: id, icon: null, archived: false, carryOver: false, plannedCents, carriedInCents: 0, actualCents, previousActualCents: 0 })
+    budgetRow({ id, name: id, icon: null, archived: false, carryOver: false, plannedCents, carriedInCents: 0, actualCents, previousActualCents: 0, suggestedCents: 0 })
   const groups = [
     budgetGroup({ id: 'i', name: 'Income', type: 'INCOME', icon: null, categories: [row('Salary', 200_000, 200_000)] }),
     budgetGroup({ id: 'b', name: 'Bills', type: 'BILL', icon: null, categories: [row('Power', 10_000, 12_000), row('Unused', 0, 0)] }),

@@ -90,6 +90,7 @@ Copy the HomeBudget folder to a writable drive.`,
   const { registerSubscriptionHandlers } = await import('./ipc/subscription')
   const { registerBudgetHandlers } = await import('./ipc/budget')
   const { registerOverviewHandlers } = await import('./ipc/overview')
+  const { registerRecurringHandlers } = await import('./ipc/recurring')
   const { seedDefaults } = await import('./services/seed')
 
   const settings = await applyStoredFormatting()
@@ -111,6 +112,7 @@ Copy the HomeBudget folder to a writable drive.`,
   registerSubscriptionHandlers()
   registerBudgetHandlers()
   registerOverviewHandlers()
+  registerRecurringHandlers()
   registerWindowHandlers(mainWindow)
 
   if (process.env['ELECTRON_RENDERER_URL']) {

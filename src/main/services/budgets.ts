@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { prisma } from '../db/prisma'
 import { addMonths, isMonth, monthRange } from '../../shared/date-only'
+import { monthlyByCategory } from './recurring'
 import { CATEGORY_TYPES, type CategoryType } from '../../shared/ledger'
 import {
   COPY_SOURCES,
@@ -84,12 +85,13 @@ async function carriedInto(m: string, categories: Array<{ id: string; type: Cate
 export async function getBudgetMonth(input: unknown): Promise<BudgetMonth> {
   const m = parse(month, input)
   const previous = addMonths(m, -1)
-  const [budget, sums, previousSums, previousLines, uncategorisedCount] = await Promise.all([
+  const [budget, sums, previousSums, previousLines, uncategorisedCount, suggested] = await Promise.all([
     prisma.budget.findUnique({ where: { month: m }, include: { lines: true } }),
     sumsByCategory(m),
     sumsByCategory(previous),
     prisma.budgetLine.count({ where: { budget: { month: previous } } }),
     prisma.transaction.count({ where: { bookedAt: monthRange(m), categoryId: null, transferId: null } }),
+    monthlyByCategory(),
   ])
   const planned = new Map((budget?.lines ?? []).map(l => [l.categoryId, l.plannedCents]))
   // Archived categories still show in a month they were planned or used in
@@ -115,6 +117,7 @@ export async function getBudgetMonth(input: unknown): Promise<BudgetMonth> {
       carriedInCents: carry.get(c.id) ?? 0,
       actualCents: actualFromSum(c.type, sums.get(c.id) ?? 0),
       previousActualCents: actualFromSum(c.type, previousSums.get(c.id) ?? 0),
+      suggestedCents: suggested.get(c.id) ?? 0,
     })
     if (isOutgoing(c.type) && row.actualCents > 0 && row.availableCents === 0) {
       unplannedCount++
@@ -176,8 +179,8 @@ export async function setPlanned(monthInput: unknown, categoryId: unknown, plann
 const copyInput = z.object({ from: month, to: month, source: z.enum(COPY_SOURCES) })
 
 /**
- * Fills the empty lines of `to` from `from`'s plan, or from its spending rounded up to whole
- * euros. Lines already planned are never overwritten. Returns how many lines were written.
+ * Fills the empty lines of `to` from `from`'s plan, from its spending rounded up to whole
+ * euros, or from the bills' monthly cost (`from` unused). Lines already planned are never overwritten. Returns how many lines were written.
  * Throws: 'INVALID_INPUT', 'BUDGET_SOURCE_EMPTY'
  */
 export async function copyBudget(input: unknown): Promise<number> {
@@ -188,6 +191,9 @@ export async function copyBudget(input: unknown): Promise<number> {
   if (source === 'PLAN') {
     const lines = await prisma.budgetLine.findMany({ where: { budget: { month: from }, categoryId: { in: active.map(c => c.id) } } })
     for (const l of lines) amounts.set(l.categoryId, l.plannedCents)
+  } else if (source === 'RULES') {
+    const ids = new Set(active.map(c => c.id))
+    for (const [id, cents] of await monthlyByCategory()) if (ids.has(id) && cents > 0) amounts.set(id, cents)
   } else {
     const sums = await sumsByCategory(from)
     for (const c of active) {

@@ -54,6 +54,12 @@ describe('buildActions', () => {
     expect(ids).not.toContain('theme:light')
     expect(ids).not.toContain('language:el')
   })
+
+  it('adds a bill from Greek or English words', () => {
+    const actions = buildActions(base)
+    expect(filterItems(actions, 'συνδρομη', 50).map(a => a.id)).toContain('billAdd')
+    expect(filterItems(actions, 'add bill', 50).map(a => a.id)).toContain('billAdd')
+  })
 })
 
 describe('buildSections', () => {

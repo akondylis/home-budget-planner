@@ -72,6 +72,18 @@ interface Window {
     copyBudget:        (input: { from: string; to: string; source: import('../../shared/budget').CopySource }) => Promise<number>
     clearBudget:       (month: string) => Promise<void>
 
+    listBills:         () => Promise<import('../../shared/recurrence').RecurringRuleRow[]>
+    createBill:        (input: import('../../shared/recurrence').RecurringRuleInput) => Promise<string>
+    updateBill:        (id: string, input: import('../../shared/recurrence').RecurringRuleInput) => Promise<void>
+    setBillArchived:   (id: string, archived: boolean) => Promise<void>
+    billOccurrences:   (range: { from: string; to: string }) => Promise<import('../../shared/recurrence').UpcomingBill[]>
+    billCandidates:    (input: { ruleId: string; dueDate: string }) => Promise<import('../../shared/recurrence').CandidateRow[]>
+    countBillMatches:  (input: { matchText: string }) => Promise<number>
+    markBillPaid:      (input: { ruleId: string; dueDate: string; transactionId: string | null }) => Promise<void>
+    payBillInCash:     (input: { ruleId: string; dueDate: string; accountId: string; bookedAt: string; amountCents: number; createdByMemberId?: string | null }) => Promise<string>
+    skipBill:          (input: { ruleId: string; dueDate: string }) => Promise<void>
+    unmarkBill:        (input: { ruleId: string; dueDate: string }) => Promise<void>
+
     getOverview:       (month: string) => Promise<import('../../shared/overview').OverviewMonth>
 
     exportPdf:    (report: import('../../shared/report-document').ReportDocument, fileName: string, dialogTitle: string) =>

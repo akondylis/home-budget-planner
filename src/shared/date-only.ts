@@ -50,3 +50,21 @@ export function addMonths(month: string, delta: number): string {
   const d = new Date(Date.UTC(y, m - 1 + delta, 1))
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
 }
+
+/** Whole days between two 'yyyy-MM-dd' dates, never negative */
+export function daysBetween(a: string, b: string): number {
+  return Math.round(Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000)
+}
+
+/** 'yyyy-MM-dd' moved by `delta` days */
+export function addDays(date: string, delta: number): string {
+  return dateToDateOnly(new Date(dateOnlyToDate(date).getTime() + delta * 86_400_000))
+}
+
+/** 'yyyy-MM-dd' moved by `delta` months, its day clamped to the month's last (31 Jan + 1 → 28/29 Feb) */
+export function addMonthsToDate(date: string, delta: number): string {
+  const [y, m, d] = date.split('-').map(Number)
+  const first = new Date(Date.UTC(y, m - 1 + delta, 1))
+  const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate()
+  return dateToDateOnly(new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), Math.min(d, last), 12)))
+}

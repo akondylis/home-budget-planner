@@ -178,7 +178,7 @@ export async function reorderCategories(parentId: unknown, orderedIds: unknown):
 }
 
 /**
- * Moves every row and rule of one category into another and archives the empty one.
+ * Moves every row, rule and bill of one category into another and archives the empty one.
  * A rule the target already has (same pattern, account and match) is dropped.
  * Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND'
  */
@@ -203,6 +203,7 @@ export async function mergeCategory(sourceId: unknown, targetId: unknown): Promi
     const duplicates = moving.filter(r => taken.has(ruleKey(r))).map(r => r.id)
     if (duplicates.length) await tx.categoryRule.deleteMany({ where: { id: { in: duplicates } } })
     const { count: rules } = await tx.categoryRule.updateMany({ where: { categoryId: sourceId }, data: { categoryId: targetId } })
+    await tx.recurringRule.updateMany({ where: { categoryId: sourceId }, data: { categoryId: targetId } })
     // Budget lines follow the rows: in a month both planned, the target takes the sum
     const sourceLines = await tx.budgetLine.findMany({ where: { categoryId: sourceId } })
     for (const line of sourceLines) {
@@ -220,17 +221,17 @@ export async function mergeCategory(sourceId: unknown, targetId: unknown): Promi
 }
 
 /**
- * Removes a category no row uses (its rules and budget lines go with it), or an empty group.
+ * Removes a category no row or bill uses (its rules and budget lines go with it), or an empty group.
  * Throws: 'INVALID_INPUT', 'CATEGORY_NOT_FOUND', 'CATEGORY_IN_USE'
  */
 export async function deleteCategory(id: unknown): Promise<void> {
   if (typeof id !== 'string') throw new Error('INVALID_INPUT')
   const found = await prisma.category.findUnique({
     where: { id },
-    include: { _count: { select: { transactions: true, children: true } } },
+    include: { _count: { select: { transactions: true, children: true, recurringRules: true } } },
   })
   if (!found) throw new Error('CATEGORY_NOT_FOUND')
-  if (found._count.transactions > 0 || found._count.children > 0) throw new Error('CATEGORY_IN_USE')
+  if (found._count.transactions > 0 || found._count.children > 0 || found._count.recurringRules > 0) throw new Error('CATEGORY_IN_USE')
   await prisma.$transaction([
     prisma.budgetLine.deleteMany({ where: { categoryId: id } }),
     prisma.category.delete({ where: { id } }),
@@ -260,9 +261,9 @@ async function assertNameFree(name: string, parentId: string | null): Promise<vo
 async function clearArchivedNamesake(name: string, parentId: string | null): Promise<void> {
   const twin = await prisma.category.findFirst({
     where: { parentId, name, archivedAt: { not: null } },
-    include: { _count: { select: { transactions: true, children: true } } },
+    include: { _count: { select: { transactions: true, children: true, recurringRules: true } } },
   })
   if (!twin) return
-  if (twin._count.transactions > 0 || twin._count.children > 0) throw new Error('CATEGORY_EXISTS')
+  if (twin._count.transactions > 0 || twin._count.children > 0 || twin._count.recurringRules > 0) throw new Error('CATEGORY_EXISTS')
   await prisma.category.delete({ where: { id: twin.id } })
 }
