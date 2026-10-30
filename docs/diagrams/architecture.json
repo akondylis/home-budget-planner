@@ -275,6 +275,66 @@
       ]
     },
     {
+      "id": "recurring",
+      "title": "Subscriptions & bills",
+      "screen": [
+        "Subscriptions & bills",
+        "page, Overview card"
+      ],
+      "handler": "ipc/recurring.ts",
+      "service": [
+        "services/recurring.ts",
+        "shared/recurrence.ts"
+      ],
+      "store": "SQLite · RecurringRule, Occurrence",
+      "calls": [
+        {
+          "api": "listBills",
+          "channel": "recurring:list"
+        },
+        {
+          "api": "createBill",
+          "channel": "recurring:create"
+        },
+        {
+          "api": "updateBill",
+          "channel": "recurring:update"
+        },
+        {
+          "api": "setBillArchived",
+          "channel": "recurring:setArchived"
+        },
+        {
+          "api": "billOccurrences",
+          "channel": "recurring:occurrences"
+        },
+        {
+          "api": "billCandidates",
+          "channel": "recurring:candidates"
+        },
+        {
+          "api": "countBillMatches",
+          "channel": "recurring:countMatches"
+        },
+        {
+          "api": "markBillPaid",
+          "channel": "recurring:markPaid"
+        },
+        {
+          "api": "payBillInCash",
+          "channel": "recurring:payInCash"
+        },
+        {
+          "api": "skipBill",
+          "channel": "recurring:skip"
+        },
+        {
+          "api": "unmarkBill",
+          "channel": "recurring:unmark"
+        }
+      ]
+    },
+    {
       "id": "budget",
       "title": "Budget",
       "screen": [
@@ -318,7 +378,7 @@
         "services/overview.ts",
         "shared/overview.ts (sums)"
       ],
-      "store": "SQLite · Transaction, Budget",
+      "store": "SQLite · Transaction, Budget, Bills",
       "calls": [
         {
           "api": "getOverview",

@@ -27,8 +27,9 @@ parents next. It is the default page (**Overview** in the sidebar, `Ctrl+K`) and
   the month. The categories step ticks once the household has created a category of its own: the starter list is
   written in one go on first run, so anything created more than a minute after the first category counts
   (`countOwnCategories()`, the meal-voucher category the app adds to older databases left out).
-- **Upcoming bills:** a quiet card that says bills and subscriptions will show there once **Subscriptions & bills**
-  (roadmap #7) arrives. It has no numbers and no action until then.
+- **Upcoming bills:** overdue bills and those due in the next 14 days, oldest first (5 rows, then "and N more"), each
+  with its relative date, signed amount and status; rows and **See all** open **Subscriptions & bills**. Without
+  bills it offers **Add a bill**. See [subscriptions & bills](subscriptions-bills.md).
 - **States:** "…" in the tiles while loading. A load error shows a warning banner with **Try again**. The page
   reloads after every write (the ledger store's `revision`), so a transaction saved with `Ctrl+N` updates it at once.
 
@@ -45,10 +46,11 @@ parents next. It is the default page (**Overview** in the sidebar, `Ctrl+K`) and
 
 | Path | Role |
 | --- | --- |
-| `src/main/services/overview.ts` | `getOverview(month)`: the budget month plus the month's income and spending |
+| `src/main/services/overview.ts` | `getOverview(month)`: the budget month, the month's income and spending, unpaid bills |
 | `src/main/ipc/overview.ts` | `overview:get` handler |
 | `src/shared/overview.ts` | `OverviewMonth`, `overBudgetCategories`, `accountTotals` |
-| `src/renderer/src/pages/OverviewScreen.tsx` | Loading, setup checklist, upcoming bills card |
+| `src/renderer/src/pages/OverviewScreen.tsx` | Loading, setup checklist |
+| `src/renderer/src/components/overview/UpcomingBillsCard.tsx` | Upcoming bills card |
 | `src/renderer/src/components/overview/OverviewTiles.tsx` | The four tiles as buttons |
 | `src/renderer/src/components/overview/OverviewBanners.tsx` | Over the plan and To categorise banners |
 
@@ -66,4 +68,4 @@ parents next. It is the default page (**Overview** in the sidebar, `Ctrl+K`) and
 
 ## Later
 
-- Upcoming bills from **Subscriptions & bills** (#7); over-budget and bill-due notifications (#8).
+- Over-budget and bill-due notifications (#8).

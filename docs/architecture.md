@@ -29,8 +29,8 @@ behind a transport adapter, without rewriting business logic.
 src/main/
   index.ts                   Window, startup (portable check → migrations → settings → handlers), clean shutdown
   user-data.ts               Portable edition: marker detection, data folder next to the exe
-  ipc/                       One file per domain: settings, pdf, window, member, account, category, transaction, import, rule, subscription, budget
-  services/                  Business logic (settings, members, accounts, categories, transactions, rules, budgets, import/, pdf/)
+  ipc/                       One file per domain: settings, pdf, window, member, account, category, transaction, import, rule, subscription, budget, overview, recurring
+  services/                  Business logic (settings, members, accounts, categories, transactions, rules, budgets, overview, recurring, import/, pdf/)
   services/pdf/              report-pdf.ts (ReportDocument → PDF, pdf-lib), pdf-export.ts (save dialog), pdf-text.ts
   db/                        migrate.ts, prisma.ts, db-path.ts, pragmas.ts (journal mode), startup-backup.ts
 src/shared/                  Pure code used by both processes
@@ -38,6 +38,7 @@ src/shared/                  Pure code used by both processes
   date-format.ts             formatDate / formatDateTime in the chosen format
   report-document.ts         Printable report model (zod), shared by the PDF and its on-screen preview
   budget.ts                  Budget types and maths (actual, carry, left to budget / to spend)
+  recurrence.ts              Bills: due dates, monthly equivalent, status, matching rows to due dates
   search-normalise.ts        Greek → Latin, accent-free text for search
 src/preload/index.ts         contextBridge → window.api
 src/renderer/
@@ -50,7 +51,7 @@ src/renderer/
     components/shell/        TitleBar, Sidebar, icons
     hooks/                   useThemeSync, useSidebarResize
     lib/                     nav-items, ui-actions, transitions, date-format, ipc-errors
-    pages/                   OverviewScreen (live month: tiles, banners, setup), SettingsScreen, PlannedScreen (placeholder for unbuilt areas)
+    pages/                   OverviewScreen (live month: tiles, banners, setup, upcoming bills), RecurringScreen, SettingsScreen, PlannedScreen (placeholder for unbuilt areas)
     store/ui.ts              Theme, sidebar, folded cards, tour seen (persisted); palette, tour step (session)
     i18n/                    el.json, en.json
 prisma/

@@ -6,7 +6,7 @@ As of 2026-10-30 · Andrew Kondylis
 
 The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
 The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
-Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **13 items** are queued
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **12 items** are queued
 in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
 decision.
 
@@ -22,7 +22,8 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
-| 2026-10-30 | Overview (live) | The start page from real data: tiles for income and spending this month (transfers left out), **Left to spend** from the budget with its meter (or **No plan yet**), and money in accounts (meal vouchers apart). Each tile opens its detail. Banners name the categories over the plan and the rows to categorise; the setup checklist ticks itself and hides once done; **Upcoming bills** waits for #7 · [overview](features/overview.md) |
+| 2026-10-30 | Subscriptions & bills | Weekly, monthly, yearly and every-N rules (quarterly, every 2 weeks) for bills, subscriptions and income; a typed or imported row that matches marks the date paid on its own, **Mark as paid** picks a row or adds a cash one, **Skip** for a missed one (no auto-created rows, decided 2026-10-30); fixed costs per month; yearly charges offered as a monthly plan line in the budget with Carry over (decided 2026-10-30); **Track it** turns a subscription hint into a rule; fills the Overview's **Upcoming bills** · [subscriptions & bills](features/subscriptions-bills.md) |
+| 2026-10-30 | Overview (live) | The start page from real data: tiles for income and spending this month (transfers left out), **Left to spend** from the budget with its meter (or **No plan yet**), and money in accounts (meal vouchers apart). Each tile opens its detail. Banners name the categories over the plan and the rows to categorise; the setup checklist ticks itself and hides once done; **Upcoming bills** filled by #7 · [overview](features/overview.md) |
 | 2026-10-29 | Banks as an editable list | Add a bank (Revolut, Piraeus, NBG…) from the account form's **+ New bank…** or Settings › **Banks** (rename, reorder, archive) with no code change; common Greek banks and the meal-card issuers listed from the start; grouping and filters on Accounts follow the list and its order, **No bank** last; existing accounts keep their bank (decided 2026-10-29) · [banks](features/banks.md) |
 | 2026-10-28 | Meal-voucher cards | Edenred and Up Hellas cards as their own account kind: top-up = income in **Meal vouchers**, food = ordinary expense, so the budget shows what the family really eats; balance marked **Food only** and kept beside the accounts total; never a transfer source, never imported; overspending warns, never blocks (decided 2026-10-28) · [meal vouchers](features/meal-vouchers.md) |
 | 2026-10-28 | Accounts: group by & filters | Group the account cards by bank, holder or type, each group with its subtotal; filter by type, bank and holder (a parent's card counts as theirs); grouping remembered per PC, filters per session · [accounts](features/accounts.md) |
@@ -50,7 +51,6 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 7 | Subscriptions & bills | M | Recurring rules incl. yearly/quarterly charges with monthly provision, **weekly/biweekly** and "every N"; mark as paid; turn a "looks like a subscription" hint into a rule; fills the Overview's **Upcoming bills** card | Accounts, categories | Auto-create transactions or confirm each? |
 | 8 | Notifications | M | Sidebar bell (Matchday pattern): bill due, overdue, over budget, instalment due; Windows toast | #7, #9 | Remind N days before? |
 | 17 | Payment calendar *(new)* | M | Amounts due by date with paid marks, pay days across the year; week starts Monday or Sunday | #7 | — |
 | 9 | Debts & loans | M | Loans, interest-free instalments, money owed; remaining balance, payoff date, schedule; **snowball / avalanche** payoff with an extra monthly amount, interest before payment, manual balance override | Accounts | Interest calculation needed? |

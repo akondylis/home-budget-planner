@@ -24,7 +24,8 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 | **CategoryRule** *(in schema)* | Merchant rule: the first match by priority sets an imported row's category and payee | pattern (normalised), match (`CONTAINS`/`STARTS_WITH`/`EXACT`), accountId?, categoryId, payee?, priority, hitCount |
 | **Budget** *(in schema)* | The plan for one month (yearly = 12 months, later) | month (`YYYY-MM`, unique) |
 | **BudgetLine** *(in schema)* | Planned amount of one category (never a group) in one month, stored positive; removed with its budget | budgetId, categoryId, plannedCents (unique per budget and category) |
-| **RecurringRule** | Subscriptions, bills, salary, and **non-monthly** charges (yearly insurance, quarterly tax, every-2-months utilities) | name, amountCents (or estimate), interval (`MONTH`/`YEAR`/…, every N), nextDue, accountId, categoryId, remindDaysBefore, endsAt |
+| **RecurringRule** *(in schema)* | Subscriptions, bills, salary, and **non-monthly** charges (yearly insurance, quarterly tax, every-2-months utilities); archived, never deleted. Due dates are computed, never stored | name, amountCents (positive; the category type gives the sign), amountVaries, categoryId, accountId?, memberId?, frequency (`WEEK`/`MONTH`/`YEAR`), interval (every N), anchorDate (first due), endsAt?, matchText? (bank text; null = name), archivedAt |
+| **RecurringOccurrence** *(in schema)* | A due date marked by hand; removed with its rule, or with its row | ruleId, dueDate (unique per rule), status (`PAID`/`SKIPPED`), transactionId? (unique) |
 | **Debt** | Loans, instalment purchases (άτοκες δόσεις), money owed to/by relatives | kind, principalCents, rate?, instalmentCents, startDate, termMonths, accountId, counterparty |
 | **Goal** *(later)* | Saving target (holidays, car) | targetCents, targetDate, accountId |
 | **Notification** | Reminders: bill due, over budget, debt instalment, low balance | kind, key, dueAt, readAt, dismissedAt |
@@ -70,14 +71,18 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
   max(0, last month's planned + carried in − actual), chained from the first planned month; *available* = planned +
   carried in. **Left to budget** = planned income − planned outgoings (zero-based goal 0); **left to spend** =
   available − actual over outgoing types. Feature doc: [features/budget.md](features/budget.md).
-- **Upcoming** = recurring rules and debt instalments due in the next N days, each `UPCOMING` / `DUE` / `OVERDUE` /
-  `PAID` (matched to a transaction) / `SKIPPED`.
+- **Upcoming** = recurring rules (debt instalments later) due in the next N days, each `UPCOMING` / `DUE` (within
+  3 days) / `OVERDUE` / `PAID` / `SKIPPED`. A row pays a due date when it has the same sign, contains the rule's bank
+  text, is within ±10 % (any amount when it varies), is in the rule's account if one is set, and is within ±7 days
+  (±2 weekly). This is found on read and never stored; no row is ever created on a due date (decided 2026-10-30).
+  Feature doc: [features/subscriptions-bills.md](features/subscriptions-bills.md).
 - **Projection** = today's balances + planned income − recurring charges − instalments, month by month.
 - **Subscription hints** = the same merchant charging within ±10% every month (26–35 days) or year (350–380), at
   least 3 times and recently, not already in a Subscriptions, Bills, Debt or Savings category
   (`services/import/subscription-detect.ts`).
-- **Subscriptions without monthly payment**: rules with interval ≠ 1 month are spread as a monthly *provision*
-  (yearly €480 insurance → €40/month set aside) so the monthly budget is honest.
+- **Subscriptions without monthly payment**: rules are spread as a monthly *provision* (yearly €480 insurance →
+  €40/month), offered as the category's plan in the monthly budget (`suggestedCents`, **Use** / **Fill from bills**),
+  and built up through Carry over (decided 2026-10-30).
 
 ## Open questions
 
