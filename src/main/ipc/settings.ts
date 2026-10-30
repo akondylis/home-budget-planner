@@ -1,5 +1,5 @@
 import { app, ipcMain, shell } from 'electron'
-import { getSettings, saveDateFormat, setLanguage } from '../services/settings'
+import { getSettings, saveDateFormat, setLanguage, setNotificationSettings } from '../services/settings'
 import { isPortable } from '../user-data'
 
 export function registerSettingsHandlers(): void {
@@ -10,6 +10,9 @@ export function registerSettingsHandlers(): void {
 
   /** Throws: 'INVALID_DATE_FORMAT' */
   ipcMain.handle('settings:setDateFormat', (_e, format: unknown) => saveDateFormat(format))
+
+  /** Throws: 'INVALID_INPUT' */
+  ipcMain.handle('settings:setNotifications', (_e, input: unknown) => setNotificationSettings(input))
 
   // Where the data lives and which edition runs (title bar badge, Settings → About)
   ipcMain.handle('settings:appInfo', () => ({ portable: isPortable(), dataDir: app.getPath('userData') }))

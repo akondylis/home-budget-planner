@@ -257,6 +257,10 @@
       "search": {
         "title": "Find anything",
         "body": "Press Ctrl+K to jump to any page or run a command, such as switching theme or printing a budget worksheet."
+      },
+      "notifications": {
+        "title": "$t(notifications.title)",
+        "body": "Bills due or late, income that has not come in, categories over budget and rows to categorise. Act on each from here; the red number counts the new ones."
       }
     }
   },
@@ -1191,5 +1195,97 @@
     "budget_use": "Use",
     "budget_use_hint": "Plan {{amount}} for {{name}}: the monthly cost of its bills",
     "add_confirm": "Add bill"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "tooltip_unread_one": "Notifications · {{count}} unread",
+    "tooltip_unread_other": "Notifications · {{count}} unread",
+    "unread_count_one": "{{count}} unread",
+    "unread_count_other": "{{count}} unread",
+    "mark_all_read": "Mark all read",
+    "clear_all": "Clear all",
+    "clear_title": "Clear every notification?",
+    "clear_body": "They come back only when something new needs a hand (a new due date, new rows to categorise).",
+    "clear_confirm": "Clear all",
+    "empty_title": "All caught up",
+    "empty_body": "Bills due, late income, categories over budget and rows to categorise show up here.",
+    "load_failed": "Notifications could not be loaded.",
+    "retry": "Retry",
+    "hide": "Hide",
+    "more_actions": "More actions",
+    "about": "about {{amount}}",
+    "group": {
+      "overdue": "Overdue",
+      "soon": "Due soon",
+      "other": "Budget & data"
+    },
+    "when": {
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "in_days_one": "in {{count}} day",
+      "in_days_other": "in {{count}} days",
+      "late_one": "{{count}} day late",
+      "late_other": "{{count}} days late"
+    },
+    "kind": {
+      "bill-due": {
+        "title": "{{name}} is due {{when}}",
+        "detail": "{{amount}} · {{date}}"
+      },
+      "bill-overdue": {
+        "title": "{{name}} is not paid yet",
+        "detail": "{{amount}} · due {{date}}, {{when}}"
+      },
+      "income-late": {
+        "title": "{{name}} has not come in",
+        "detail": "{{amount}} · expected {{date}}, {{when}}"
+      },
+      "over-budget": {
+        "title": "{{name}} is over budget",
+        "detail": "{{over}} over its {{available}} this month"
+      },
+      "to-categorise": {
+        "title_one": "{{count}} row to categorise",
+        "title_other": "{{count}} rows to categorise",
+        "detail_one": "Give it a category so the budget adds up.",
+        "detail_other": "Give them a category so the budget adds up."
+      },
+      "import-stale": {
+        "title_one": "{{account}}: no statement for {{count}} day",
+        "title_other": "{{account}}: no statement for {{count}} days",
+        "detail": "The last import ended {{date}}."
+      }
+    },
+    "action": {
+      "markPaid": "Mark as paid",
+      "markReceived": "Mark as received",
+      "skip": "Skip this one",
+      "openBills": "Open bills",
+      "openBudget": "Open budget",
+      "openInbox": "Categorise",
+      "importStatement": "Import statement"
+    },
+    "toast": {
+      "summary_title": "{{count}} things need a hand",
+      "summary_body": "Bills due today or late. Open Home Budget to see them."
+    },
+    "settings": {
+      "section": "Notifications",
+      "toasts": "Windows notifications",
+      "toasts_hint": "While the app is open, a bill due today, an overdue one or late income pops up once.",
+      "toasts_on": "On",
+      "toasts_off": "Off",
+      "lead": "Remind me before a bill",
+      "lead_hint": "How early the bell shows a bill. A bill can have its own in its form (More).",
+      "lead_0": "On the day",
+      "lead_days_one": "{{count}} day before",
+      "lead_days_other": "{{count}} days before"
+    },
+    "rule": {
+      "remind": "Remind me",
+      "remind_hint": "When the bell shows this one.",
+      "remind_default": "As in Settings ({{label}})"
+    },
+    "palette": "Notifications"
   }
 }

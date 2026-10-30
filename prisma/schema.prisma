@@ -18,6 +18,10 @@ model AppSettings {
   language   String   @default("el")
   dateFormat String   @default("dd/MM/yyyy")
   currency   String   @default("EUR")
+  /// Notifications: remind this many days before a bill falls due (a rule can override it)
+  notifyLeadDays Int     @default(3)
+  /// Notifications: Windows toasts while the app is open
+  notifyToasts   Boolean @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -313,6 +317,8 @@ model RecurringRule {
   endsAt       DateTime?
   /// Bank text that marks a payment, normalised like CategoryRule.pattern; null = the name
   matchText    String?
+  /// Remind this many days before a due date; null = the household setting (AppSettings.notifyLeadDays)
+  remindDays   Int?
   archivedAt   DateTime?
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
@@ -333,4 +339,16 @@ model RecurringOccurrence {
   createdAt     DateTime         @default(now())
 
   @@unique([ruleId, dueDate])
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+/// Read / hidden / toasted state of a computed notification (the notifications themselves are never stored)
+model NotificationState {
+  key         String    @id // e.g. 'bill:<ruleId>:<dueDate>'
+  readAt      DateTime?
+  dismissedAt DateTime?
+  /// A Windows toast was shown for it, so it is never shown twice
+  toastedAt   DateTime?
+  createdAt   DateTime  @default(now())
 }

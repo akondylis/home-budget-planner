@@ -49,6 +49,7 @@ const rule = (over: Partial<RecurringRuleInput> & Pick<RecurringRuleInput, 'cate
   anchorDate: '2026-01-05',
   endsAt: null,
   matchText: null,
+  remindDays: null,
   ...over,
 })
 

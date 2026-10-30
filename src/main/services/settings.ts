@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma'
 import { isDateFormat, setDateFormat, setDateLanguage } from '../../shared/date-format'
 import { setMoneyLanguage } from '../../shared/money'
+import { isLeadDays, LEAD_DAY_CHOICES, type NotificationSettings } from '../../shared/notifications'
 
 export type AppLanguage = 'el' | 'en'
 
@@ -39,4 +40,12 @@ export async function saveDateFormat(format: unknown): Promise<void> {
   if (!isDateFormat(format)) throw new Error('INVALID_DATE_FORMAT')
   await prisma.appSettings.update({ where: { id: 1 }, data: { dateFormat: format } })
   setDateFormat(format)
+}
+
+/** Notifications: lead time before a bill (Settings offers up to 14 days) and Windows toasts. Throws: 'INVALID_INPUT' */
+export async function setNotificationSettings(input: unknown): Promise<void> {
+  const { leadDays, toasts } = (input ?? {}) as Partial<NotificationSettings>
+  const maxLead = LEAD_DAY_CHOICES[LEAD_DAY_CHOICES.length - 1]
+  if (!isLeadDays(leadDays, maxLead) || typeof toasts !== 'boolean') throw new Error('INVALID_INPUT')
+  await prisma.appSettings.update({ where: { id: 1 }, data: { notifyLeadDays: leadDays, notifyToasts: toasts } })
 }

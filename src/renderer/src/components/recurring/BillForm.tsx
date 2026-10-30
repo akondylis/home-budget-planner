@@ -24,6 +24,8 @@ import { todayDateOnly } from '../../../../shared/date-only'
 import { formatMoney, parseMoney } from '../../../../shared/money'
 import { RECURRING_FREQUENCIES, monthlyEquivalentCents, type RecurringFrequency } from '../../../../shared/recurrence'
 import { HOUSEHOLD } from '../../../../shared/members'
+import { NOTIFY_LEAD_DAYS_DEFAULT, RULE_LEAD_DAY_CHOICES } from '../../../../shared/notifications'
+import { leadDaysLabel } from '../../lib/notifications'
 
 export interface BillFormProps {
   request: RuleFormRequest
@@ -44,14 +46,20 @@ export function BillForm({ request, onClose }: BillFormProps) {
   const categories = useLedgerStore(s => s.categories)
   const members = useLedgerStore(s => s.members)
   const editing = request.mode === 'edit' ? request.rule : null
-  const ids = { name: useId(), amount: useId(), interval: useId(), anchor: useId(), ends: useId(), account: useId(), match: useId(), form: useId() }
+  const ids = { name: useId(), amount: useId(), interval: useId(), anchor: useId(), ends: useId(), account: useId(), match: useId(), remind: useId(), form: useId() }
   const [draft, setDraft] = useState<RuleDraft>(() => initialDraft(request))
-  // Bank text, end date and "For" are rarely needed; open when a value is already there
-  const [more, setMore] = useState(() => !!(draft.endsAt || (editing && editing.matchText)))
+  // Bank text, end date, reminder and "For" are rarely needed; open when a value is already there
+  const [more, setMore] = useState(() => !!(draft.endsAt || (editing && (editing.matchText || editing.remindDays !== null))))
+  // The household's reminder, named in the "As in Settings" choice
+  const [householdLead, setHouseholdLead] = useState(NOTIFY_LEAD_DAYS_DEFAULT)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [matchCount, setMatchCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    window.api.getSettings().then(s => { if (s) setHouseholdLead(s.notifyLeadDays) }).catch(() => {})
+  }, [])
 
   const errors = submitted ? validateDraft(draft) : {}
   const err = (key?: string) => (key ? t(`recurring.errors.${key}`) : undefined)
@@ -229,6 +237,20 @@ export function BillForm({ request, onClose }: BillFormProps) {
               <Field label={t('recurring.ends')} htmlFor={ids.ends} error={err(errors.endsAt)} hint={t('recurring.ends_hint')}>
                 <DateInput id={ids.ends} value={draft.endsAt} onChange={endsAt => update({ endsAt })} invalid={!!errors.endsAt} />
               </Field>
+              {/* Income is only flagged once it is late, so a lead time means nothing there */}
+              {!income && (
+                <Field label={t('notifications.rule.remind')} htmlFor={ids.remind} hint={t('notifications.rule.remind_hint')}>
+                  <Select
+                    id={ids.remind}
+                    value={draft.remindDays === null ? '' : String(draft.remindDays)}
+                    onChange={e => update({ remindDays: e.target.value === '' ? null : Number(e.target.value) })}
+                    className="w-64"
+                  >
+                    <option value="">{t('notifications.rule.remind_default', { label: leadDaysLabel(householdLead, t) })}</option>
+                    {RULE_LEAD_DAY_CHOICES.map(d => <option key={d} value={d}>{leadDaysLabel(d, t)}</option>)}
+                  </Select>
+                </Field>
+              )}
               {forOptions.length > 0 && (
                 <Field label={t('entry.for')}>
                   <Segmented<string>

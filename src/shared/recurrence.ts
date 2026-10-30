@@ -49,6 +49,8 @@ export interface RecurringRuleInput {
   endsAt: string | null
   /** Bank text to match; null or empty = the name */
   matchText: string | null
+  /** Remind this many days before a due date; null = the household setting */
+  remindDays: number | null
 }
 
 export interface RecurringRuleRow extends RecurringRuleInput {
@@ -76,6 +78,8 @@ export interface UpcomingBill {
   /** Signed: a bill is negative, income positive */
   amountCents: number
   amountVaries: boolean
+  /** The rule's own reminder; null = the household setting */
+  remindDays: number | null
   status: PaymentStatus
   /** The row that paid it, matched or picked by hand */
   transactionId: string | null

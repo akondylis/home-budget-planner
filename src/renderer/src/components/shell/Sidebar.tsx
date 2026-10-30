@@ -6,6 +6,8 @@ import type { View } from '../../types'
 import { Icon } from './icons'
 import { Badge, HoverCard } from '../ui'
 import { MemberSwitcher } from '../members/MemberSwitcher'
+import { NotificationCenter } from '../notifications/NotificationCenter'
+import type { AppNotification, NotificationAction } from '../../../../shared/notifications'
 import { FOOTER_NAV_ITEMS, MAIN_NAV_ITEMS, type NavItem } from '../../lib/nav-items'
 
 function isActive(item: NavItem, view: View): boolean {
@@ -16,9 +18,10 @@ function isActive(item: NavItem, view: View): boolean {
 export interface SidebarProps {
   view: View
   onNavigate: (target: NavItem['id']) => void
+  onNotificationAction: (action: NotificationAction, notification: AppNotification) => void
 }
 
-export function Sidebar({ view, onNavigate }: SidebarProps) {
+export function Sidebar({ view, onNavigate, onNotificationAction }: SidebarProps) {
   const { t } = useTranslation()
   const collapsed = useUiStore(s => s.sidebarCollapsed)
   const position = useUiStore(s => s.sidebarPosition)
@@ -75,6 +78,7 @@ export function Sidebar({ view, onNavigate }: SidebarProps) {
       {MAIN_NAV_ITEMS.map(renderItem)}
 
       <div className="mt-auto flex flex-col gap-1 border-t border-line pt-2">
+        <NotificationCenter collapsed={collapsed} isLeft={isLeft} onAction={onNotificationAction} />
         <MemberSwitcher collapsed={collapsed} onManage={() => onNavigate('settings')} />
         {FOOTER_NAV_ITEMS.map(renderItem)}
         <button

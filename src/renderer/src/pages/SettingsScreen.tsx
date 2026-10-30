@@ -7,6 +7,9 @@ import { useUiStore, type SidebarPosition, type ThemeMode } from '../store/ui'
 import { changeLanguage, changeSidebarPosition, changeTheme } from '../lib/ui-actions'
 import { DATE_FORMATS, formatDate, type DateFormat } from '../lib/date-format'
 import type { AppLanguage } from '../types'
+import { LEAD_DAY_CHOICES, NOTIFY_LEAD_DAYS_DEFAULT, type NotificationSettings } from '../../../shared/notifications'
+import { leadDaysLabel } from '../lib/notifications'
+import { useNotificationsStore } from '../store/notifications'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -28,6 +31,7 @@ export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
   const sidebarPosition = useUiStore(s => s.sidebarPosition)
   const dateFormat = useUiStore(s => s.dateFormat)
   const [dataDir, setDataDir] = useState('')
+  const [notify, setNotify] = useState<NotificationSettings>({ leadDays: NOTIFY_LEAD_DAYS_DEFAULT, toasts: true })
 
   useEffect(() => {
     window.api.getAppInfo().then(info => {
@@ -35,6 +39,24 @@ export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
       setPortable(info.portable)
     }).catch(() => setDataDir(''))
   }, [])
+
+  useEffect(() => {
+    window.api.getSettings().then(s => {
+      if (s) setNotify({ leadDays: s.notifyLeadDays, toasts: s.notifyToasts })
+    }).catch(err => console.error('[settings] load failed:', err))
+  }, [])
+
+  async function changeNotify(next: NotificationSettings) {
+    const before = notify
+    setNotify(next)
+    try {
+      await window.api.setNotificationSettings(next)
+      void useNotificationsStore.getState().refresh()
+    } catch (err) {
+      console.error('[settings] notifications save failed:', err)
+      setNotify(before)
+    }
+  }
 
   async function changeDateFormat(format: DateFormat) {
     useUiStore.getState().setDateFormat(format)
@@ -106,6 +128,30 @@ export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
               <option key={f} value={f}>{formatDate(sample, f)}</option>
             ))}
           </Select>
+        </Field>
+      </Section>
+
+      <Section title={t('notifications.settings.section')}>
+        <Field label={t('notifications.settings.lead')} htmlFor="notify-lead" hint={t('notifications.settings.lead_hint')}>
+          <Select
+            id="notify-lead"
+            value={String(notify.leadDays)}
+            onChange={e => void changeNotify({ ...notify, leadDays: Number(e.target.value) })}
+            className="w-64"
+          >
+            {LEAD_DAY_CHOICES.map(d => <option key={d} value={d}>{leadDaysLabel(d, t)}</option>)}
+          </Select>
+        </Field>
+        <Field label={t('notifications.settings.toasts')} hint={t('notifications.settings.toasts_hint')}>
+          <Segmented<'on' | 'off'>
+            label={t('notifications.settings.toasts')}
+            value={notify.toasts ? 'on' : 'off'}
+            onChange={v => void changeNotify({ ...notify, toasts: v === 'on' })}
+            options={[
+              { value: 'on', label: t('notifications.settings.toasts_on'), icon: 'bell' },
+              { value: 'off', label: t('notifications.settings.toasts_off') },
+            ]}
+          />
         </Field>
       </Section>
 

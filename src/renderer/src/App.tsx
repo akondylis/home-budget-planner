@@ -14,6 +14,7 @@ import { CategoriesScreen } from './pages/CategoriesScreen'
 import { BudgetScreen } from './pages/BudgetScreen'
 import { RecurringScreen } from './pages/RecurringScreen'
 import { BillForm } from './components/recurring/BillForm'
+import { MarkPaidDialog } from './components/recurring/MarkPaidDialog'
 import { CommandPalette } from './components/CommandPalette'
 import { AppTour } from './components/tour/AppTour'
 import { WorksheetPreviewModal } from './components/pdf/WorksheetPreviewModal'
@@ -29,12 +30,15 @@ import { EMPTY_FILTER, currentMonth, useTransactionsStore } from './store/transa
 import { useImportStore } from './store/import'
 import { useBudgetStore } from './store/budget'
 import { useRecurringStore } from './store/recurring'
+import { useNotificationsStore } from './store/notifications'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
 import { isImportable } from './lib/ledger'
 import { BANKS_SECTION_ID } from './components/banks/BanksSection'
 import type { PaletteTarget } from './lib/command-palette'
 import type { View } from './types'
 import type { CategoriesTab } from './lib/categories'
+import type { NotificationAction } from '../../shared/notifications'
+import type { UpcomingBill } from '../../shared/recurrence'
 
 // ── Zoom ──────────────────────────────────────────────────────────────────────
 
@@ -60,6 +64,8 @@ export default function App() {
   const [categoriesFrom, setCategoriesFrom] = useState<View>('transactions')
   const [zoom, setZoom] = useState<number>(readStoredZoom)
   const [worksheetOpen, setWorksheetOpen] = useState(false)
+  // A bill picked from the bell's "Mark as paid"
+  const [markingBill, setMarkingBill] = useState<UpcomingBill | null>(null)
   const sidebarPosition = useUiStore(s => s.sidebarPosition)
   const paletteOpen = useUiStore(s => s.paletteOpen)
   const shortcutsOpen = useUiStore(s => s.shortcutsOpen)
@@ -67,6 +73,7 @@ export default function App() {
   const billForm = useRecurringStore(s => s.form)
   const importWizard = useImportStore(s => s.wizard)
   const importHistory = useImportStore(s => s.history)
+  const ledgerRevision = useLedgerStore(s => s.revision)
   // Subscribing re-renders the tree when the date format changes in Settings
   useUiStore(s => s.dateFormat)
 
@@ -83,6 +90,23 @@ export default function App() {
   useEffect(() => {
     useLedgerStore.getState().load().catch(err => console.error('[ledger] load failed:', err))
   }, [])
+
+  // Notifications are computed from the data, so re-read them whenever the data changes,
+  // the user moves around or comes back to the window
+  useEffect(() => {
+    void useNotificationsStore.getState().refresh()
+  }, [view, ledgerRevision])
+  useEffect(() => {
+    const onFocus = () => void useNotificationsStore.getState().refresh()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+  // A clicked Windows toast opens the bell
+  useEffect(() => window.api.onNotificationOpen(() => {
+    const store = useNotificationsStore.getState()
+    void store.refresh()
+    store.setPanelOpen(true)
+  }), [])
 
   // First launch: show the way around once (Settings and Ctrl+K replay it)
   useEffect(() => {
@@ -186,6 +210,36 @@ export default function App() {
     setView('transactions')
   }
 
+  /** Rows still waiting for a category, every month */
+  function openInbox() {
+    useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month: null, uncategorised: true })
+    setView('transactions')
+  }
+
+  async function handleNotificationAction(action: NotificationAction) {
+    switch (action.kind) {
+      case 'markPaid': {
+        const due = { from: action.dueDate, to: action.dueDate }
+        const bill = (await window.api.billOccurrences(due)).find(b => b.ruleId === action.ruleId)
+        if (bill) setMarkingBill(bill)
+        else setView('recurring')
+        break
+      }
+      case 'skip':
+        try {
+          await window.api.skipBill({ ruleId: action.ruleId, dueDate: action.dueDate })
+          await useRecurringStore.getState().changed()
+        } catch (err) {
+          console.error('[notifications] skip failed:', err)
+        }
+        break
+      case 'openBills': setView('recurring'); break
+      case 'openBudget': openBudget(action.month); break
+      case 'openInbox': openInbox(); break
+      case 'importStatement': importStatement(action.accountId); break
+    }
+  }
+
   /** Ctrl+K: this month's budget, its empty lines filled from last month's plan */
   function copyLastMonthsPlan() {
     const budget = useBudgetStore.getState()
@@ -218,6 +272,12 @@ export default function App() {
       case 'categories': openCategories(target.tab); break
       case 'budgetCopy': copyLastMonthsPlan(); break
       case 'billAdd': useRecurringStore.getState().openForm(); break
+      case 'notifications': {
+        const store = useNotificationsStore.getState()
+        void store.refresh()
+        store.setPanelOpen(true)
+        break
+      }
     }
   }
 
@@ -280,7 +340,7 @@ export default function App() {
         nav={nav}
       />
       <div className={`flex min-h-0 flex-1 ${sidebarPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
-        <Sidebar view={view} onNavigate={setView} />
+        <Sidebar view={view} onNavigate={setView} onNotificationAction={action => void handleNotificationAction(action)} />
         <div className="flex min-w-0 flex-1 flex-col bg-gray-50">
           <main className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
             {/* Zoom is chosen by the user at runtime */}
@@ -307,6 +367,7 @@ export default function App() {
           onShowRows={showImport}
         />
       )}
+      {markingBill && <MarkPaidDialog bill={markingBill} onClose={() => setMarkingBill(null)} />}
       {billForm && <BillForm request={billForm} onClose={() => useRecurringStore.getState().closeForm()} />}
       {entry && <TransactionForm request={entry} onClose={() => useLedgerStore.getState().closeEntry()} />}
       <AppTour />

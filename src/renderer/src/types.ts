@@ -20,6 +20,8 @@ export interface AppSettings {
   language: AppLanguage
   dateFormat: string
   currency: string
+  notifyLeadDays: number
+  notifyToasts: boolean
   createdAt: string
   updatedAt: string
 }

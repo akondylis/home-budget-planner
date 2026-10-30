@@ -10,6 +10,7 @@ interface Window {
     setDateFormat: (f: import('./lib/date-format').DateFormat) => Promise<void>
     getAppInfo:    () => Promise<{ portable: boolean; dataDir: string }>
     openDataDir:   () => Promise<void>
+    setNotificationSettings: (input: import('../../shared/notifications').NotificationSettings) => Promise<void>
 
     listMembers:       (opts?: { includeArchived?: boolean }) => Promise<import('../../shared/members').MemberSummary[]>
     createMember:      (input: import('../../shared/members').MemberInput) => Promise<string>
@@ -85,6 +86,14 @@ interface Window {
     unmarkBill:        (input: { ruleId: string; dueDate: string }) => Promise<void>
 
     getOverview:       (month: string) => Promise<import('../../shared/overview').OverviewMonth>
+
+    listNotifications:        () => Promise<import('../../shared/notifications').AppNotification[]>
+    markNotificationsRead:    (keys: string[]) => Promise<void>
+    markAllNotificationsRead: () => Promise<void>
+    dismissNotification:      (key: string) => Promise<void>
+    dismissAllNotifications:  () => Promise<void>
+    /** A Windows toast was clicked (key null = the summary toast); returns the unsubscribe */
+    onNotificationOpen:       (cb: (key: string | null) => void) => () => void
 
     exportPdf:    (report: import('../../shared/report-document').ReportDocument, fileName: string, dialogTitle: string) =>
                      Promise<{ success: false } | { success: true; filePath: string }>

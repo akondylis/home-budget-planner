@@ -32,7 +32,7 @@ export function createTestDb(): { prisma: PrismaClient; sqlite: Database.Databas
 /** Empties every domain table (children first) and puts the starter banks back, so each test starts clean */
 export function resetTestDb(): void {
   if (!current) throw new Error('createTestDb() first')
-  for (const table of ['RecurringOccurrence', 'RecurringRule', 'Transaction', 'ImportBatch', 'CategoryRule', 'BudgetLine', 'Budget', 'Category', 'Card', 'Account', 'Member']) {
+  for (const table of ['NotificationState', 'RecurringOccurrence', 'RecurringRule', 'Transaction', 'ImportBatch', 'CategoryRule', 'BudgetLine', 'Budget', 'Category', 'Card', 'Account', 'Member']) {
     if (table === 'Category') current.sqlite.exec('UPDATE "Category" SET "parentId" = NULL')
     current.sqlite.exec(`DELETE FROM "${table}"`)
   }

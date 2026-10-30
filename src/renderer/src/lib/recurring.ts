@@ -43,6 +43,8 @@ export interface RuleDraft {
   anchorDate: string
   endsAt: string
   matchText: string
+  /** Days before a due date to remind; null = the household setting */
+  remindDays: number | null
   /** Non-monthly bills: turn on Carry over in the category so the monthly amount builds up */
   carryOver: boolean
 }
@@ -52,7 +54,7 @@ export type RuleErrors = Partial<Record<'name' | 'amount' | 'categoryId' | 'inte
 export function emptyDraft(today: string): RuleDraft {
   return {
     name: '', amount: '', amountVaries: false, categoryId: null, accountId: '', memberId: null,
-    frequency: 'MONTH', interval: '1', anchorDate: today, endsAt: '', matchText: '', carryOver: true,
+    frequency: 'MONTH', interval: '1', anchorDate: today, endsAt: '', matchText: '', remindDays: null, carryOver: true,
   }
 }
 
@@ -69,6 +71,7 @@ export function draftFromRule(rule: RecurringRuleRow, amountText: string): RuleD
     anchorDate: rule.anchorDate,
     endsAt: rule.endsAt ?? '',
     matchText: rule.matchText ?? '',
+    remindDays: rule.remindDays,
     carryOver: false,
   }
 }
@@ -116,6 +119,7 @@ export function draftToInput(d: RuleDraft): RecurringRuleInput {
     anchorDate: d.anchorDate,
     endsAt: d.endsAt || null,
     matchText: d.matchText.trim() || null,
+    remindDays: d.remindDays,
   }
 }
 

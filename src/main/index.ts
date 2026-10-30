@@ -45,6 +45,9 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
+// Windows shows toasts under this id (the installer's appId)
+if (process.platform === 'win32') app.setAppUserModelId('com.akondylis.homebudget')
+
 app.whenReady().then(async () => {
   // Portable edition: refuse a read-only stick instead of losing writes, then keep a startup copy
   if (isPortable()) {
@@ -91,6 +94,10 @@ Copy the HomeBudget folder to a writable drive.`,
   const { registerBudgetHandlers } = await import('./ipc/budget')
   const { registerOverviewHandlers } = await import('./ipc/overview')
   const { registerRecurringHandlers } = await import('./ipc/recurring')
+  const { registerNotificationHandlers } = await import('./ipc/notifications')
+  const { registerNotificationProvider } = await import('./services/notifications')
+  const { NOTIFICATION_PROVIDERS } = await import('./services/notification-providers')
+  const { startNotificationToasts } = await import('./services/notification-toasts')
   const { seedDefaults } = await import('./services/seed')
 
   const settings = await applyStoredFormatting()
@@ -98,7 +105,10 @@ Copy the HomeBudget folder to a writable drive.`,
 
   setAppMenu()
   const mainWindow = createMainWindow()
-  mainWindow.once('ready-to-show', () => mainWindow.show())
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+    startNotificationToasts(mainWindow)
+  })
 
   registerSettingsHandlers()
   registerPdfHandlers()
@@ -113,6 +123,8 @@ Copy the HomeBudget folder to a writable drive.`,
   registerBudgetHandlers()
   registerOverviewHandlers()
   registerRecurringHandlers()
+  registerNotificationHandlers()
+  for (const provider of NOTIFICATION_PROVIDERS) registerNotificationProvider(provider)
   registerWindowHandlers(mainWindow)
 
   if (process.env['ELECTRON_RENDERER_URL']) {

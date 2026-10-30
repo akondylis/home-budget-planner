@@ -24,6 +24,7 @@ import {
   type Schedule,
   type UpcomingBill,
 } from '../../shared/recurrence'
+import { NOTIFY_LEAD_DAYS_MAX } from '../../shared/notifications'
 import { assertMember } from './members'
 import { createTransaction } from './transactions'
 
@@ -51,6 +52,7 @@ const ruleInput = z.object({
   anchorDate: dateOnly,
   endsAt: dateOnly.nullish().transform(v => v ?? null),
   matchText: text(120),
+  remindDays: z.number().int().min(0).max(NOTIFY_LEAD_DAYS_MAX).nullish().transform(v => v ?? null),
 }).refine(r => !r.endsAt || r.endsAt >= r.anchorDate)
 
 const dueInput = z.object({ ruleId: z.string().min(1), dueDate: dateOnly })
@@ -101,6 +103,7 @@ function toRow(r: FullRule, today: string): RecurringRuleRow {
     anchorDate: s.anchorDate,
     endsAt: s.endsAt,
     matchText: r.matchText,
+    remindDays: r.remindDays,
     archived: r.archivedAt !== null,
     monthlyCents: monthlyEquivalentCents(r.amountCents, r.frequency, r.interval),
     nextDue: nextDue(s, today),
@@ -224,6 +227,7 @@ export async function listOccurrences(input: unknown, today: string = todayDateO
         dueDate: due,
         amountCents: ruleAmount(rule.amountCents, rule.category.type),
         amountVaries: rule.amountVaries,
+        remindDays: rule.remindDays,
         status: occurrenceStatus(due, today, mark?.status ?? (auto ? 'PAID' : null)),
         transactionId: mark?.transactionId ?? auto?.id ?? null,
         paidBy: mark?.status === 'PAID' ? 'HAND' : auto ? 'AUTO' : null,
@@ -235,7 +239,7 @@ export async function listOccurrences(input: unknown, today: string = todayDateO
   return bills.sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name))
 }
 
-/** Unpaid due dates up to `days` ahead and the overdue ones before, for the Overview card */
+/** Unpaid due dates up to `days` ahead and the overdue ones before, for the Overview card and the bell */
 export async function listUnpaid(days: number, today: string = todayDateOnly()): Promise<UpcomingBill[]> {
   const bills = await listOccurrences({ from: addDays(today, -HISTORY_GRACE_DAYS * 3), to: addDays(today, days) }, today)
   return bills.filter(b => b.status !== 'PAID' && b.status !== 'SKIPPED')

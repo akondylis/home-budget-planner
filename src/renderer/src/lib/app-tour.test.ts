@@ -26,7 +26,7 @@ describe('steps', () => {
 
   it('open on a centred welcome and point only at real anchors', () => {
     expect(TOUR_STEPS[0].anchors).toHaveLength(0)
-    const known = new Set<string>([...MAIN_NAV_ITEMS, ...FOOTER_NAV_ITEMS].map(n => n.id as string).concat('search', 'member'))
+    const known = new Set<string>([...MAIN_NAV_ITEMS, ...FOOTER_NAV_ITEMS].map(n => n.id as string).concat('search', 'member', 'notifications'))
     for (const step of TOUR_STEPS) for (const anchor of step.anchors) expect(known).toContain(anchor)
   })
 

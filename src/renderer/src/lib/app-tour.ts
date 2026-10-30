@@ -11,6 +11,7 @@ export const TOUR_STEPS = [
   { id: 'recurring', anchors: ['recurring'] },
   { id: 'debts', anchors: ['debts'] },
   { id: 'insight', anchors: ['projections', 'reports'] },
+  { id: 'notifications', anchors: ['notifications'] },
   { id: 'member', anchors: ['member'] },
   { id: 'settings', anchors: ['settings'] },
   { id: 'search', anchors: ['search'] },

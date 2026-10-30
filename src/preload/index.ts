@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('api', {
   setDateFormat: (f: string)     => ipcRenderer.invoke('settings:setDateFormat', f),
   getAppInfo:    ()              => ipcRenderer.invoke('settings:appInfo'),
   openDataDir:   ()              => ipcRenderer.invoke('settings:openDataDir'),
+  setNotificationSettings: (input: unknown) => ipcRenderer.invoke('settings:setNotifications', input),
 
   // ── Members ─────────────────────────────────────────────────────────────────
   listMembers:       (opts?: unknown)                 => ipcRenderer.invoke('member:list', opts),
@@ -93,6 +94,19 @@ contextBridge.exposeInMainWorld('api', {
 
   // ── Overview ────────────────────────────────────────────────────────────────
   getOverview:       (month: string)                  => ipcRenderer.invoke('overview:get', month),
+
+  // ── Notifications ───────────────────────────────────────────────────────────
+  listNotifications:        ()               => ipcRenderer.invoke('notification:list'),
+  markNotificationsRead:    (keys: string[]) => ipcRenderer.invoke('notification:markRead', keys),
+  markAllNotificationsRead: ()               => ipcRenderer.invoke('notification:markAllRead'),
+  dismissNotification:      (key: string)    => ipcRenderer.invoke('notification:dismiss', key),
+  dismissAllNotifications:  ()               => ipcRenderer.invoke('notification:dismissAll'),
+  // A Windows toast was clicked: open the bell (key null = the summary toast)
+  onNotificationOpen: (cb: (key: string | null) => void) => {
+    const listener = (_e: unknown, key: string | null) => cb(key)
+    ipcRenderer.on('notification:open', listener)
+    return () => { ipcRenderer.removeListener('notification:open', listener) }
+  },
 
   // ── PDF ─────────────────────────────────────────────────────────────────────
   exportPdf:     (report: unknown, fileName: string, dialogTitle: string) => ipcRenderer.invoke('pdf:export', report, fileName, dialogTitle),
