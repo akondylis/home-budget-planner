@@ -24,11 +24,11 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 | **CategoryRule** *(in schema)* | Merchant rule: the first match by priority sets an imported row's category and payee | pattern (normalised), match (`CONTAINS`/`STARTS_WITH`/`EXACT`), accountId?, categoryId, payee?, priority, hitCount |
 | **Budget** *(in schema)* | The plan for one month (yearly = 12 months, later) | month (`YYYY-MM`, unique) |
 | **BudgetLine** *(in schema)* | Planned amount of one category (never a group) in one month, stored positive; removed with its budget | budgetId, categoryId, plannedCents (unique per budget and category) |
-| **RecurringRule** *(in schema)* | Subscriptions, bills, salary, and **non-monthly** charges (yearly insurance, quarterly tax, every-2-months utilities); archived, never deleted. Due dates are computed, never stored | name, amountCents (positive; the category type gives the sign), amountVaries, categoryId, accountId?, memberId?, frequency (`WEEK`/`MONTH`/`YEAR`), interval (every N), anchorDate (first due), endsAt?, matchText? (bank text; null = name), archivedAt |
+| **RecurringRule** *(in schema)* | Subscriptions, bills, salary, and **non-monthly** charges (yearly insurance, quarterly tax, every-2-months utilities); archived, never deleted. Due dates are computed, never stored | name, amountCents (positive; the category type gives the sign), amountVaries, categoryId, accountId?, memberId?, frequency (`WEEK`/`MONTH`/`YEAR`), interval (every N), anchorDate (first due), endsAt?, matchText? (bank text; null = name), remindDays? (bell lead time; null = Settings), archivedAt |
 | **RecurringOccurrence** *(in schema)* | A due date marked by hand; removed with its rule, or with its row | ruleId, dueDate (unique per rule), status (`PAID`/`SKIPPED`), transactionId? (unique) |
 | **Debt** | Loans, instalment purchases (άτοκες δόσεις), money owed to/by relatives | kind, principalCents, rate?, instalmentCents, startDate, termMonths, accountId, counterparty |
 | **Goal** *(later)* | Saving target (holidays, car) | targetCents, targetDate, accountId |
-| **Notification** | Reminders: bill due, over budget, debt instalment, low balance | kind, key, dueAt, readAt, dismissedAt |
+| **NotificationState** *(in schema)* | Marks of a computed notification (the notifications themselves are never stored; see [notifications](features/notifications.md)); pruned when the item is gone. Lead time and toasts live on `AppSettings` (notifyLeadDays, notifyToasts) | key (e.g. `bill:<ruleId>:<dueDate>`), readAt?, dismissedAt?, toastedAt? |
 
 ### Rules that live in the services
 

@@ -387,6 +387,42 @@
       ]
     },
     {
+      "id": "notification",
+      "title": "Notifications",
+      "screen": [
+        "Sidebar bell (panel)",
+        "Windows toast click"
+      ],
+      "handler": "ipc/notifications.ts",
+      "service": [
+        "services/notifications.ts",
+        "notification-providers.ts"
+      ],
+      "store": "SQLite · NotificationState",
+      "calls": [
+        {
+          "api": "listNotifications",
+          "channel": "notification:list"
+        },
+        {
+          "api": "markNotificationsRead",
+          "channel": "notification:markRead"
+        },
+        {
+          "api": "markAllNotificationsRead",
+          "channel": "notification:markAllRead"
+        },
+        {
+          "api": "dismissNotification",
+          "channel": "notification:dismiss"
+        },
+        {
+          "api": "dismissAllNotifications",
+          "channel": "notification:dismissAll"
+        }
+      ]
+    },
+    {
       "id": "category",
       "title": "Categories",
       "screen": [
@@ -469,6 +505,10 @@
           "channel": "settings:setDateFormat"
         },
         {
+          "api": "setNotificationSettings",
+          "channel": "settings:setNotifications"
+        },
+        {
           "api": "getAppInfo",
           "channel": "settings:appInfo"
         },
@@ -527,6 +567,10 @@
     {
       "api": "zoom",
       "note": "Zoom (window.api.zoom) uses webFrame inside the preload, with no IPC."
+    },
+    {
+      "api": "onNotificationOpen",
+      "note": "onNotificationOpen listens for main's notification:open event, sent when a Windows toast is clicked."
     }
   ]
 }

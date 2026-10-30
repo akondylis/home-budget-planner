@@ -93,4 +93,4 @@ and `Ctrl+K` "Add a bill or subscription".
 
 ## Later
 
-- Reminders N days before a due date and the sidebar bell (#8); a payment calendar (#17); projections (#11).
+- A payment calendar (#17); projections (#11). Reminders and the bell shipped with [notifications](notifications.md) (#8).

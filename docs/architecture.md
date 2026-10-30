@@ -29,8 +29,8 @@ behind a transport adapter, without rewriting business logic.
 src/main/
   index.ts                   Window, startup (portable check → migrations → settings → handlers), clean shutdown
   user-data.ts               Portable edition: marker detection, data folder next to the exe
-  ipc/                       One file per domain: settings, pdf, window, member, account, category, transaction, import, rule, subscription, budget, overview, recurring
-  services/                  Business logic (settings, members, accounts, categories, transactions, rules, budgets, overview, recurring, import/, pdf/)
+  ipc/                       One file per domain: settings, pdf, window, member, account, category, transaction, import, rule, subscription, budget, overview, recurring, notifications
+  services/                  Business logic (settings, members, accounts, categories, transactions, rules, budgets, overview, recurring, notifications + notification-providers + notification-toasts, import/, pdf/)
   services/pdf/              report-pdf.ts (ReportDocument → PDF, pdf-lib), pdf-export.ts (save dialog), pdf-text.ts
   db/                        migrate.ts, prisma.ts, db-path.ts, pragmas.ts (journal mode), startup-backup.ts
 src/shared/                  Pure code used by both processes
