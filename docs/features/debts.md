@@ -119,5 +119,5 @@ page, that meant a separate bank app for each loan plus mental arithmetic; now o
 
 ## Later
 
-Projections (#11) and net worth (#18) use the remaining balance. Variable rates are covered for now by **Set
+Instalments feed [projections](projections.md) (#11) as bill rules; net worth (#18) will use the remaining balance. Variable rates are covered for now by **Set
 balance from statement**.

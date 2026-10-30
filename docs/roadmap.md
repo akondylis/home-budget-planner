@@ -6,7 +6,7 @@ As of 2026-10-30 · Andrew Kondylis
 
 The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
 The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
-Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **10 items** are queued
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **9 items** are queued
 in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
 decision.
 
@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-10-30 | Projections | Month-end balance for the next 6, 12 or 24 months (12 by default, decided 2026-10-30) from today's money (vouchers apart), bills, instalments and income rules on their dates and the budget plan (the larger of plan and bills per category; a month with no plan repeats this month's, so a one-off never spreads, decided 2026-10-30); lowest point and the month it goes below €0 with **Open budget**; chart + month table with each month's categories · [projections](features/projections.md) |
 | 2026-10-30 | Yearly budget | **Month \| Year** on the Budget page: 12-month plan grid edited in place with what was spent and over marks per month, fills for empty months (from a month's plan, the bills or one amount; never overwrite, decided 2026-10-30); **vs last year** compares actual spending over the same dates (decided 2026-10-30); printable landscape sheet. Pay-period budgeting moved to #20 (decided 2026-10-30) · [budget](features/budget.md) |
 | 2026-10-30 | Debts & loans | Bank loans with interest (monthly schedule, interest before payment) and interest-free card instalments (decided 2026-10-30), plus money owed by or to relatives (both ways, decided 2026-10-30); what is left, payoff date and schedule; instalments are bill rules, so imported rows tick them off and the bell says **Instalment due** (decided 2026-10-30); balance from a statement, extra payments; **Snowball / Avalanche** plan with an extra monthly amount · [debts & loans](features/debts.md) |
 | 2026-10-30 | Notifications | Sidebar bell for bills due and overdue (remind N days before, household-wide in Settings or per bill, decided 2026-10-30), income not come in, planned categories over budget, rows to categorise and accounts not imported for 30 days; one click to **Mark as paid**, **Open budget**, **Categorise** or **Import**; Windows toasts for what is due today or late while the app is open, on/off in Settings (decided 2026-10-30). Instalment due added with Debts & loans · [notifications](features/notifications.md) |
@@ -55,7 +56,6 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
 | 17 | Payment calendar *(new)* | M | Amounts due by date with paid marks, pay days across the year; week starts Monday or Sunday | #7 | — |
-| 11 | Projections | M | Balance forecast per month from rules, instalments and planned income | #7, #9 | Horizon (6/12/24 months) |
 | 20 | Pay-period budgeting *(new)* | M–L | Months that start on pay day (e.g. the 25th) for the budget, carry, Overview and notifications | Yearly budget | Which day; per household or per income? |
 
 ### Insight & data

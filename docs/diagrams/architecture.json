@@ -452,6 +452,26 @@
       ]
     },
     {
+      "id": "projection",
+      "title": "Projections",
+      "screen": [
+        "Projections page",
+        "(sidebar, Ctrl+K)"
+      ],
+      "handler": "ipc/projection.ts",
+      "service": [
+        "services/projections.ts",
+        "shared/projection.ts (maths)"
+      ],
+      "store": "SQLite · Accounts, Bills, Budget",
+      "calls": [
+        {
+          "api": "getProjection",
+          "channel": "projection:get"
+        }
+      ]
+    },
+    {
       "id": "notification",
       "title": "Notifications",
       "screen": [
