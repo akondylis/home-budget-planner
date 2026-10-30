@@ -27,9 +27,31 @@ export async function exportReportPdf(report: unknown, fileName: unknown, dialog
   return { success: true, filePath }
 }
 
-/** Opens a file the app just saved in its default program. Throws: 'OPEN_FILE_FAILED' */
+/**
+ * Saves CSV text (built in the renderer, which has the translations) where the user picks.
+ * Throws: 'INVALID_INPUT', 'CSV_EXPORT_FAILED'
+ */
+export async function saveCsv(content: unknown, fileName: unknown, dialogTitle: unknown): Promise<ExportResult> {
+  if (typeof content !== 'string') throw new Error('INVALID_INPUT')
+  const name = sanitizeFileName(typeof fileName === 'string' && fileName.trim() ? fileName : 'report')
+  const { filePath, canceled } = await dialog.showSaveDialog({
+    title: typeof dialogTitle === 'string' ? dialogTitle : undefined,
+    defaultPath: `${name}.csv`,
+    filters: [{ name: 'CSV', extensions: ['csv'] }],
+  })
+  if (canceled || !filePath) return { success: false }
+  try {
+    writeFileSync(filePath, content, 'utf8')
+  } catch (err) {
+    console.error('[CSV] Save failed:', err)
+    throw new Error('CSV_EXPORT_FAILED')
+  }
+  return { success: true, filePath }
+}
+
+/** Opens a file the app just saved (a PDF or a CSV) in its default program. Throws: 'OPEN_FILE_FAILED' */
 export async function openSavedFile(filePath: unknown): Promise<void> {
-  if (typeof filePath !== 'string' || !filePath.toLowerCase().endsWith('.pdf')) throw new Error('OPEN_FILE_FAILED')
+  if (typeof filePath !== 'string' || !/\.(pdf|csv)$/i.test(filePath)) throw new Error('OPEN_FILE_FAILED')
   const error = await shell.openPath(filePath)
   if (error) throw new Error('OPEN_FILE_FAILED')
 }

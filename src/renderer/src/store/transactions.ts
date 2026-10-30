@@ -7,6 +7,8 @@ export const PAGE_SIZES = [50, 100, 200]
 export interface LogFilter {
   /** 'yyyy-MM'; null = every month */
   month: string | null
+  /** 'yyyy-MM-dd' days, both included (from Reports); never set together with `month` */
+  range: { from: string; to: string } | null
   accountId: string | null
   categoryType: CategoryType | null
   categoryId: string | null
@@ -23,6 +25,7 @@ export const currentMonth = () => todayDateOnly().slice(0, 7)
 
 export const EMPTY_FILTER = (): LogFilter => ({
   month: currentMonth(),
+  range: null,
   accountId: null,
   categoryType: null,
   categoryId: null,
@@ -82,7 +85,13 @@ export const useTransactionsStore = create<TransactionsStore>()((set, get) => ({
   searchFocus: 0,
   selected: [],
   setFilter: patch => {
-    set(s => ({ filter: { ...s.filter, ...patch }, page: 0, selected: [] }))
+    set(s => {
+      const filter = { ...s.filter, ...patch }
+      // A month and a range never both apply: the one just set wins
+      if (patch.range) filter.month = null
+      else if (patch.month) filter.range = null
+      return { filter, page: 0, selected: [] }
+    })
     void get().fetch()
   },
   setPage: page => {
@@ -109,6 +118,8 @@ export const useTransactionsStore = create<TransactionsStore>()((set, get) => ({
     try {
       const data = await window.api.listTransactions({
         month: filter.month ?? undefined,
+        from: filter.range?.from,
+        to: filter.range?.to,
         accountId: filter.accountId ?? undefined,
         categoryType: filter.categoryType ?? undefined,
         categoryId: filter.categoryId ?? undefined,

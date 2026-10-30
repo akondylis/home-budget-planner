@@ -5,6 +5,8 @@ import { Sidebar } from './components/shell/Sidebar'
 import { OverviewScreen } from './pages/OverviewScreen'
 import { PlannedScreen } from './pages/PlannedScreen'
 import { ProjectionsScreen } from './pages/ProjectionsScreen'
+import { ReportsScreen } from './pages/ReportsScreen'
+import type { ReportRowsFilter } from './components/reports/ReportTabs'
 import { AccountsScreen } from './pages/AccountsScreen'
 import { TransactionsScreen } from './pages/TransactionsScreen'
 import { TransactionForm } from './components/transactions/TransactionForm'
@@ -202,6 +204,19 @@ export default function App() {
     setView('transactions')
   }
 
+  /** Reports: the rows behind a number, on the report's own days */
+  function showReportRows(f: ReportRowsFilter) {
+    useTransactionsStore.getState().setFilter({
+      ...EMPTY_FILTER(),
+      month: null,
+      range: f.range,
+      categoryId: f.categoryId ?? null,
+      memberId: f.memberId ?? null,
+      uncategorised: f.uncategorised ?? false,
+    })
+    setView('transactions')
+  }
+
   function showMonth(month: string) {
     useTransactionsStore.getState().setFilter({ ...EMPTY_FILTER(), month })
     setView('transactions')
@@ -332,6 +347,7 @@ export default function App() {
           />
         )
       case 'recurring': return <RecurringScreen />
+      case 'reports': return <ReportsScreen onOpenRows={showReportRows} />
       case 'projections':
         return <ProjectionsScreen onOpenBudget={openBudget} onOpenAccounts={() => setView('accounts')} onOpenRecurring={() => setView('recurring')} />
       case 'debts': return <DebtsScreen />

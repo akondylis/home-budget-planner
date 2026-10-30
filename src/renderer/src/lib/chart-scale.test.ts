@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { chartMonthLabel, chartScale, labelEvery, niceStep, repeatedPlanMonth } from './projection'
+import { chartMonthLabel, chartScale, labelEvery, niceStep } from './chart-scale'
+import { repeatedPlanMonth } from './projection'
 import type { Projection, ProjectionMonth } from '../../../shared/projection'
 
 describe('chart scale', () => {

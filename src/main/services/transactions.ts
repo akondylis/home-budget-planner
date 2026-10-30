@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../db/prisma'
 import type { Prisma } from '../../../prisma/generated/client/client'
 import { assertMember } from './members'
-import { dateOnlyToDate, dateToDateOnly, isDateOnly, isMonth, monthRange } from '../../shared/date-only'
+import { dateOnlyToDate, dateToDateOnly, isDateOnly, dayRange, isMonth, monthRange } from '../../shared/date-only'
 import {
   CATEGORY_TYPES,
   LOG_SORT_KEYS,
@@ -49,6 +49,9 @@ const transferInput = z.object({
 
 const filterInput = z.object({
   month: z.string().refine(isMonth).optional(),
+  /** A date range, both days included (Reports); used instead of `month` */
+  from: z.string().refine(isDateOnly).optional(),
+  to: z.string().refine(isDateOnly).optional(),
   accountId: z.string().optional(),
   categoryType: z.enum(CATEGORY_TYPES).optional(),
   categoryId: z.string().optional(),
@@ -99,6 +102,7 @@ async function assertMembers(memberId: string | null | undefined, createdByMembe
 function filterWhere(f: z.infer<typeof filterInput>): Prisma.TransactionWhereInput {
   const and: Prisma.TransactionWhereInput[] = []
   if (f.month) and.push({ bookedAt: monthRange(f.month) })
+  if (f.from && f.to) and.push({ bookedAt: dayRange(f.from, f.to) })
   if (f.accountId) and.push({ accountId: f.accountId })
   if (f.importBatchId) and.push({ importBatchId: f.importBatchId })
   if (f.memberId) and.push({ memberId: f.memberId === HOUSEHOLD ? null : f.memberId })

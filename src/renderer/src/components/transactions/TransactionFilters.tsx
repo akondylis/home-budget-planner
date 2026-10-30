@@ -10,11 +10,17 @@ import { CATEGORY_TYPES, type CategoryType } from '../../../../shared/ledger'
 import { HOUSEHOLD } from '../../../../shared/members'
 import { MemberDot } from '../members/MemberDot'
 import { activeMembers } from '../../lib/members'
+import { formatDate } from '../../lib/date-format'
 
 /** "October 2026" in the app language */
 export function monthLabel(month: string, lang: string): string {
   const [y, m] = month.split('-').map(Number)
   return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'el-GR', { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1))
+}
+
+/** "01/01/2026 – 30/10/2026": a range opened from Reports */
+export function rangeLabel(range: { from: string; to: string }): string {
+  return `${formatDate(range.from)} – ${formatDate(range.to)}`
 }
 
 const SEARCH_DELAY_MS = 250
@@ -78,8 +84,11 @@ export function TransactionFilters() {
           onClick={() => filter.month && setFilter({ month: addMonths(filter.month, -1) })}
         />
         <span className="min-w-36 text-center text-sm font-medium text-fg first-letter:uppercase">
-          {filter.month ? monthLabel(filter.month, i18n.language) : t('log.all_months')}
+          {filter.range ? rangeLabel(filter.range) : filter.month ? monthLabel(filter.month, i18n.language) : t('log.all_months')}
         </span>
+        {filter.range && (
+          <IconButton icon="close" size="sm" label={t('log.range_clear')} onClick={() => setFilter({ range: null, month: currentMonth() })} />
+        )}
         <IconButton
           icon="chevron-down"
           className="-rotate-90"
@@ -88,7 +97,10 @@ export function TransactionFilters() {
           onClick={() => filter.month && setFilter({ month: addMonths(filter.month, 1) })}
         />
       </div>
-      <FilterChip active={filter.month === null} onClick={() => setFilter({ month: filter.month ? null : currentMonth() })}>
+      <FilterChip
+        active={filter.month === null && filter.range === null}
+        onClick={() => setFilter(filter.month || filter.range ? { month: null, range: null } : { month: currentMonth() })}
+      >
         {t('log.all_months')}
       </FilterChip>
 

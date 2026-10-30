@@ -109,6 +109,11 @@ contextBridge.exposeInMainWorld('api', {
   // ── Overview ────────────────────────────────────────────────────────────────
   getOverview:       (month: string)                  => ipcRenderer.invoke('overview:get', month),
   getProjection:     (months: number)                 => ipcRenderer.invoke('projection:get', months),
+  reportCategories:  (input: unknown)                 => ipcRenderer.invoke('report:categories', input),
+  reportTrend:       (input: unknown)                 => ipcRenderer.invoke('report:trend', input),
+  reportMembers:     (input: unknown)                 => ipcRenderer.invoke('report:members', input),
+  reportBalances:    (input: unknown)                 => ipcRenderer.invoke('report:balances', input),
+  saveCsv:           (content: string, fileName: string, title: string) => ipcRenderer.invoke('report:saveCsv', content, fileName, title),
 
   // ── Notifications ───────────────────────────────────────────────────────────
   listNotifications:        ()               => ipcRenderer.invoke('notification:list'),

@@ -197,6 +197,9 @@ export interface TransactionRow {
 export interface TransactionFilter {
   /** 'yyyy-MM' */
   month?: string
+  /** 'yyyy-MM-dd' days, both included; used instead of `month` */
+  from?: string
+  to?: string
   accountId?: string
   categoryType?: CategoryType
   categoryId?: string

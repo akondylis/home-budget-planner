@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Banner, Button, ConfirmDialog, EmptyCard, Money, PageHeader, Pagination, Spinner, StatTile, joinMeta } from '../components/ui'
-import { TransactionFilters, monthLabel } from '../components/transactions/TransactionFilters'
+import { TransactionFilters, monthLabel, rangeLabel } from '../components/transactions/TransactionFilters'
 import { TransactionList } from '../components/transactions/TransactionList'
 import { activeAccounts, useLedgerStore } from '../store/ledger'
 import { EMPTY_FILTER, PAGE_SIZES, currentMonth, useTransactionsStore } from '../store/transactions'
@@ -84,7 +84,7 @@ export function TransactionsScreen({ onGoToAccounts, onImport, onManageCategorie
     <PageHeader
       title={t('log.title')}
       subtitle={joinMeta([
-        filter.month ? monthLabel(filter.month, i18n.language) : t('log.all_months'),
+        filter.range ? rangeLabel(filter.range) : filter.month ? monthLabel(filter.month, i18n.language) : t('log.all_months'),
         account?.name,
         data && t('log.count', { count: data.total }),
       ])}
@@ -196,7 +196,7 @@ export function TransactionsScreen({ onGoToAccounts, onImport, onManageCategorie
           </EmptyCard>
         ) : filtered ? (
           <EmptyCard icon="filter" title={t('log.no_match_title')} body={t('log.no_match_body')}>
-            <Button icon="close" onClick={() => setFilter({ ...EMPTY_FILTER(), month: filter.month })}>{t('ui.filter_clear_all')}</Button>
+            <Button icon="close" onClick={() => setFilter({ ...EMPTY_FILTER(), month: filter.month, range: filter.range })}>{t('ui.filter_clear_all')}</Button>
           </EmptyCard>
         ) : (
           <EmptyCard

@@ -100,6 +100,11 @@ interface Window {
 
     getOverview:       (month: string) => Promise<import('../../shared/overview').OverviewMonth>
     getProjection:     (months: number) => Promise<import('../../shared/projection').Projection>
+    reportCategories:  (input: { range: import('../../shared/reports').DateRange; compare: import('../../shared/reports').CompareMode; direction: import('../../shared/reports').CategoryDirection; level: import('../../shared/reports').CategoryLevel }) => Promise<import('../../shared/reports').CategoryReport>
+    reportTrend:       (input: { range: import('../../shared/reports').DateRange }) => Promise<import('../../shared/reports').TrendReport>
+    reportMembers:     (input: { range: import('../../shared/reports').DateRange; compare: import('../../shared/reports').CompareMode }) => Promise<import('../../shared/reports').MemberReport>
+    reportBalances:    (input: { range: import('../../shared/reports').DateRange }) => Promise<import('../../shared/reports').BalanceReport>
+    saveCsv:           (content: string, fileName: string, title: string) => Promise<{ success: false } | { success: true; filePath: string }>
 
     listNotifications:        () => Promise<import('../../shared/notifications').AppNotification[]>
     markNotificationsRead:    (keys: string[]) => Promise<void>
