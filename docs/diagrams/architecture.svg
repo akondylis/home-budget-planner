@@ -137,16 +137,18 @@
 <text x="1592" y="184" font-size="13" fill="#57606a">cards, log, Ctrl+K)</text>
 <text x="1592" y="208" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.pickStatement()</text>
 <text x="1592" y="225" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.previewImport()</text>
-<text x="1592" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.commitImport()</text>
-<text x="1592" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listImports()</text>
-<text x="1592" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.undoImport()</text>
+<text x="1592" y="242" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.previewImportText()</text>
+<text x="1592" y="259" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.commitImport()</text>
+<text x="1592" y="276" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.listImports()</text>
+<text x="1592" y="293" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">window.api.undoImport()</text>
 <rect x="1574" y="464" width="300" height="238" rx="10" fill="#fff" stroke="#8250df" stroke-width="2"/>
 <rect x="1574" y="464" width="6" height="238" rx="3" fill="#8250df"/>
 <text x="1592" y="490" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:pickFile'</text>
 <text x="1592" y="507" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:preview'</text>
-<text x="1592" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:commit'</text>
-<text x="1592" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:history'</text>
-<text x="1592" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:undo'</text>
+<text x="1592" y="524" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:previewText'</text>
+<text x="1592" y="541" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:commit'</text>
+<text x="1592" y="558" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:history'</text>
+<text x="1592" y="575" font-size="12" font-family="Consolas, Menlo, monospace" fill="#1f2328">'import:undo'</text>
 <rect x="1574" y="748" width="300" height="104" rx="10" fill="#fff" stroke="#bc4c00" stroke-width="2"/>
 <rect x="1574" y="748" width="6" height="104" rx="3" fill="#bc4c00"/>
 <text x="1592" y="774" font-size="12" font-family="Consolas, Menlo, monospace" font-weight="700" fill="#1f2328">ipc/import.ts</text>

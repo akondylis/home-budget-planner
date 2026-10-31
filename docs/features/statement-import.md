@@ -3,7 +3,8 @@
 **User's job:** get this month's bank and card movements into the budget once, correctly sorted, in under a
 minute, with no fear of doubles. Known formats: Alpha Bank and Eurobank (accounts and cards, CSV; Eurobank's
 reserved card payments), Piraeus (account, Excel), Revolut (account, CSV) and Viva Wallet (an HTML table saved as
-`.xls`). Any other CSV or `.xlsx` goes through the column mapping step once.
+`.xls`). Any other CSV or `.xlsx` goes through the column mapping step once. Meal cards (Up Hellas, Edenred) have no
+export: their list is pasted from the issuer's page (below).
 
 ## UX
 
@@ -34,6 +35,13 @@ reserved card payments), Piraeus (account, Excel), Revolut (account, CSV) and Vi
 - **Errors:** an unreadable or too large file, a file with no movements ("choose the statement export") and an
   expired preview (**Read again**) are explained in place. A debit card's own export (Eurobank, Alpha, Piraeus)
   stops with "its payments are already on the account statement; import that instead" (user, 2026-11-01).
+- **Meal cards (paste):** for a meal-voucher card step 1 is a paste box: how to copy the list from the issuer's
+  page (Edenred: scroll to the oldest month first), and a live line under the box, "Found 12 payments and 2 top-ups ·
+  1 declined payment left out" or "No transactions found…". **Review transactions** (primary, Ctrl+Enter) goes to
+  the usual review; **Open saved page…** reads the page the browser saved (`.mhtml`/`.html`) instead. Top-ups start
+  in **Meal vouchers**; nothing pairs as a transfer; the history names it "Pasted text" (user, 2026-11-01).
+- **Dates after today:** a row booked after today (a typo on the bank's page) gets an **After today** badge and
+  starts unticked, with "check the date on the card's page" (user, 2026-11-01).
 - **Pending and IBAN rows:** a reserved card payment carries a **Pending** badge (also in the log). Money out to the
   IBAN of an own account (Accounts › IBAN) starts as a transfer to it ("Sent to your account Savings (its IBAN)");
   any other IBAN gets a quiet line: add it to the account if it is yours, and read the file again.
@@ -108,9 +116,9 @@ Each row ends with one status, from exact to fuzzy:
 
 | Path | Role |
 | --- | --- |
-| `src/main/services/import/` | `decode`, `csv`, `xlsx`, `html-table`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile` (pure), `picked-files`, `import-service` (preview, commit, undo, history) |
+| `src/main/services/import/` | `decode`, `csv`, `xlsx`, `html-table`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile`, `card-list` (meal-card page/paste) (pure), `picked-files`, `import-service` (preview, commit, undo, history) |
 | `src/main/ipc/import.ts` | Thin handlers |
-| `src/renderer/src/components/import/` | `ImportWizard`, `ColumnMappingStep`, `ImportReview`, `RulePrompt`, `ImportHistory`, `ReconciliationNote` |
+| `src/renderer/src/components/import/` | `ImportWizard`, `PasteStep`, `ColumnMappingStep`, `ImportReview`, `RulePrompt`, `ImportHistory`, `ReconciliationNote` |
 | `src/renderer/src/lib/import-review.ts` | Row defaults, decisions, counts, filters, same-merchant fill, mapping form |
 | `src/renderer/src/store/import.ts` | Wizard and history open state; the last import for the banner |
 | `src/shared/statement-import.ts` | Shared shapes |
@@ -121,6 +129,7 @@ Each row ends with one status, from exact to fuzzy:
 | --- | --- | --- |
 | `import:pickFile` | `({ title, filterName })` → `{ fileId, fileName }` or `null` | — |
 | `import:preview` | `(accountId, fileId, mapping?)` → `PreviewResult` (`ok: false` with `NO_ROWS`/`UNKNOWN_FORMAT`/`DEBIT_CARD_FILE` and a sample) | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND`, `IMPORT_FILE_UNREADABLE`, `IMPORT_FILE_TOO_LARGE` |
+| `import:previewText` | `(accountId, text)` → `PreviewResult` (a meal card's pasted list; `NO_ROWS` when none) | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND`, `IMPORT_TEXT_TOO_LONG` |
 | `import:commit` | `({ previewId, decisions })` → `CommitResult` (counts, batch id, reconciliation) | `INVALID_INPUT`, `IMPORT_PREVIEW_EXPIRED`, `IMPORT_NOTHING_TO_IMPORT`, `SAME_ACCOUNT`, `ACCOUNT_NOT_FOUND` |
 | `import:history` | `(accountId?)` → `ImportHistoryItem[]` | — |
 | `import:undo` | `(batchId)` → `{ removedCount }` | `INVALID_INPUT`, `IMPORT_NOT_FOUND`, `IMPORT_ALREADY_UNDONE` |
@@ -132,4 +141,6 @@ Rules (`rule:*`) are listed in [transactions.md](transactions.md#ipc).
 `services/import/import-engine.test.ts` (decode, CSV, `.xlsx`, HTML table, presets and header search, Piraeus,
 Revolut, Viva, Eurobank reserved and Alpha shapes, debit-card files, own IBANs, pending twins, amounts, dates, fingerprints, dedupe, transfers, rules), `reconcile.test.ts`, `src/main/__tests__/statement-import.test.ts` (overlapping files,
 same file, double click, twin link, pending → booked, own-IBAN transfer, card payment pairing, ATM → Cash, column mapping saved, balance check, undo)
-and `lib/import-review.test.ts` (row defaults, decisions, filters, same-merchant fill, mapping form).
+`card-list.test.ts` (Up Hellas and Edenred shapes, declined rows, `.mhtml`, top-ups, no pairing, dates after today), the
+*meal-card paste* cases in `statement-import.test.ts` (top-up category, re-paste, hand-typed twin, too long),
+and `lib/import-review.test.ts` (row defaults, dates after today, decisions, filters, same-merchant fill, mapping form).

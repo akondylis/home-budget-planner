@@ -39,7 +39,7 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
   turned into a transfer: it loses its category and member, and the other side is written in the row's import.
 - **Meal-voucher cards** (Edenred, Up Hellas; kind `MEAL_VOUCHER`): the employer's top-up is income in **Meal
   vouchers** (created with the first card when missing), food bought with the card is an ordinary expense. Money never
-  leaves the card by transfer (`VOUCHER_NO_TRANSFER_OUT`; transfers in are allowed), it is never imported, and once
+  leaves the card by transfer (`VOUCHER_NO_TRANSFER_OUT`; transfers in are allowed), its rows come from the issuer's page pasted into the import (never paired as transfers), and once
   parents exist the card names its holder (`HOLDER_REQUIRED`). Its balance is not "spendable": totals show it beside
   the accounts total, and an expense that takes it below zero is warned about, not refused. Feature doc:
   [features/meal-vouchers.md](features/meal-vouchers.md).

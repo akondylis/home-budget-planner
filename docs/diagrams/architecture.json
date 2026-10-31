@@ -210,6 +210,10 @@
           "channel": "import:preview"
         },
         {
+          "api": "previewImportText",
+          "channel": "import:previewText"
+        },
+        {
           "api": "commitImport",
           "channel": "import:commit"
         },

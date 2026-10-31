@@ -12,8 +12,9 @@ Starts at sidebar › **Accounts & cards** › **New account** › kind **Meal-v
   app is pre-picked). The opening balance hint asks for what the provider's app shows today; the card row takes
   the last 4 digits.
 - **Account card:** fork-and-knife icon, "Voucher balance", a **Food only** badge (tooltip: not counted in the
-  total) and, below zero, a **Below zero** warning badge. Source line "Entered by hand", as for cash;
-  only **Add transaction**, no import.
+  total) and, below zero, a **Below zero** warning badge. **Import statement** opens the paste step: the list copied from the
+  issuer's page (or its saved page) goes through the usual review, top-ups in **Meal vouchers**, declined payments
+  left out ([statement import](statement-import.md#ux), user 2026-11-01).
 - **Page header:** the accounts total leaves voucher balances out and adds them beside it:
   "Total of all accounts: €2.340,00 • Meal vouchers: €230,00" (also in the filtered "Total shown" line).
 - **Top-up:** Add income, account = the card, category **Meal vouchers** (the payee default remembers it after the
@@ -45,7 +46,8 @@ Starts at sidebar › **Accounts & cards** › **New account** › kind **Meal-v
 | `src/main/services/accounts.ts` | issuer check, `assertVoucherHolders`, top-up category on save |
 | `src/main/services/seed.ts` | `meal_vouchers` starter, `ensureVoucherCategory` |
 | `src/main/services/transactions.ts` | no transfer out of a card (create, edit, link) |
-| `src/main/services/import/import-service.ts` | voucher rows left out of transfer pairing |
+| `src/main/services/import/import-service.ts` | voucher rows left out of transfer pairing; no pairing when importing into a card |
+| `src/main/services/import/card-list.ts` | the issuer's pasted list or saved page → rows |
 | `src/renderer/src/lib/ledger.ts` | `isImportable`, `canSendTransfer`, `voucherShortfall`, holder check in `parseAccountDraft` |
 | `components/accounts/AccountForm.tsx`, `AccountCard.tsx`, `pages/AccountsScreen.tsx` | form, badges, totals |
 | `components/transactions/TransactionForm.tsx` | From picker, overdraw warning |
