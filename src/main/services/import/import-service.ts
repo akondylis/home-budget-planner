@@ -19,7 +19,7 @@ import { readStatement } from './read-statement'
 import { buildPreview } from './build-preview'
 import { fileHash, payeeKey } from './fingerprint'
 import { sortRules } from './apply-rules'
-import { refKey, TWIN_WINDOW_DAYS } from './dedupe'
+import { PENDING_WINDOW_DAYS, refKey } from './dedupe'
 import { TRANSFER_WINDOW_DAYS } from './transfer-match'
 import { parseSavedMapping } from './profiles'
 import { closingBalance, type StatementBalance } from './reconcile'
@@ -77,17 +77,23 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
   const to = dates[dates.length - 1] ?? '1970-01-01'
   const hash = fileHash(bytes)
 
-  const [known, manual, others, rules, categorised, sameBatch] = await Promise.all([
+  const [known, manual, others, rules, categorised, sameBatch, withIban] = await Promise.all([
+    // Pending rows are not "already imported": the booked row replaces them (as a twin below)
     prisma.transaction.findMany({
-      where: { accountId, OR: [{ fingerprint: { not: null } }, { bankReference: { not: null } }] },
+      where: { accountId, pending: false, OR: [{ fingerprint: { not: null } }, { bankReference: { not: null } }] },
       select: { fingerprint: true, bankReference: true, amountCents: true },
     }),
     prisma.transaction.findMany({
       where: {
-        accountId, fingerprint: null, transferId: null,
-        bookedAt: { gte: shift(from, -TWIN_WINDOW_DAYS), lte: shift(to, TWIN_WINDOW_DAYS) },
+        accountId,
+        bookedAt: { gte: shift(from, -PENDING_WINDOW_DAYS), lte: shift(to, PENDING_WINDOW_DAYS) },
+        OR: [
+          // Entered by hand, or the other side of a transfer written by another account's import
+          { fingerprint: null },
+          { pending: true },
+        ],
       },
-      select: { id: true, bookedAt: true, amountCents: true, payee: true },
+      select: { id: true, bookedAt: true, amountCents: true, payee: true, pending: true },
     }),
     prisma.transaction.findMany({
       where: {
@@ -105,6 +111,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
       take: 5000,
     }),
     prisma.importBatch.findFirst({ where: { accountId, fileHash: hash, undoneAt: null }, orderBy: { importedAt: 'desc' } }),
+    prisma.account.findMany({ where: { id: { not: accountId }, archivedAt: null, iban: { not: null } }, select: { id: true, name: true, iban: true } }),
   ])
 
   const history = new Map<string, string>()
@@ -123,6 +130,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     })),
     rules: sortRules(rules),
     history,
+    ownIbans: new Map(withIban.map(a => [a.iban!, { id: a.id, name: a.name }])),
   })
 
   const previewId = cachePreview({
@@ -164,6 +172,8 @@ const commitSchema = z.object({
 function defaultAction(row: PreviewRow): ImportDecision['action'] {
   if (row.status === 'NEW') return 'IMPORT'
   if (row.status === 'TRANSFER_MATCH') return 'TRANSFER'
+  // The booked row replaces the pending one the bank had reserved
+  if (row.status === 'POSSIBLE_DUPLICATE' && row.duplicateOf?.pending) return 'LINK'
   return 'SKIP'
 }
 
@@ -228,6 +238,8 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
       const clash = await tx.transaction.findFirst({
         where: {
           accountId,
+          // The row being linked (a pending one can share the fingerprint) is not a clash
+          ...(action === 'LINK' && row.duplicateOf ? { id: { not: row.duplicateOf.id } } : {}),
           OR: [{ fingerprint: row.fingerprint }, ...(row.bankReference ? [{ bankReference: row.bankReference, amountCents: row.amountCents! }] : [])],
         },
         select: { id: true },
@@ -240,11 +252,12 @@ export async function commitImport(input: unknown): Promise<CommitResult> {
         bankReference: row.bankReference,
         balanceAfterCents: row.balanceAfterCents,
         valueDate: row.valueDate ? dateOnlyToDate(row.valueDate) : null,
+        pending: row.pending,
       }
 
       if (action === 'LINK') {
         if (!row.duplicateOf) continue
-        // The hand-entered row stays (with its category and payee) and becomes this statement row;
+        // The hand-entered (or pending) row stays, with its category and payee, and becomes this statement row;
         // it is not part of the batch, so undoing the import leaves it in place
         await tx.transaction.update({ where: { id: row.duplicateOf.id }, data: { ...bankData, bookedAt: dateOnlyToDate(row.bookedAt!) } })
         linked++

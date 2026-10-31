@@ -11,7 +11,8 @@ import { bankAfterKindChange } from '../../lib/banks'
 import { centsToInput, parseAccountDraft, type AccountDraft } from '../../lib/ledger'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
 import { todayDateOnly } from '../../../../shared/date-only'
-import { ACCOUNT_KINDS, type AccountKind, type AccountSummary } from '../../../../shared/ledger'
+import { ACCOUNT_KINDS, hasIban, type AccountKind, type AccountSummary } from '../../../../shared/ledger'
+import { formatIban } from '../../../../shared/iban'
 
 export interface AccountFormProps {
   /** null = a new account */
@@ -24,18 +25,19 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const { t } = useTranslation()
   const members = useLedgerStore(s => s.members)
   const formId = useId()
-  const ids = { name: useId(), kind: useId(), balance: useId(), date: useId() }
+  const ids = { name: useId(), kind: useId(), iban: useId(), balance: useId(), date: useId() }
   const [draft, setDraft] = useState<AccountDraft>(() => account
     ? {
         name: account.name,
         kind: account.kind,
         institutionId: account.institutionId,
+        iban: account.iban ? formatIban(account.iban) : '',
         openingBalance: (account.openingBalanceCents < 0 ? '-' : '') + centsToInput(account.openingBalanceCents),
         openingDate: account.openingDate,
         holderMemberId: account.holderMemberId,
         cards: account.cards.map(c => ({ key: c.id, id: c.id, last4: c.last4, holderMemberId: c.holderMemberId })),
       }
-    : { name: '', kind: 'CURRENT', institutionId: null, openingBalance: '', openingDate: todayDateOnly(), holderMemberId: null, cards: [] })
+    : { name: '', kind: 'CURRENT', institutionId: null, iban: '', openingBalance: '', openingDate: todayDateOnly(), holderMemberId: null, cards: [] })
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -124,6 +126,20 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               storedId={account?.institutionId}
             />
           </div>
+          {hasIban(draft.kind) && (
+            <Field label={t('accounts.iban')} htmlFor={ids.iban} error={err(errors.iban)} hint={t('accounts.iban_hint')}>
+              <Input
+                id={ids.iban}
+                value={draft.iban}
+                placeholder="GR00 0000 0000 0000 0000 0000 000"
+                spellCheck={false}
+                autoComplete="off"
+                onChange={e => update({ iban: e.target.value })}
+                onBlur={() => draft.iban.trim() && update({ iban: formatIban(draft.iban) })}
+                className="w-full font-mono tabular-nums"
+              />
+            </Field>
+          )}
           {showMembers && (
             <Field label={t('accounts.holder')} required={voucher} hint={t(voucher ? 'accounts.holder_hint_voucher' : 'accounts.holder_hint')} error={err(errors.holder)}>
               <Segmented<string>

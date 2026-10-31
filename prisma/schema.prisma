@@ -86,6 +86,8 @@ model Account {
   institutionId       String?
   institution         Institution?    @relation(fields: [institutionId], references: [id])
   currency            String          @default("EUR")
+  /// Current and savings accounts only; normalised (no spaces, upper case). Money sent to it from another own account is a transfer
+  iban                String?         @unique
   openingBalanceCents Int             @default(0)
   openingDate         DateTime
   /// Statement preset key, e.g. "alpha-account"
@@ -194,6 +196,8 @@ model Transaction {
   /// Not unique alone: a bank can give the interest and its tax one reference (dedupe keys on reference + amount)
   bankReference     String?
   balanceAfterCents Int?
+  /// A card payment the bank has reserved but not booked yet; the settled statement row replaces it (import LINK)
+  pending           Boolean              @default(false)
   /// The due date this row was marked as paying (by hand); matches found on read are not stored
   occurrence        RecurringOccurrence?
   /// An extra payment on a loan, or a payment of a personal debt with no schedule

@@ -241,6 +241,7 @@ async function toRows(rows: FullRow[]): Promise<TransactionRow[]> {
       transferAccountId: other?.accountId ?? null,
       transferAccountName: other?.account.name ?? null,
       importBatchId: r.importBatchId,
+      pending: r.pending,
       memberId: r.memberId,
       memberName: r.member?.name ?? null,
       memberColour: (r.member?.colour as MemberColour | undefined) ?? null,

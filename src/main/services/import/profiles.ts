@@ -2,7 +2,9 @@
 //
 // The Alpha Bank and Eurobank layouts (column positions) are the ones the household's
 // own converter has read their exports with for years. Piraeus (account, .xlsx) and
-// Revolut (account, CSV) were taken from real exports on 2026-10-30. The header
+// Revolut (account, CSV) were taken from real exports on 2026-10-30; Viva Wallet (an
+// HTML table named .xls), Eurobank's reserved card payments and the Alpha account
+// header from real exports on 2026-10-31. The header
 // aliases are a fallback for when a bank moves its columns. A file neither reads goes
 // to the column-mapping step, and that mapping is saved on the account.
 
@@ -41,6 +43,11 @@ export interface LayoutExtras {
   keep?: { column: number; values: string[] }[]
   /** The row's currency; a row not in the account's currency cannot be read */
   currency?: number
+  /**
+   * Card payments the bank has reserved but not booked: every row of the file (Eurobank's
+   * reserved file), or rows whose column is empty (Viva: no post date yet)
+   */
+  pending?: 'all' | { whenEmpty: number }
 }
 
 // Words Greek banks put in their column headers
@@ -71,15 +78,24 @@ const card = (key: ProfileKey, layout?: StatementLayout): StatementProfile => {
   return { ...base, options: { ...base.options, invertSign: true } }
 }
 
-// Alpha account: the amount has no sign; a flag column says Π (money in) or Χ (money out)
+// Alpha account: the amount has no sign; a flag column says Π (money in) or Χ (money out).
+// The real export heads its date column "Ημ/νία" (a line above has "Ημ/νία" too, without "Ποσό").
 const ALPHA_ACCOUNT: StatementLayout = {
-  header: { contains: ['Ημερομηνία', 'Ποσό'] },
+  header: { contains: ['Αιτιολογία', 'Ποσό'] },
   columns: { date: 1, description: 2, amount: 6, dcFlag: 7 },
   amountMode: 'AMOUNT_WITH_DC_FLAG',
 }
 const ALPHA_CARD: StatementLayout = { header: { contains: ['Ημ/νία συναλλαγής'] }, columns: { date: 0, description: 1, amount: 4 }, amountMode: 'SIGNED' }
 // Eurobank prints the same columns for the account and the card
 const EUROBANK: StatementLayout = { header: { row: 0 }, columns: { date: 0, description: 2, amount: 3 }, amountMode: 'SIGNED' }
+// Eurobank's reserved debit-card payments: ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ, ΗΜ/ΝΙΑ ΕΓΓΡΑΦΗΣ (the day it will be booked), ΠΕΡΙΓΡΑΦΗ, ΠΟΣΟ (signed).
+// Imported into the current account as pending; the account statement's row replaces each one later.
+const EUROBANK_RESERVED: StatementLayout = {
+  header: { contains: ['ΗΜ/ΝΙΑ ΕΓΓΡΑΦΗΣ'] },
+  columns: { date: 0, description: 2, amount: 3 },
+  amountMode: 'SIGNED',
+  extras: { pending: 'all' },
+}
 // Piraeus account (.xlsx, below a few lines about the account): Κατηγορία, Περιγραφή Συναλλαγής, Ημ/νία Συναλλαγής,
 // Σχόλια / Κωδικός Αναφοράς, Ποσό, Νόμισμα, Προοδευτικό Λογιστικό Υπόλοιπο, Νόμισμα. The description is the bank's
 // generic text ("ΜΕΤΑΦΟΡΑ ΣΕ ΛΟΓ.ΤΡΙΤΟΥ"); who it went to is in the comments.
@@ -98,26 +114,69 @@ const REVOLUT: StatementLayout = {
   extras: { fee: 6, currency: 7, keep: [{ column: 8, values: ['COMPLETED'] }, { column: 1, values: ['Current'] }] },
 }
 
+// Viva Wallet (HTML table): Transaction ID, Post Date, Post Time, Transaction Date, Description, Card Number, Currency,
+// Amount (signed), Balance, Available, Holds. The transaction date is the booked date (user, 2026-10-31); fees come as
+// rows of their own. A row with no post date yet is taken as pending (assumed: the sample file had none).
+const VIVA: StatementLayout = {
+  header: { contains: ['Transaction Date', 'Post Date'] },
+  columns: { date: 3, description: 4, amount: 7, balance: 8, reference: 0 },
+  amountMode: 'SIGNED',
+  extras: { currency: 6, pending: { whenEmpty: 1 } },
+}
+
 export const PROFILES: Record<ProfileKey, StatementProfile> = {
   'alpha-account': account('alpha-account', ALPHA_ACCOUNT),
   'alpha-card': card('alpha-card', ALPHA_CARD),
   'eurobank-account': account('eurobank-account', EUROBANK),
   'eurobank-card': card('eurobank-card', EUROBANK),
+  'eurobank-reserved': account('eurobank-reserved', EUROBANK_RESERVED),
   'piraeus-account': account('piraeus-account', PIRAEUS_ACCOUNT),
   'revolut-account': account('revolut-account', REVOLUT, { dateOrder: 'YMD', decimalSeparator: '.' }),
+  'viva-account': account('viva-account', VIVA),
   generic: account('generic'),
 }
 
 /**
  * Preset families a bank can name (`Institution.statementPreset`), with the preset for its
  * accounts and its cards. No card preset = a card of that bank reads with the generic card one
- * (no Piraeus card export seen yet); Revolut cards are on the account's statement.
+ * (no Piraeus card export seen yet); Revolut and Viva cards are on the account's statement.
+ * `variants`: other files of the bank's accounts, read with their own preset when their layout fits.
  */
-const PRESET_BANKS: Record<string, { account: ProfileKey; card?: ProfileKey }> = {
+const PRESET_BANKS: Record<string, { account: ProfileKey; card?: ProfileKey; variants?: ProfileKey[] }> = {
   alpha: { account: 'alpha-account', card: 'alpha-card' },
-  eurobank: { account: 'eurobank-account', card: 'eurobank-card' },
+  eurobank: { account: 'eurobank-account', card: 'eurobank-card', variants: ['eurobank-reserved'] },
   piraeus: { account: 'piraeus-account' },
   revolut: { account: 'revolut-account', card: 'revolut-account' },
+  viva: { account: 'viva-account', card: 'viva-account' },
+}
+
+/** The bank's other file presets for an account (none for credit cards, or when a preset is saved on the account) */
+export function variantsFor(account: { importProfile: string | null; statementPreset: string | null; kind: AccountKind }): StatementProfile[] {
+  if (account.kind === 'CREDIT_CARD' || account.importProfile || !account.statementPreset || !Object.hasOwn(PRESET_BANKS, account.statementPreset)) return []
+  return (PRESET_BANKS[account.statementPreset].variants ?? []).map(key => PROFILES[key])
+}
+
+/**
+ * Headers of debit-card exports. Their payments are already on the account statement, so
+ * reading one into a current account would count each payment twice (user, 2026-11-01: stop).
+ * Every `contains` text must be in one header row, and none of `without`.
+ */
+const DEBIT_CARD_FILES: { contains: string[]; without?: string[] }[] = [
+  // Eurobank debit-card-transactions (the account file has a balance column; the reserved file ΗΜ/ΝΙΑ ΕΓΓΡΑΦΗΣ)
+  { contains: ['ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ', 'ΗΜ/ΝΙΑ ΑΞΙΑΣ'], without: ['ΥΠΟΛΟΙΠΟ', 'ΗΜ/ΝΙΑ ΕΓΓΡΑΦΗΣ'] },
+  // Alpha "Κινήσεις κάρτας" (debit cards such as Enter Visa)
+  { contains: ['Ημ/νία συναλλαγής', 'Κατάσταση συναλλαγής'] },
+  // Piraeus "Κινήσεις Χρεωστικών Καρτών"
+  { contains: ['Αριθμός Παραστατικού', 'Ανθρακικό Αποτύπωμα'] },
+]
+
+/** A debit card's own export, picked for an account that is not a credit card */
+export function isDebitCardFile(rows: string[][], kind: AccountKind): boolean {
+  if (kind === 'CREDIT_CARD') return false
+  const has = (row: string[], text: string) => row.some(c => normalise(c).includes(normalise(text)))
+  return rows.slice(0, 30).some(row =>
+    DEBIT_CARD_FILES.some(f => f.contains.every(t => has(row, t)) && !(f.without ?? []).some(t => has(row, t))),
+  )
 }
 
 /** The preset an account starts from: the one saved on it, else its bank's preset family and its kind */
@@ -178,7 +237,7 @@ const OPTIONAL_FIELDS: MappingField[] = ['valueDate', 'balance', 'reference']
  * something else (a changed export falls back to the aliases). Value date, balance and
  * reference come from the header names when present.
  */
-function resolveLayout(rows: string[][], profile: StatementProfile): ResolvedMapping | null {
+export function resolveLayout(rows: string[][], profile: StatementProfile): ResolvedMapping | null {
   const layout = profile.layout
   if (!layout) return null
   const { header } = layout

@@ -93,7 +93,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
         }
         setStep('mapping')
       } else {
-        setError({ message: t('import.no_rows') })
+        setError({ message: t(result.reason === 'DEBIT_CARD_FILE' ? 'import.debit_card_file' : 'import.no_rows') })
         setStep('choose')
       }
     } catch (err) {

@@ -309,6 +309,7 @@ export function TransactionList({ rows }: TransactionListProps) {
               <RowTitle
                 title={title}
                 meta={[
+                  row.pending ? t('log.pending') : null,
                   row.memberName ? t('log.for_member', { name: row.memberName }) : null,
                   row.accountName,
                   row.payee && row.description && row.description !== row.payee ? row.description : null,

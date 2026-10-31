@@ -7,6 +7,7 @@ import { fingerprintRows, payeeKey } from './fingerprint'
 import { matchTransfers, transferHint, type TransferCandidate } from './transfer-match'
 import { suggestCategory, type RuleLike } from './apply-rules'
 import type { ParsedRow } from './parse-rows'
+import { findIbans } from '../../../shared/iban'
 
 export interface PreviewContext extends ExistingRows {
   /** Untransferred rows in the other own accounts, around the statement's dates */
@@ -15,6 +16,18 @@ export interface PreviewContext extends ExistingRows {
   rules: RuleLike[]
   /** Payee key → category last used */
   history: Map<string, string>
+  /** IBAN → the own account (not this one) that has it */
+  ownIbans: Map<string, { id: string; name: string }>
+}
+
+/**
+ * The IBAN a row sends money to or gets it from: an own account's (a transfer, user 2026-10-31)
+ * or someone else's (stays an expense or income)
+ */
+function ibanIn(description: string, ownIbans: PreviewContext['ownIbans']): { own: { id: string; name: string } | null; other: string | null } {
+  const ibans = findIbans(description)
+  const own = ibans.map(i => ownIbans.get(i)).find(a => a !== undefined)
+  return own ? { own, other: null } : { own: null, other: ibans[0] ?? null }
 }
 
 export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: PreviewContext): { rows: PreviewRow[]; summary: PreviewSummary } {
@@ -34,6 +47,8 @@ export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: Previe
     // A transfer match too: the user can turn it into a categorised row
     const needsCategory = status === 'NEW' || status === 'POSSIBLE_DUPLICATE' || status === 'TRANSFER_MATCH'
     const key = payeeKey(row.description)
+    // An exact match already found the other side; otherwise an own IBAN in the text says where it went
+    const iban = status === 'NEW' ? ibanIn(row.description, ctx.ownIbans) : { own: null, other: null }
     return {
       line: row.line,
       status,
@@ -46,12 +61,15 @@ export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: Previe
       payeeKey: key,
       balanceAfterCents: row.balanceAfterCents,
       fingerprint: row.fingerprint,
+      pending: row.pending,
       suggestion: needsCategory ? suggestCategory(key, accountId, ctx.rules, ctx.history) : null,
-      duplicateOf: twin ? { id: twin.id, bookedAt: twin.bookedAt, amountCents: twin.amountCents, payee: twin.payee } : null,
+      duplicateOf: twin ? { id: twin.id, bookedAt: twin.bookedAt, amountCents: twin.amountCents, payee: twin.payee, pending: twin.pending } : null,
       transferWith: other
         ? { id: other.id, accountId: other.accountId, accountName: other.accountName, bookedAt: other.bookedAt, amountCents: other.amountCents, description: other.description }
         : null,
-      transferHint: status === 'NEW' ? transferHint(row.description) : null,
+      transferHint: iban.own ? 'OWN_IBAN' : status === 'NEW' ? transferHint(row.description) : null,
+      ibanAccount: iban.own,
+      otherIban: iban.other,
     }
   })
   return { rows, summary: summarise(rows) }

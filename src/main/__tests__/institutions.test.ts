@@ -22,7 +22,7 @@ describe('starter list', () => {
     ])
     expect(list.filter(i => i.kind === 'VOUCHER_ISSUER').map(i => i.id)).toEqual(['inst_edenred', 'inst_up_hellas'])
     expect(list.filter(i => i.statementPreset).map(i => [i.id, i.statementPreset])).toEqual([
-      ['inst_alpha', 'alpha'], ['inst_eurobank', 'eurobank'], ['inst_piraeus', 'piraeus'], ['inst_revolut', 'revolut'],
+      ['inst_alpha', 'alpha'], ['inst_eurobank', 'eurobank'], ['inst_piraeus', 'piraeus'], ['inst_revolut', 'revolut'], ['inst_viva', 'viva'],
     ])
   })
 })

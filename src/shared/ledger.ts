@@ -21,6 +21,11 @@ export function isSpendable(kind: AccountKind): boolean {
   return kind !== 'MEAL_VOUCHER'
 }
 
+/** Accounts with an IBAN of their own (money can be sent to them by bank transfer) */
+export function hasIban(kind: AccountKind): boolean {
+  return kind === 'CURRENT' || kind === 'SAVINGS'
+}
+
 /** Display and picker order */
 export const CATEGORY_TYPES = ['INCOME', 'BILL', 'SUBSCRIPTION', 'EXPENSE', 'DEBT', 'SAVINGS'] as const
 export type CategoryType = (typeof CATEGORY_TYPES)[number]
@@ -54,6 +59,8 @@ export interface AccountSummary {
   institutionId: string | null
   institutionName: string | null
   currency: string
+  /** Normalised; null = not entered (or not a current/savings account) */
+  iban: string | null
   openingBalanceCents: number
   openingDate: string
   /** Opening balance + every transaction */
@@ -92,6 +99,8 @@ export interface AccountInput {
   /** null = no bank; a meal-voucher card names a voucher issuer or none */
   institutionId: string | null
   currency?: string
+  /** Own IBAN, current and savings accounts only; null = none */
+  iban?: string | null
   openingBalanceCents: number
   openingDate: string
   /** null = joint */
@@ -186,6 +195,8 @@ export interface TransactionRow {
   transferAccountId: string | null
   transferAccountName: string | null
   importBatchId: string | null
+  /** A card payment the bank has reserved but not booked yet (replaced when the booked row is imported) */
+  pending: boolean
   /** Who it was for; null = the household */
   memberId: string | null
   memberName: string | null

@@ -256,6 +256,44 @@ describe('statement import', () => {
     await expect(commitImport({ previewId: 'gone' })).rejects.toThrow('IMPORT_PREVIEW_EXPIRED')
     await expect(previewImport('nope', 'x.csv', OCTOBER)).rejects.toThrow('ACCOUNT_NOT_FOUND')
   })
+
+  it('should import reserved card payments as pending and let the booked row replace each one', async () => {
+    const { bankId } = await setup()
+    const reserved = new TextEncoder().encode('"ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ";"ΗΜ/ΝΙΑ ΕΓΓΡΑΦΗΣ";"ΠΕΡΙΓΡΑΦΗ";"ΠΟΣΟ"\n31/10/26;02/11/26;"SKLAVENITIS N CHAL";-23,79')
+    const first = await preview(bankId, reserved, 'debit-card-reserved-transactions.csv')
+    expect(first.rows[0]).toMatchObject({ status: 'NEW', pending: true })
+    await commitImport({ previewId: first.previewId })
+    expect((await listTransactions({ accountId: bankId })).rows).toMatchObject([{ pending: true, amountCents: -2379 }])
+
+    // The same reserved file again only refreshes the pending row
+    expect((await preview(bankId, reserved, 'again.csv')).rows[0]).toMatchObject({ status: 'POSSIBLE_DUPLICATE', duplicateOf: { pending: true } })
+    clearPreviews()
+
+    const booked = await preview(bankId, csv(['02/11/2026;POS SKLAVENITIS N CHAL;-23,79']))
+    expect(booked.rows[0]).toMatchObject({ status: 'POSSIBLE_DUPLICATE', duplicateOf: { pending: true, bookedAt: '2026-10-31' } })
+    expect(await commitImport({ previewId: booked.previewId })).toMatchObject({ importedCount: 0, linkedCount: 1 })
+    const rows = (await listTransactions({ accountId: bankId })).rows
+    expect(rows).toMatchObject([{ pending: false, bookedAt: '2026-11-02', description: 'POS SKLAVENITIS N CHAL', amountCents: -2379 }])
+  })
+
+  it('should send money out to an own IBAN as a transfer to that account, and stop at a debit card file', async () => {
+    const IBAN = 'GR1601101250000000012300695'
+    const { bankId } = await setup()
+    const [savingsId] = await createAccounts([
+      { name: 'Savings', kind: 'SAVINGS', institutionId: 'inst_eurobank', iban: IBAN, openingBalanceCents: 0, openingDate: '2026-09-30' },
+    ])
+    const p = await preview(bankId, csv([`10/10/2026;Money out to IBAN - ${IBAN};-200,00`]))
+    expect(p.rows[0]).toMatchObject({ status: 'NEW', transferHint: 'OWN_IBAN', ibanAccount: { id: savingsId, name: 'Savings' } })
+    await commitImport({ previewId: p.previewId, decisions: [{ line: 2, action: 'TRANSFER', toAccountId: savingsId }] })
+    expect(await balanceOf(savingsId)).toBe(20_000)
+
+    // The savings account's own statement later finds the side already written
+    const incoming = await preview(savingsId, csv(['10/10/2026;ΜΕΤΑΦΟΡΑ ΑΠΟ EUROBANK;200,00']))
+    expect(incoming.rows[0]).toMatchObject({ status: 'POSSIBLE_DUPLICATE' })
+
+    const debitCard = new TextEncoder().encode('"ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ";"ΗΜ/ΝΙΑ ΑΞΙΑΣ";"ΠΕΡΙΓΡΑΦΗ";"ΠΟΣΟ"\n30/10/26;30/10/26;"CINOBO";-9,99')
+    expect(await previewImport(bankId, 'debit-card-transactions.csv', debitCard)).toMatchObject({ ok: false, reason: 'DEBIT_CARD_FILE' })
+  })
 })
 
 describe('undo import', () => {

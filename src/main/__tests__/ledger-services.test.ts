@@ -67,6 +67,20 @@ describe('accounts', () => {
   it('should throw ACCOUNT_NOT_FOUND when updating a missing account', async () => {
     await expect(updateAccount('nope', bank)).rejects.toThrow('ACCOUNT_NOT_FOUND')
   })
+
+  it('should keep one normalised, valid IBAN per current or savings account, and none on other kinds', async () => {
+    const IBAN = 'GR1601101250000000012300695'
+    const id = await createAccount({ ...bank, iban: 'gr16 0110 1250 0000 0001 2300 695' })
+    expect((await listAccounts()).find(a => a.id === id)?.iban).toBe(IBAN)
+    await expect(createAccount({ ...bank, name: 'Other', iban: 'GR17 0110 1250 0000 0001 2300 695' })).rejects.toThrow('IBAN_INVALID')
+    await expect(createAccount({ ...bank, name: 'Other', iban: IBAN })).rejects.toThrow('IBAN_IN_USE')
+    // Saving the same account again keeps it; leaving the field out leaves it as it is
+    await updateAccount(id, { ...bank, iban: IBAN })
+    await updateAccount(id, bank)
+    expect((await listAccounts()).find(a => a.id === id)?.iban).toBe(IBAN)
+    const cashId = await createAccount({ ...cash, iban: 'DE89370400440532013000' })
+    expect((await listAccounts()).find(a => a.id === cashId)?.iban).toBeNull()
+  })
 })
 
 describe('account holders and cards', () => {

@@ -41,6 +41,7 @@ const STATUS_BADGE: Record<RowStatus, { tone: BadgeTone; icon: IconName }> = {
   TRANSFER_MATCH: { tone: 'info', icon: 'arrows-up-down' },
   INVALID: { tone: 'danger', icon: 'alert-triangle' },
 }
+const SETTLES_BADGE: { tone: BadgeTone; icon: IconName } = { tone: 'info', icon: 'refresh' }
 
 // Picker values that are not categories
 const LINK = 'link'
@@ -188,7 +189,9 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
           const choice = choices[row.line]
           const selectable = SELECTABLE.has(row.status)
           const status = shownStatus(row, choice)
-          const badge = STATUS_BADGE[status]
+          // A booked row that replaces a pending one is expected, not a doubt
+          const settles = status === 'POSSIBLE_DUPLICATE' && row.duplicateOf?.pending === true
+          const badge = settles ? SETTLES_BADGE : STATUS_BADGE[status]
           return (
             <ListRow key={row.line} cols={COLS} muted={!choice.include}>
               <div>
@@ -229,7 +232,10 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
               <div className="text-right">
                 {row.amountCents === null ? <span className="text-sm text-fg-muted">—</span> : <Money cents={row.amountCents} signed />}
               </div>
-              <div><Badge tone={badge.tone} icon={badge.icon}>{t(`import.status.${status}`)}</Badge></div>
+              <div className="flex flex-wrap gap-1">
+                <Badge tone={badge.tone} icon={badge.icon}>{settles ? t('import.status_settles') : t(`import.status.${status}`)}</Badge>
+                {row.pending && <Badge tone="neutral" icon="calendar">{t('import.pending')}</Badge>}
+              </div>
             </ListRow>
           )
         })}
@@ -254,7 +260,7 @@ function pickerValue(row: PreviewRow, choice: RowChoice): string | null {
 /** Choices above the categories: link to the hand-entered twin, or keep the transfer the app matched */
 function leadingOptions(row: PreviewRow, t: TFunction): SelectMenuOption<string>[] {
   const options: SelectMenuOption<string>[] = []
-  if (row.status === 'POSSIBLE_DUPLICATE') options.push({ value: LINK, label: t('import.target_link') })
+  if (row.status === 'POSSIBLE_DUPLICATE') options.push({ value: LINK, label: t(row.duplicateOf?.pending ? 'import.target_link_pending' : 'import.target_link') })
   if (row.status === 'TRANSFER_MATCH' && row.transferWith) {
     const { accountName, bookedAt } = row.transferWith
     options.push({ value: MATCHED, label: t('import.target_matched', { account: accountName, date: formatDate(bookedAt) }) })
@@ -276,17 +282,23 @@ function explain(row: PreviewRow, choice: RowChoice, t: TFunction, accounts: Acc
       break
     }
     case 'POSSIBLE_DUPLICATE':
-      return row.duplicateOf
-        ? t('import.why_duplicate', { date: formatDate(row.duplicateOf.bookedAt), payee: row.duplicateOf.payee ?? t('log.no_description') })
-        : null
+      if (!row.duplicateOf) return null
+      if (row.duplicateOf.pending) return t(row.pending ? 'import.why_still_pending' : 'import.why_settles', { date: formatDate(row.duplicateOf.bookedAt) })
+      return t('import.why_duplicate', { date: formatDate(row.duplicateOf.bookedAt), payee: row.duplicateOf.payee ?? t('log.no_description') })
   }
   if (choice.target.kind === 'transfer' && choice.target.toAccountId) {
     const other = accounts.find(a => a.id === (choice.target as { toAccountId: string }).toAccountId)
     const account = other?.name ?? ''
     if (row.transferHint === 'ATM' && other?.kind === 'CASH') return t('import.why_atm', { account })
+    if (row.transferHint === 'OWN_IBAN' && row.ibanAccount?.id === other?.id) {
+      return t(isIncoming(row) ? 'import.why_own_iban_from' : 'import.why_own_iban_to', { account })
+    }
     return t(isIncoming(row) ? 'import.why_transfer_from' : 'import.why_transfer_to', { account })
   }
   if (row.transferHint === 'CARD_PAYMENT') return t('import.why_card_payment')
+  // Someone else's IBAN unless the user says it is theirs: a quiet hint, the row stays as it is
+  // (the IBAN itself is in the bank text above)
+  if (row.otherIban && row.status === 'NEW' && choice.target.kind === 'category') return t('import.why_other_iban')
   const s = row.suggestion
   if (s && choice.target.kind === 'category' && choice.target.categoryId === s.categoryId) {
     return s.source.kind === 'rule' ? t('import.why_rule', { merchant: s.payee ?? (merchantText(row.description) || row.description) }) : t('import.why_history')

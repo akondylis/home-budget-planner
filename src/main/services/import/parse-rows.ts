@@ -16,6 +16,8 @@ export interface ParsedRow {
   description: string
   bankReference: string | null
   balanceAfterCents: number | null
+  /** Reserved by the bank, not booked yet */
+  pending: boolean
   problem?: RowProblem
 }
 
@@ -60,6 +62,10 @@ export function parseStatementDate(text: string, order: DateOrder): string | nul
 
 const cell = (row: string[], index: number | undefined) => (index === undefined ? '' : (row[index] ?? '').trim())
 
+// A long number Excel saved in scientific notation (Alpha's "2,02610150960236E+017"): its last digits
+// are lost, so it cannot tell two rows apart
+const ROUNDED_NUMBER = /^\d+([.,]\d+)?E\+?\d+$/i
+
 /**
  * Rows after the header; lines without a date (totals, notes) are not movements and are left out,
  * as are rows a bank layout's `keep` rule rules out (Revolut's reverted payments).
@@ -101,15 +107,17 @@ export function parseRows(rows: string[][], mapping: ResolvedMapping, currency =
     const foreign = rowCurrency !== '' && rowCurrency !== currency.toUpperCase()
     const valueText = cell(row, c.valueDate)
     const balanceText = cell(row, c.balance)
+    const reference = cell(row, c.reference)
     out.push({
       line: r + 1,
       bookedAt,
       valueDate: valueText ? parseStatementDate(valueText, o.dateOrder) : null,
       amountCents,
       description: [cell(row, c.description), cell(row, x.detail)].filter(Boolean).join(' ').replace(/\s+/g, ' '),
-      bankReference: cell(row, c.reference) || null,
+      bankReference: reference && !ROUNDED_NUMBER.test(reference) ? reference : null,
       // A balance in another currency says nothing about this account
       balanceAfterCents: balanceText && !foreign ? parseStatementAmount(balanceText, o.decimalSeparator) : null,
+      pending: x.pending === 'all' || (x.pending !== undefined && cell(row, x.pending.whenEmpty) === ''),
       ...(bookedAt === null ? { problem: 'DATE' as const }
         : foreign ? { problem: 'CURRENCY' as const }
           : amountCents === null || amountCents === 0 ? { problem: 'AMOUNT' as const } : {}),

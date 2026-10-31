@@ -4,6 +4,8 @@
 import type { IconName } from '../components/shell/icons'
 import { parseMoney } from '../../../shared/money'
 import { isDateOnly } from '../../../shared/date-only'
+import { isValidIban, normaliseIban } from '../../../shared/iban'
+import { hasIban } from '../../../shared/ledger'
 import { merchantText, payeeKey } from '../../../shared/payee-key'
 import { ruleMatches, type RuleLike } from '../../../shared/rule-match'
 import type {
@@ -220,6 +222,8 @@ export interface AccountDraft {
   kind: AccountKind
   /** null = no bank */
   institutionId: string | null
+  /** As typed (spaces allowed); current and savings accounts only */
+  iban: string
   openingBalance: string
   openingDate: string
   /** null = joint */
@@ -227,7 +231,7 @@ export interface AccountDraft {
   cards: CardDraft[]
 }
 
-export type AccountDraftErrors = Partial<Record<'name' | 'openingBalance' | 'openingDate' | 'holder', string>> & {
+export type AccountDraftErrors = Partial<Record<'name' | 'iban' | 'openingBalance' | 'openingDate' | 'holder', string>> & {
   /** Per card key */
   cards?: Record<string, string>
 }
@@ -243,6 +247,8 @@ export function parseAccountDraft(draft: AccountDraft, requireHolder = false): {
   if (!draft.name.trim()) errors.name = 'name_required'
   if (cents === null) errors.openingBalance = 'amount_invalid'
   if (!isDateOnly(draft.openingDate)) errors.openingDate = 'date_required'
+  const iban = hasIban(draft.kind) ? normaliseIban(draft.iban) : ''
+  if (iban && !isValidIban(iban)) errors.iban = 'iban_invalid'
   // Cash has no cards: switching an account to cash lets its cards go
   const cards = draft.kind === 'CASH' ? [] : draft.cards.map(c => ({ ...c, last4: c.last4.trim() }))
   const cardErrors: Record<string, string> = {}
@@ -259,6 +265,7 @@ export function parseAccountDraft(draft: AccountDraft, requireHolder = false): {
       name: draft.name.trim(),
       kind: draft.kind,
       institutionId: draft.institutionId,
+      iban: iban || null,
       openingBalanceCents: cents,
       openingDate: draft.openingDate,
       holderMemberId: draft.holderMemberId,

@@ -2,12 +2,16 @@
 //  - same bank reference and amount, or same fingerprint, as a row already in the account → ALREADY_IMPORTED
 //    (a reference alone is not enough: Alpha gives credit interest and the tax on it one reference)
 //  - a hand-entered row (no fingerprint) in the account with the same amount, ±3 days → POSSIBLE_DUPLICATE
+//  - a pending row (a card payment the bank had reserved) with the same amount, ±7 days → POSSIBLE_DUPLICATE,
+//    linked by default so the booked row replaces it (pending rows are left out of the exact checks above)
 // Layer 1 (same file again) is a banner, decided by the file hash; layer 4 is transfer-match.ts.
 
 import type { RowStatus } from '../../../shared/statement-import'
 import { daysBetween } from '../../../shared/date-only'
 
 export const TWIN_WINDOW_DAYS = 3
+/** A reserved card payment can take a few days more to be booked */
+export const PENDING_WINDOW_DAYS = 7
 
 export interface DedupeRow {
   bookedAt: string | null
@@ -22,13 +26,15 @@ export interface ManualRow {
   bookedAt: string
   amountCents: number
   payee: string | null
+  /** A pending imported row, waiting for the booked one */
+  pending: boolean
 }
 
 export interface ExistingRows {
   fingerprints: Set<string>
   /** refKey() of the account's rows */
   bankReferences: Set<string>
-  /** Rows of this account entered by hand (no fingerprint), not yet linked to a statement */
+  /** Rows of this account entered by hand (no fingerprint) and not yet linked to a statement, and its pending rows */
   manual: ManualRow[]
 }
 
@@ -60,7 +66,8 @@ export function classifyRows(rows: DedupeRow[], existing: ExistingRows): DedupeR
     if (row.fingerprint && existing.fingerprints.has(row.fingerprint)) return { status: 'ALREADY_IMPORTED', duplicateOf: null }
 
     const twin = existing.manual
-      .filter(m => !usedManual.has(m.id) && m.amountCents === row.amountCents && daysBetween(m.bookedAt, row.bookedAt!) <= TWIN_WINDOW_DAYS)
+      .filter(m => !usedManual.has(m.id) && m.amountCents === row.amountCents
+        && daysBetween(m.bookedAt, row.bookedAt!) <= (m.pending ? PENDING_WINDOW_DAYS : TWIN_WINDOW_DAYS))
       .sort((a, b) => daysBetween(a.bookedAt, row.bookedAt!) - daysBetween(b.bookedAt, row.bookedAt!))[0]
     if (twin) {
       usedManual.add(twin.id)

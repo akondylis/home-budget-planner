@@ -36,17 +36,20 @@ export function cashAccounts(accounts: AccountSummary[], importingInto: string):
 
 /**
  * What each row starts as: new rows in with their suggestion, transfers paired,
- * possible duplicates out (ticking one links it), an ATM withdrawal to Cash when there is one.
+ * possible duplicates out (ticking one links it) unless they settle a pending row,
+ * an ATM withdrawal to Cash when there is one, money sent to an own IBAN as a transfer to that account.
  */
 export function initialChoice(row: PreviewRow, cashAccountId: string | null): RowChoice {
   switch (row.status) {
     case 'NEW':
       if (row.transferHint === 'ATM' && cashAccountId) return { include: true, target: { kind: 'transfer', toAccountId: cashAccountId } }
+      if (row.transferHint === 'OWN_IBAN' && row.ibanAccount) return { include: true, target: { kind: 'transfer', toAccountId: row.ibanAccount.id } }
       return { include: true, target: { kind: 'category', categoryId: row.suggestion?.categoryId ?? null } }
     case 'TRANSFER_MATCH':
       return { include: true, target: { kind: 'transfer', toAccountId: null } }
     case 'POSSIBLE_DUPLICATE':
-      return { include: false, target: { kind: 'link' } }
+      // The booked row replaces the pending one
+      return { include: row.duplicateOf?.pending === true, target: { kind: 'link' } }
     default:
       return { include: false, target: { kind: 'category', categoryId: null } }
   }

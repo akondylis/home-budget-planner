@@ -22,7 +22,7 @@ import { matchShortcut } from '../hooks/useShortcuts'
 import type { AccountSummary, CategoryNode, TransactionRow } from '../../../shared/ledger'
 
 const account = (id: string, kind: AccountSummary['kind'] = 'CURRENT', archived = false): AccountSummary => ({
-  id, name: id, kind, institutionId: null, institutionName: null, currency: 'EUR', openingBalanceCents: 0, openingDate: '2026-10-01',
+  id, name: id, kind, institutionId: null, institutionName: null, currency: 'EUR', iban: null, openingBalanceCents: 0, openingDate: '2026-10-01',
   balanceCents: 0, transactionCount: 0, importedUntil: null, archived,
   holderMemberId: null, holderName: null, holderColour: null, cards: [],
 })
@@ -143,7 +143,7 @@ describe('draftFromRow', () => {
   const row: TransactionRow = {
     id: 'r', accountId: 'bank', accountName: 'Bank', bookedAt: '2026-10-05', amountCents: -123405, description: '', payee: 'Lidl',
     note: null, categoryId: 'power', categoryName: 'power', categoryGroupName: 'bills', categoryType: 'BILL',
-    transferId: null, transferAccountId: null, transferAccountName: null, importBatchId: null,
+    transferId: null, transferAccountId: null, transferAccountName: null, importBatchId: null, pending: false,
     memberId: 'm1', memberName: 'Maria', memberColour: 'purple', createdByName: 'Andreas',
   }
 
@@ -188,11 +188,11 @@ describe('meal-voucher cards', () => {
 })
 
 describe('parseAccountDraft', () => {
-  const base = { name: ' Alpha ', kind: 'CREDIT_CARD' as const, institutionId: 'inst_alpha', openingBalance: '-350,00', openingDate: '2026-10-01', holderMemberId: null, cards: [] }
+  const base = { name: ' Alpha ', kind: 'CREDIT_CARD' as const, institutionId: 'inst_alpha', iban: '', openingBalance: '-350,00', openingDate: '2026-10-01', holderMemberId: null, cards: [] }
 
   it('should keep a negative card balance and treat an empty balance as zero', () => {
     expect(parseAccountDraft(base)).toEqual({
-      input: { name: 'Alpha', kind: 'CREDIT_CARD', institutionId: 'inst_alpha', openingBalanceCents: -35000, openingDate: '2026-10-01', holderMemberId: null, cards: [] },
+      input: { name: 'Alpha', kind: 'CREDIT_CARD', institutionId: 'inst_alpha', iban: null, openingBalanceCents: -35000, openingDate: '2026-10-01', holderMemberId: null, cards: [] },
     })
     expect(parseAccountDraft({ ...base, openingBalance: '' })).toMatchObject({ input: { openingBalanceCents: 0 } })
   })
@@ -206,6 +206,13 @@ describe('parseAccountDraft', () => {
     expect(parseAccountDraft({ ...base, holderMemberId: 'm1', cards })).toMatchObject({
       input: { holderMemberId: 'm1', cards: [{ id: 'c1', last4: '1234', holderMemberId: 'm1' }, { last4: '5678', holderMemberId: null }] },
     })
+  })
+
+  it('should keep a valid IBAN of a current account (normalised), flag a wrong one and drop it on a card', () => {
+    const current = { ...base, kind: 'CURRENT' as const }
+    expect(parseAccountDraft({ ...current, iban: 'gr16 0110 1250 0000 0001 2300 695' })).toMatchObject({ input: { iban: 'GR1601101250000000012300695' } })
+    expect(parseAccountDraft({ ...current, iban: 'GR17 0110 1250 0000 0001 2300 695' })).toEqual({ errors: { iban: 'iban_invalid' } })
+    expect(parseAccountDraft({ ...base, iban: 'whatever' })).toMatchObject({ input: { iban: null } })
   })
 
   it('should flag card digits that are not 4 digits, and a card listed twice', () => {

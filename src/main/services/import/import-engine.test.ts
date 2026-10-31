@@ -9,6 +9,9 @@ import { matchTransfers, transferHint } from './transfer-match'
 import { ruleMatches, sortRules, suggestCategory, type RuleLike } from './apply-rules'
 import { readStatement } from './read-statement'
 import { readXlsx, sheetRows } from './xlsx'
+import { isHtmlTable, readHtmlTable } from './html-table'
+import { buildPreview } from './build-preview'
+import type { ParsedRow } from './parse-rows'
 import { deflateRawSync } from 'node:zlib'
 import { normalise } from '../../../shared/search-normalise'
 
@@ -144,7 +147,7 @@ describe('parseRows', () => {
 
   it('should read signed amounts, balances and collapse spaces in the text', () => {
     expect(resolve('Ημερομηνία;Περιγραφή;Ποσό;Υπόλοιπο\n01/10/2026;  POS   LIDL  ;-12,50;987,50')).toEqual([
-      { line: 2, bookedAt: '2026-10-01', valueDate: null, amountCents: -1250, description: 'POS LIDL', bankReference: null, balanceAfterCents: 98750 },
+      { line: 2, bookedAt: '2026-10-01', valueDate: null, amountCents: -1250, description: 'POS LIDL', bankReference: null, balanceAfterCents: 98750, pending: false },
     ])
   })
 
@@ -468,5 +471,108 @@ describe('Piraeus and Revolut layouts', () => {
       ],
     })
     expect(result.ok && result.rows).toHaveLength(3)
+  })
+})
+
+// Shapes of the real exports (2026-10-31), with made-up rows and textbook IBANs
+describe('Viva, Eurobank reserved, Alpha header and debit-card files', () => {
+  const account = (statementPreset: string | null, kind: 'CURRENT' | 'CREDIT_CARD' = 'CURRENT') =>
+    ({ importProfile: null, importMapping: null, statementPreset, kind, currency: 'EUR' })
+  const OWN = 'GR1601101250000000012300695'
+  const OTHER = 'DE89370400440532013000'
+
+  const viva = (rows: string[][]) => utf8([
+    '<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Wallet Export</title></head><body><table><thead><tr>',
+    ...['Transaction ID', 'Post Date', 'Post Time', 'Transaction Date', 'Description', 'Card Number', 'Currency', 'Amount', 'Balance', 'Available', 'Holds'].map(h => `<th>${h}</th>`),
+    '</tr></thead><tbody>',
+    ...rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('\n')}</tr>`),
+    '</tbody></table></body></html>',
+  ].join('\n'))
+
+  it('should read a Viva HTML table: the transaction date, comma amounts, fee rows, and no post date as pending', () => {
+    const file = viva([
+      ['id-1', '17/10/2026', '16:04:27', '16/10/2026', 'Viva Wallet Card Purchase - SHOP &amp; CO', '5375XXXX5201', 'EUR', '-92,10', '135,46', '72,76', '62,70'],
+      ['id-2', '21/10/2026', '12:01:08', '21/10/2026', 'Viva Wallet - Money out to IBAN fee', '', 'EUR', '-0,70', '52,06', '52,06', '---'],
+      ['id-3', '', '', '22/10/2026', 'Viva Wallet Card Purchase - CAFE', '5375XXXX5201', 'EUR', '-3,50', '48,56', '48,56', '---'],
+    ])
+    expect(readStatement(file, account('viva'))).toMatchObject({
+      ok: true, profile: 'viva-account', source: { format: 'html', encoding: 'utf-8' },
+      rows: [
+        { bookedAt: '2026-10-16', amountCents: -9210, description: 'Viva Wallet Card Purchase - SHOP & CO', bankReference: 'id-1', balanceAfterCents: 13546, pending: false },
+        { bookedAt: '2026-10-21', amountCents: -70, pending: false },
+        { bookedAt: '2026-10-22', amountCents: -350, pending: true },
+      ],
+    })
+  })
+
+  it('should read Eurobank reserved card payments as pending, and the account file as booked', () => {
+    const reserved = readStatement(utf8('﻿"ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ";"ΗΜ/ΝΙΑ ΕΓΓΡΑΦΗΣ";"ΠΕΡΙΓΡΑΦΗ";"ΠΟΣΟ"\n31/10/26;02/11/26;"SUPERMARKET";-23,79'), account('eurobank'))
+    expect(reserved).toMatchObject({ ok: true, profile: 'eurobank-reserved', rows: [{ bookedAt: '2026-10-31', amountCents: -2379, pending: true }] })
+    const booked = readStatement(utf8('"ΗΜ/ΝΙΑ ΚΙΝΗΣΗΣ";"ΗΜ/ΝΙΑ ΑΞΙΑΣ";"ΠΕΡΙΓΡΑΦΗ";"ΠΟΣΟ";"ΥΠΟΛΟΙΠΟ"\n02/11/26;02/11/26;"SUPERMARKET";-23,79;76,21\n;;"ΑΡΙΘΜΟΣ ΛΟΓΑΡΙΑΣΜΟΥ: X";;'), account('eurobank'))
+    expect(booked).toMatchObject({ ok: true, profile: 'eurobank-account', rows: [{ bookedAt: '2026-11-02', amountCents: -2379, pending: false }] })
+  })
+
+  it('should find the Alpha account header that says Ημ/νία, and drop a reference Excel rounded', () => {
+    const csv = [
+      '"Τίτλος";"Κινήσεις Λογαριασμού: ";"GR00";;;;;',
+      '"Ημ/νία";31/10/26 23:50;;;;;;',
+      ';;;;;;;',
+      '"Α/Α";"Ημ/νία";"Αιτιολογία";"Κατάστημα";"Τοκισμός από";"Αρ. συναλλαγής";"Ποσό";"Πρόσημο ποσού"',
+      '1;15/10/26;"ΠΛΗΡΩΜΗ";96;15/10/26;2,02610150960236E+017;1010;"Χ"',
+      '2;08/10/26;"ΚΑΤΑΘΕΣΗ ΣΕ ΑΤΜ";303;08/10/26;2,0261008303021E+017;1010;"Π"',
+    ].join('\n')
+    expect(readStatement(utf8(csv), account('alpha'))).toMatchObject({
+      ok: true, profile: 'alpha-account',
+      rows: [{ bookedAt: '2026-10-15', amountCents: -101000, bankReference: null }, { amountCents: 101000, bankReference: null }],
+    })
+  })
+
+  it('should stop at a debit card file for an account, but read card files for a credit card', () => {
+    const eurobankCard = '"ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ";"ΗΜ/ΝΙΑ  ΑΞΙΑΣ";"ΠΕΡΙΓΡΑΦΗ";"ΠΟΣΟ"\n30/10/26;30/10/26;"STREAMING";-9,99'
+    const alphaCard = '"Κινήσεις Κάρτας";;\n"Ημ/νία συναλλαγής";"Αιτιολογία";"Κατηγορία δαπάνης";"Είδος συναλλαγής";"Ποσό (EUR)";"Κατάσταση συναλλαγής"\n08/10/26 17:39;"ALPHA BANK";"x";"Κατάθεση Μετρητών";1010;"Εκτελεσμένη"'
+    const piraeusCard = 'Κατηγορία;Περιγραφή;Ημ/νία Συναλλαγής;Ημ/νία Αξίας;Αριθμός Λογαριασμού;Αριθμός Παραστατικού;Ποσό;Νόμισμα;Ανθρακικό Αποτύπωμα\nΑγορές;SHOP;01/10/2026;01/10/2026;123;456;-5,00;EUR;'
+    expect(readStatement(utf8(eurobankCard), account('eurobank'))).toMatchObject({ ok: false, reason: 'DEBIT_CARD_FILE' })
+    expect(readStatement(utf8(alphaCard), account('alpha'))).toMatchObject({ ok: false, reason: 'DEBIT_CARD_FILE' })
+    expect(readStatement(utf8(piraeusCard), account('piraeus'))).toMatchObject({ ok: false, reason: 'DEBIT_CARD_FILE' })
+    expect(readStatement(utf8(eurobankCard), account('eurobank', 'CREDIT_CARD'))).toMatchObject({ ok: true, profile: 'eurobank-card', rows: [{ amountCents: 999 }] })
+  })
+
+  it('should read entities and line breaks in HTML cells and ignore comments', () => {
+    expect(readHtmlTable('<table><!-- <tr><td>no</td></tr> --><tr><td>A&nbsp;&amp;<br>B</td><th> &#8364;1 </th></tr></table>')).toEqual([['A & B', '€1']])
+    expect(isHtmlTable('﻿  <html><table>')).toBe(true)
+    expect(isHtmlTable('Date;Amount\n<b>;1')).toBe(false)
+  })
+
+  const ctx = (manual: { id: string; bookedAt: string; amountCents: number; payee: string | null; pending: boolean }[] = []) => ({
+    fingerprints: new Set<string>(), bankReferences: new Set<string>(), manual, transferCandidates: [], rules: [], history: new Map<string, string>(),
+    ownIbans: new Map([[OWN, { id: 'savings', name: 'Savings' }]]),
+  })
+  const parsed = (description: string, patch: Partial<ParsedRow> = {}): ParsedRow => ({
+    line: 2, bookedAt: '2026-10-21', valueDate: null, amountCents: -2000, description, bankReference: null, balanceAfterCents: null, pending: false, ...patch,
+  })
+
+  it('should offer money sent to an own IBAN as a transfer to that account, and only hint at other IBANs', () => {
+    const { rows } = buildPreview('viva', [
+      parsed(`Money out to IBAN - ${OWN}`),
+      parsed(`Money out to IBAN - ${OTHER}`, { line: 3 }),
+      parsed('Money out to IBAN - GR1701101250000000012300695', { line: 4 }),
+    ], ctx())
+    expect(rows.map(r => [r.status, r.transferHint, r.ibanAccount, r.otherIban])).toEqual([
+      ['NEW', 'OWN_IBAN', { id: 'savings', name: 'Savings' }, null],
+      ['NEW', null, null, OTHER],
+      ['NEW', null, null, null],
+    ])
+  })
+
+  it('should offer a pending row as the twin of the booked one up to 7 days later, a hand-entered one only 3', () => {
+    const { rows } = buildPreview('eurobank', [
+      parsed('SUPERMARKET', { bookedAt: '2026-11-04', amountCents: -2379 }),
+      parsed('BAKERY', { line: 3, bookedAt: '2026-11-06', amountCents: -500 }),
+    ], ctx([
+      { id: 'p', bookedAt: '2026-10-31', amountCents: -2379, payee: null, pending: true },
+      { id: 'h', bookedAt: '2026-11-01', amountCents: -500, payee: 'Bakery', pending: false },
+    ]))
+    expect(rows[0]).toMatchObject({ status: 'POSSIBLE_DUPLICATE', duplicateOf: { id: 'p', pending: true } })
+    expect(rows[1]).toMatchObject({ status: 'NEW', duplicateOf: null })
   })
 })

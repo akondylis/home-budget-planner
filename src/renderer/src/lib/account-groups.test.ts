@@ -21,6 +21,7 @@ const account = (id: string, over: Partial<AccountSummary> = {}): AccountSummary
   kind: 'CURRENT',
   ...at('alpha'),
   currency: 'EUR',
+  iban: null,
   openingBalanceCents: 0,
   openingDate: '2026-01-01',
   balanceCents: 0,

@@ -34,8 +34,8 @@ export interface ColumnMapping {
 /** Why a row could not be read (CURRENCY: not in the account's currency) */
 export type RowProblem = 'DATE' | 'AMOUNT' | 'CURRENCY'
 
-/** Hint for a row that looks like money moving between own accounts */
-export type TransferHint = 'CARD_PAYMENT' | 'ATM'
+/** Hint for a row that looks like money moving between own accounts (OWN_IBAN: sent to the IBAN of an own account) */
+export type TransferHint = 'CARD_PAYMENT' | 'ATM' | 'OWN_IBAN'
 
 export interface CategorySuggestion {
   categoryId: string
@@ -58,12 +58,18 @@ export interface PreviewRow {
   payeeKey: string
   balanceAfterCents: number | null
   fingerprint: string | null
+  /** A card payment the bank has reserved but not booked yet */
+  pending: boolean
   suggestion: CategorySuggestion | null
-  /** POSSIBLE_DUPLICATE: the hand-entered row it may be */
-  duplicateOf: { id: string; bookedAt: string; amountCents: number; payee: string | null } | null
+  /** POSSIBLE_DUPLICATE: the hand-entered row it may be, or the pending row it settles (`pending`, linked by default) */
+  duplicateOf: { id: string; bookedAt: string; amountCents: number; payee: string | null; pending: boolean } | null
   /** TRANSFER_MATCH: the suggested other side, already in another own account (the user can pick something else) */
   transferWith: { id: string; accountId: string; accountName: string; bookedAt: string; amountCents: number; description: string } | null
   transferHint: TransferHint | null
+  /** OWN_IBAN: the own account whose IBAN is in the description */
+  ibanAccount: { id: string; name: string } | null
+  /** An IBAN in the description that is not one of the household's accounts (the row stays an expense or income) */
+  otherIban: string | null
 }
 
 export interface PreviewSummary {
@@ -76,7 +82,9 @@ export interface PreviewSummary {
 }
 
 /** Bank presets the engine knows (src/main/services/import/profiles.ts) */
-export type ProfileKey = 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'piraeus-account' | 'revolut-account' | 'generic'
+export type ProfileKey =
+  | 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'eurobank-reserved' | 'piraeus-account' | 'revolut-account' | 'viva-account'
+  | 'generic'
 
 /** A statement chosen in the native dialog; main keeps the path, the renderer only sees this */
 export interface PickedFile {
@@ -97,8 +105,13 @@ export type PreviewResult =
       summary: PreviewSummary
       rows: PreviewRow[]
     }
-  /** The first rows of the file, so the column mapping step can show them */
-  | { ok: false; reason: 'NO_ROWS' | 'UNKNOWN_FORMAT'; sample: string[][] }
+  /**
+   * The first rows of the file, so the column mapping step can show them.
+   * DEBIT_CARD_FILE: a debit card's own export, whose payments are already on the account statement
+   */
+  | { ok: false; reason: ReadFailure; sample: string[][] }
+
+export type ReadFailure = 'NO_ROWS' | 'UNKNOWN_FORMAT' | 'DEBIT_CARD_FILE'
 
 export type ImportAction = 'IMPORT' | 'SKIP' | 'LINK' | 'TRANSFER'
 

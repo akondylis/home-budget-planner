@@ -360,7 +360,9 @@
     "DEBT_OWNED_RULE": "These are a debt's instalments. Change them on the Debts & loans page.",
     "PAYMENT_ALREADY_LINKED": "That row already counts for a debt.",
     "INSTALMENT_TOO_LOW": "This instalment never pays it off: it does not cover the monthly interest.",
-    "CSV_EXPORT_FAILED": "The CSV could not be saved there. Choose another folder or close the file if it is open in Excel."
+    "CSV_EXPORT_FAILED": "The CSV could not be saved there. Choose another folder or close the file if it is open in Excel.",
+    "IBAN_INVALID": "This IBAN is not valid. Check the digits.",
+    "IBAN_IN_USE": "Another account already has this IBAN."
   },
   "categories": {
     "choose": "Choose a category…",
@@ -587,7 +589,8 @@
     "no_bank_text": "Only rows with bank text can teach a rule",
     "delete_many_title": "Delete {{count}} transactions?",
     "delete_many_message": "They are removed from the log and the account balances change. This cannot be undone.",
-    "range_clear": "Back to this month"
+    "range_clear": "Back to this month",
+    "pending": "Pending"
   },
   "members": {
     "household": "Household",
@@ -678,6 +681,8 @@
     "not_imported": "No statement imported yet",
     "view_transactions": "View transactions",
     "name": "Name",
+    "iban": "IBAN",
+    "iban_hint": "Optional. Money sent to this IBAN from your other accounts is recognised as a transfer.",
     "kind_label": "Kind",
     "kind": {
       "CURRENT": "Current account",
@@ -727,7 +732,8 @@
       "date_required": "Enter a real date, e.g. 05/03/2026.",
       "card_last4": "Type exactly 4 digits, as on the card.",
       "card_duplicate": "This card is already in the list.",
-      "holder_required": "Choose whose card it is."
+      "holder_required": "Choose whose card it is.",
+      "iban_invalid": "This IBAN is not valid. Check the digits."
     },
     "quick_title": "Quick setup",
     "quick_intro": "The household's usual accounts, ready to go. Untick what you don't have, rename if you like, and type today's balance. Meal-voucher cards (Edenred, Up Hellas) can be added afterwards with Add account.",
@@ -865,6 +871,7 @@
     "pick_title": "Choose a bank statement",
     "pick_filter": "Bank statements (CSV, Excel)",
     "no_rows": "No transactions were found in this file. Choose the statement export (CSV or Excel) for one account.",
+    "debit_card_file": "This is a debit card’s own file. Its payments are already on the account statement, so import the account statement instead.",
     "other_file": "Choose another file",
     "read_again": "Read again",
     "review_title": "Check before importing",
@@ -875,8 +882,10 @@
       "alpha-card": "Alpha Bank card",
       "eurobank-account": "Eurobank account",
       "eurobank-card": "Eurobank card",
+      "eurobank-reserved": "Eurobank reserved card payments",
       "piraeus-account": "Piraeus Bank account",
       "revolut-account": "Revolut account",
+      "viva-account": "Viva Wallet",
       "generic": "standard columns"
     },
     "nothing_new": "Nothing new to import",
@@ -904,6 +913,7 @@
     "tick_row": "Import {{name}}",
     "col_goes_to": "Goes to",
     "col_status": "Status",
+    "pending": "Pending",
     "status": {
       "NEW": "New",
       "ALREADY_IMPORTED": "Already in",
@@ -911,8 +921,10 @@
       "TRANSFER_MATCH": "Transfer",
       "INVALID": "Unreadable"
     },
+    "status_settles": "Replaces pending",
     "goes_to_of": "Where {{name}} goes",
     "target_link": "Same as the row I entered",
+    "target_link_pending": "Replaces the pending payment",
     "target_matched": "With {{account}} · {{date}}",
     "why_already": "Imported before",
     "why_invalid_DATE": "Line {{line}}: the date could not be read",
@@ -920,9 +932,14 @@
     "why_invalid_CURRENCY": "Line {{line}}: in another currency than the account",
     "why_transfer": "Matched with “{{description}}” {{amount}} on {{date}} in {{account}}",
     "why_duplicate": "You entered {{payee}} on {{date}}. Tick to keep one row.",
+    "why_settles": "Booked now: replaces the pending payment of {{date}}",
+    "why_still_pending": "Still pending: updates the reserved payment of {{date}}",
     "why_atm": "Cash taken out: moves to {{account}}, not an expense",
     "why_transfer_to": "Transfer to {{account}}: not an expense",
     "why_transfer_from": "Transfer from {{account}}: not income",
+    "why_own_iban_to": "Sent to your account {{account}} (its IBAN): not an expense",
+    "why_own_iban_from": "From your account {{account}} (its IBAN): not income",
+    "why_other_iban": "Not an IBAN of your accounts. If it is yours, add it to that account.",
     "why_card_payment": "Card payment: pairs with the card statement when you import it",
     "why_rule": "Rule: {{merchant}}",
     "why_history": "As last time",

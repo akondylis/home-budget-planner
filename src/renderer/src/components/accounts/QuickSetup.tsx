@@ -30,7 +30,7 @@ export function QuickSetup() {
   const activeBank = (id: string | null) => (institutions.some(b => b.id === id && !b.archived) ? id : null)
   const parsed = rows.map((row, i) => ({
     row,
-    result: parseAccountDraft({ name: row.name, kind: QUICK_SETUP[i].kind, institutionId: activeBank(QUICK_SETUP[i].institutionId), openingBalance: row.balance, openingDate: date, holderMemberId: null, cards: [] }),
+    result: parseAccountDraft({ name: row.name, kind: QUICK_SETUP[i].kind, institutionId: activeBank(QUICK_SETUP[i].institutionId), iban: '', openingBalance: row.balance, openingDate: date, holderMemberId: null, cards: [] }),
   }))
   const chosen = parsed.filter(p => p.row.checked)
   const valid = chosen.every(p => 'input' in p.result)

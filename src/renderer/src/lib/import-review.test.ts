@@ -31,10 +31,13 @@ function row(patch: Partial<PreviewRow>): PreviewRow {
     payeeKey: 'shop',
     balanceAfterCents: null,
     fingerprint: 'f',
+    pending: false,
     suggestion: null,
     duplicateOf: null,
     transferWith: null,
     transferHint: null,
+    ibanAccount: null,
+    otherIban: null,
     ...patch,
   }
 }
@@ -45,7 +48,7 @@ describe('import review', () => {
   const fresh = row({ suggestion: rule('groceries') })
   const unsorted = row({})
   const known = row({ status: 'ALREADY_IMPORTED' })
-  const twin = row({ status: 'POSSIBLE_DUPLICATE', duplicateOf: { id: 'h', bookedAt: '2026-09-30', amountCents: -1000, payee: 'Shop' } })
+  const twin = row({ status: 'POSSIBLE_DUPLICATE', duplicateOf: { id: 'h', bookedAt: '2026-09-30', amountCents: -1000, payee: 'Shop', pending: false } })
   const pair = row({ status: 'TRANSFER_MATCH', transferWith: { id: 'o', accountId: 'card', accountName: 'Card', bookedAt: '2026-10-02', amountCents: 1000, description: 'PAYMENT' } })
   const atm = row({ transferHint: 'ATM', description: 'ΑΝΑΛΗΨΗ ATM' })
   const broken = row({ status: 'INVALID', problem: 'DATE', bookedAt: null })
@@ -90,6 +93,16 @@ describe('import review', () => {
     const decisions = toDecisions(rows, choices)
     expect(decisions.find(d => d.line === twin.line)).toEqual({ line: twin.line, action: 'LINK' })
     expect(decisions.find(d => d.line === known.line)?.action).toBe('SKIP')
+  })
+
+  it('should link a row that settles a pending one, and send money to an own IBAN to that account', () => {
+    const settles = row({ status: 'POSSIBLE_DUPLICATE', duplicateOf: { id: 'p', bookedAt: '2026-09-29', amountCents: -1000, payee: null, pending: true } })
+    const toSavings = row({ transferHint: 'OWN_IBAN', ibanAccount: { id: 'savings', name: 'Savings' } })
+    const choices = initialChoices([settles, toSavings], null)
+    expect(toDecisions([settles, toSavings], choices)).toEqual([
+      { line: settles.line, action: 'LINK' },
+      { line: toSavings.line, action: 'TRANSFER', toAccountId: 'savings' },
+    ])
   })
 
   it('should filter by status and by rows still to categorise', () => {
