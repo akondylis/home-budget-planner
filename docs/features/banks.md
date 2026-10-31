@@ -30,9 +30,10 @@ order. Starts in the account form's **Bank** picker, or in Settings › **Banks*
   bank or none (`INVALID_INPUT`). Changing a bank's type is refused while an account of the other kind uses it
   (`INSTITUTION_IN_USE`). Switching an account's kind in the form keeps its bank while it fits, else picks the
   first issuer (meal card) or no bank.
-- **Statement presets** follow `statementPreset` (`alpha`, `eurobank`), not the bank's name, so renaming Alpha Bank
-  keeps its preset. A bank without one (Revolut, any bank added) uses the generic reader and the column map saved
-  on the account, as "Other" did before.
+- **Statement presets** follow `statementPreset` (`alpha`, `eurobank`, `piraeus`, `revolut`), not the bank's name,
+  so renaming Alpha Bank keeps its preset. Piraeus and Revolut got theirs in `20261030140000_bank_statement_presets`
+  (by id). A bank without one (NBG, any bank added) uses the generic reader and the column map saved on the
+  account, as "Other" did before.
 - **Order:** ↑ / ↓ swaps among the active banks and renumbers them from 0. Groups and chips use this order; a bank
   missing from the list sorts after the listed ones.
 - **Migration** `20261029120000_institutions_table` (hand-written) creates the list with fixed ids (`inst_alpha`,

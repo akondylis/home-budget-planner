@@ -1,7 +1,8 @@
 # Statement import
 
 **User's job:** get this month's bank and card movements into the budget once, correctly sorted, in under a
-minute, with no fear of doubles. Supported first: Alpha Bank and Eurobank, accounts and cards, as CSV.
+minute, with no fear of doubles. Known formats: Alpha Bank and Eurobank (accounts and cards, CSV), Piraeus
+(account, Excel) and Revolut (account, CSV). Any other CSV or `.xlsx` goes through the column mapping step once.
 
 ## UX
 
@@ -42,7 +43,7 @@ Each row ends with one status, from exact to fuzzy:
 | `POSSIBLE_DUPLICATE` | A hand-entered row in the account, same amount, ±3 days | Unticked; ticking **links** it (one row); a category = import anyway |
 | `TRANSFER_MATCH` | The opposite amount in another own account, ±5 days, not yet paired | Paired as a transfer; the row names what it matched (bank text, amount, date) and its picker can change it to another account or a category |
 | `NEW` | Anything else | Ticked, with the rule or last-used category |
-| `INVALID` | Date or amount unreadable (the reason names the line) | Not selectable |
+| `INVALID` | Date or amount unreadable, or not in the account's currency (the reason names the line) | Not selectable |
 
 - Two identical €2,50 coffees on one day are occurrence 1 and 2, so both import, and an overlapping later file
   finds both again. A third one in a new file is new.
@@ -56,13 +57,24 @@ Each row ends with one status, from exact to fuzzy:
   hand-entered rows stay, and the other side of a paired transfer goes back to "to categorise".
 - **Reading:** UTF-8 (with or without BOM), UTF-16 with BOM, else Windows-1253; `;`, `,` or tab; header row found in
   the first 30 lines by Greek or English column names; amounts in cents with the bank's decimal separator;
-  Excel-style text cells (`="…"`, Eurobank) unwrapped.
+  Excel-style text cells (`="…"`, Eurobank) unwrapped. **Excel (`.xlsx`):** the first sheet, read in main with no
+  dependency (`xlsx.ts`: zip + zlib); numbers and date cells are written out in the preset's decimal mark and date
+  order, so the same presets and mapping step apply; line numbers are Excel's row numbers.
 - **Bank formats:** the bank presets know where the columns sit; an account gets one through its bank's
   `statementPreset` ([banks.md](banks.md)). These positions are taken from the household's earlier converter script:
   - **Eurobank** (account and card): header in row 0; date, description and amount in columns 1, 3 and 4.
   - **Alpha card:** the header row says `Ημ/νία συναλλαγής`; date, description and amount in columns 1, 2 and 5.
   - **Alpha account:** the header row says `Ημερομηνία` and `Ποσό`; date, description and an unsigned amount in
     columns 2, 3 and 7. Column 8 is the flag: `Π` means money in, `Χ` means money out.
+
+  Taken from real exports (2026-10-30):
+  - **Piraeus account** (`.xlsx`; Piraeus offers no CSV): header found by `Ημ/νία Συναλλαγής` + `Ποσό` below the
+    account lines; description = *Περιγραφή Συναλλαγής* plus *Σχόλια / Κωδικός Αναφοράς* (the payee is there);
+    signed amount, running balance. No card export seen yet, so a Piraeus card uses the generic card reader.
+  - **Revolut** (account; its cards are on the same statement): date = *Completed Date* (pending rows have none and
+    wait), `.` decimals, ISO dates; only `COMPLETED` rows of the `Current` product; the fee is taken off the amount
+    so the running balance matches; a row in another currency is `INVALID` (*in another currency than the account*).
+  - **NBG:** no preset yet (no file); the mapping step reads it.
 
   Card exports print a purchase as a positive amount, so the app flips it. Order tried: the mapping saved on the
   account → the bank's layout, used only when its dated rows all have an amount and no header names those columns
@@ -78,7 +90,7 @@ Each row ends with one status, from exact to fuzzy:
 
 | Path | Role |
 | --- | --- |
-| `src/main/services/import/` | `decode`, `csv`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile` (pure), `picked-files`, `import-service` (preview, commit, undo, history) |
+| `src/main/services/import/` | `decode`, `csv`, `xlsx`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile` (pure), `picked-files`, `import-service` (preview, commit, undo, history) |
 | `src/main/ipc/import.ts` | Thin handlers |
 | `src/renderer/src/components/import/` | `ImportWizard`, `ColumnMappingStep`, `ImportReview`, `RulePrompt`, `ImportHistory`, `ReconciliationNote` |
 | `src/renderer/src/lib/import-review.ts` | Row defaults, decisions, counts, filters, same-merchant fill, mapping form |
@@ -99,7 +111,7 @@ Rules (`rule:*`) are listed in [transactions.md](transactions.md#ipc).
 
 ## Tests
 
-`services/import/import-engine.test.ts` (decode, CSV, presets and header search, amounts, dates, fingerprints,
-dedupe, transfers, rules), `reconcile.test.ts`, `src/main/__tests__/statement-import.test.ts` (overlapping files,
+`services/import/import-engine.test.ts` (decode, CSV, `.xlsx`, presets and header search, Piraeus and Revolut
+shapes, amounts, dates, fingerprints, dedupe, transfers, rules), `reconcile.test.ts`, `src/main/__tests__/statement-import.test.ts` (overlapping files,
 same file, double click, twin link, card payment pairing, ATM → Cash, column mapping saved, balance check, undo)
 and `lib/import-review.test.ts` (row defaults, decisions, filters, same-merchant fill, mapping form).
