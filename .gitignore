@@ -18,3 +18,5 @@ npm-dev.log
 .claude/settings.local.json
 /tsconfig.*.tsbuildinfo
 coverage/
+# Real bank statements for checking import presets; never committed
+samples/

@@ -21,7 +21,9 @@ describe('starter list', () => {
       'Alpha Bank', 'Eurobank', 'Piraeus Bank', 'National Bank (NBG)', 'Revolut', 'Optima bank', 'Viva Wallet', 'Attica Bank', 'Edenred', 'Up Hellas',
     ])
     expect(list.filter(i => i.kind === 'VOUCHER_ISSUER').map(i => i.id)).toEqual(['inst_edenred', 'inst_up_hellas'])
-    expect(list.filter(i => i.statementPreset).map(i => [i.id, i.statementPreset])).toEqual([['inst_alpha', 'alpha'], ['inst_eurobank', 'eurobank']])
+    expect(list.filter(i => i.statementPreset).map(i => [i.id, i.statementPreset])).toEqual([
+      ['inst_alpha', 'alpha'], ['inst_eurobank', 'eurobank'], ['inst_piraeus', 'piraeus'], ['inst_revolut', 'revolut'],
+    ])
   })
 })
 

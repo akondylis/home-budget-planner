@@ -60,9 +60,13 @@ export function parseStatementDate(text: string, order: DateOrder): string | nul
 
 const cell = (row: string[], index: number | undefined) => (index === undefined ? '' : (row[index] ?? '').trim())
 
-/** Rows after the header; lines without a date (totals, notes) are not movements and are left out */
-export function parseRows(rows: string[][], mapping: ResolvedMapping): ParsedRow[] {
-  const { columns: c, options: o } = mapping
+/**
+ * Rows after the header; lines without a date (totals, notes) are not movements and are left out,
+ * as are rows a bank layout's `keep` rule rules out (Revolut's reverted payments).
+ * `currency` is the account's: with a layout that names a currency column, other rows cannot be read.
+ */
+export function parseRows(rows: string[][], mapping: ResolvedMapping, currency = 'EUR'): ParsedRow[] {
+  const { columns: c, options: o, extras: x = {} } = mapping
   const debitFlags = new Set(o.debitFlags.map(f => normalise(f) || f))
   const out: ParsedRow[] = []
 
@@ -70,6 +74,7 @@ export function parseRows(rows: string[][], mapping: ResolvedMapping): ParsedRow
     const row = rows[r]
     const dateText = cell(row, c.date)
     if (dateText === '') continue
+    if (x.keep?.some(k => !k.values.includes(cell(row, k.column)))) continue
 
     const amount = (index: number | undefined) => parseStatementAmount(cell(row, index), o.decimalSeparator)
     let amountCents: number | null
@@ -84,9 +89,16 @@ export function parseRows(rows: string[][], mapping: ResolvedMapping): ParsedRow
     } else {
       amountCents = amount(c.amount)
     }
+    // The fee is charged on top: a €10 payment with a €0,50 fee leaves €10,50
+    if (amountCents !== null && x.fee !== undefined && cell(row, x.fee) !== '') {
+      const fee = amount(x.fee)
+      amountCents = fee === null ? null : amountCents - Math.abs(fee)
+    }
     if (amountCents !== null && o.invertSign) amountCents = -amountCents
 
     const bookedAt = parseStatementDate(dateText, o.dateOrder)
+    const rowCurrency = cell(row, x.currency).toUpperCase()
+    const foreign = rowCurrency !== '' && rowCurrency !== currency.toUpperCase()
     const valueText = cell(row, c.valueDate)
     const balanceText = cell(row, c.balance)
     out.push({
@@ -94,10 +106,13 @@ export function parseRows(rows: string[][], mapping: ResolvedMapping): ParsedRow
       bookedAt,
       valueDate: valueText ? parseStatementDate(valueText, o.dateOrder) : null,
       amountCents,
-      description: cell(row, c.description).replace(/\s+/g, ' '),
+      description: [cell(row, c.description), cell(row, x.detail)].filter(Boolean).join(' ').replace(/\s+/g, ' '),
       bankReference: cell(row, c.reference) || null,
-      balanceAfterCents: balanceText ? parseStatementAmount(balanceText, o.decimalSeparator) : null,
-      ...(bookedAt === null ? { problem: 'DATE' as const } : amountCents === null || amountCents === 0 ? { problem: 'AMOUNT' as const } : {}),
+      // A balance in another currency says nothing about this account
+      balanceAfterCents: balanceText && !foreign ? parseStatementAmount(balanceText, o.decimalSeparator) : null,
+      ...(bookedAt === null ? { problem: 'DATE' as const }
+        : foreign ? { problem: 'CURRENCY' as const }
+          : amountCents === null || amountCents === 0 ? { problem: 'AMOUNT' as const } : {}),
     })
   }
   return out

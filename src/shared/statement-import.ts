@@ -31,8 +31,8 @@ export interface ColumnMapping {
   debitFlags: string[]
 }
 
-/** Why a row could not be read */
-export type RowProblem = 'DATE' | 'AMOUNT'
+/** Why a row could not be read (CURRENCY: not in the account's currency) */
+export type RowProblem = 'DATE' | 'AMOUNT' | 'CURRENCY'
 
 /** Hint for a row that looks like money moving between own accounts */
 export type TransferHint = 'CARD_PAYMENT' | 'ATM'
@@ -76,7 +76,7 @@ export interface PreviewSummary {
 }
 
 /** Bank presets the engine knows (src/main/services/import/profiles.ts) */
-export type ProfileKey = 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'generic'
+export type ProfileKey = 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'piraeus-account' | 'revolut-account' | 'generic'
 
 /** A statement chosen in the native dialog; main keeps the path, the renderer only sees this */
 export interface PickedFile {

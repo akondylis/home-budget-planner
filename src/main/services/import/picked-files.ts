@@ -20,7 +20,7 @@ export async function pickStatementFile(labels: unknown): Promise<PickedFile | n
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: typeof title === 'string' ? title : undefined,
     properties: ['openFile'],
-    filters: [{ name: typeof filterName === 'string' ? filterName : 'CSV', extensions: ['csv', 'txt'] }],
+    filters: [{ name: typeof filterName === 'string' ? filterName : 'CSV', extensions: ['csv', 'txt', 'xlsx'] }],
   })
   if (canceled || filePaths.length === 0) return null
   while (picked.size >= MAX_PICKED) picked.delete(picked.keys().next().value!)

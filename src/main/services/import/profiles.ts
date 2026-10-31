@@ -1,10 +1,10 @@
 // Statement presets per bank and source, and finding the header row in a file.
 //
-// The layouts (column positions) are the ones the household's own converter has
-// read Alpha Bank and Eurobank exports with for years. The header aliases are a
-// fallback for when a bank moves its columns, and are not checked against real
-// files. A file neither reads goes to the column-mapping step, and that mapping
-// is saved on the account.
+// The Alpha Bank and Eurobank layouts (column positions) are the ones the household's
+// own converter has read their exports with for years. Piraeus (account, .xlsx) and
+// Revolut (account, CSV) were taken from real exports on 2026-10-30. The header
+// aliases are a fallback for when a bank moves its columns. A file neither reads goes
+// to the column-mapping step, and that mapping is saved on the account.
 
 import { z } from 'zod'
 import { normalise } from '../../../shared/search-normalise'
@@ -28,6 +28,19 @@ export interface StatementLayout {
   header: { row: number } | { contains: string[] }
   columns: Partial<Record<MappingField, number>>
   amountMode: AmountMode
+  /** Bank-specific columns the mapping step does not offer */
+  extras?: LayoutExtras
+}
+
+export interface LayoutExtras {
+  /** A second text column added to the description (Piraeus keeps the payee in its comments) */
+  detail?: number
+  /** A fee column taken off the amount, so the bank's running balance still matches (Revolut) */
+  fee?: number
+  /** Rows are movements only when these columns hold one of the values (Revolut: State COMPLETED, Product Current) */
+  keep?: { column: number; values: string[] }[]
+  /** The row's currency; a row not in the account's currency cannot be read */
+  currency?: number
 }
 
 // Words Greek banks put in their column headers
@@ -45,10 +58,10 @@ const COMMON: Partial<Record<MappingField, string[]>> = {
 
 const DEBIT_FLAGS = ['Χ', 'Χρ', 'Χρέωση', 'D', 'DR', 'Debit', '-']
 
-const account = (key: ProfileKey, layout?: StatementLayout): StatementProfile => ({
+const account = (key: ProfileKey, layout?: StatementLayout, style?: Pick<ColumnMapping, 'dateOrder' | 'decimalSeparator'>): StatementProfile => ({
   key,
   aliases: COMMON,
-  options: { dateOrder: 'DMY', decimalSeparator: ',', amountMode: 'SIGNED', invertSign: false, debitFlags: DEBIT_FLAGS },
+  options: { dateOrder: 'DMY', decimalSeparator: ',', amountMode: 'SIGNED', invertSign: false, debitFlags: DEBIT_FLAGS, ...style },
   layout,
 })
 
@@ -67,24 +80,54 @@ const ALPHA_ACCOUNT: StatementLayout = {
 const ALPHA_CARD: StatementLayout = { header: { contains: ['Ημ/νία συναλλαγής'] }, columns: { date: 0, description: 1, amount: 4 }, amountMode: 'SIGNED' }
 // Eurobank prints the same columns for the account and the card
 const EUROBANK: StatementLayout = { header: { row: 0 }, columns: { date: 0, description: 2, amount: 3 }, amountMode: 'SIGNED' }
+// Piraeus account (.xlsx, below a few lines about the account): Κατηγορία, Περιγραφή Συναλλαγής, Ημ/νία Συναλλαγής,
+// Σχόλια / Κωδικός Αναφοράς, Ποσό, Νόμισμα, Προοδευτικό Λογιστικό Υπόλοιπο, Νόμισμα. The description is the bank's
+// generic text ("ΜΕΤΑΦΟΡΑ ΣΕ ΛΟΓ.ΤΡΙΤΟΥ"); who it went to is in the comments.
+const PIRAEUS_ACCOUNT: StatementLayout = {
+  header: { contains: ['Ημ/νία Συναλλαγής', 'Ποσό'] },
+  columns: { date: 2, description: 1, amount: 4, balance: 6 },
+  amountMode: 'SIGNED',
+  extras: { detail: 3, currency: 5 },
+}
+// Revolut: Type, Product, Started Date, Completed Date, Description, Amount, Fee, Currency, State, Balance.
+// A pending payment has no completed date yet, so it is not a movement until it completes.
+const REVOLUT: StatementLayout = {
+  header: { contains: ['Completed Date', 'State'] },
+  columns: { date: 3, description: 4, amount: 5, balance: 9 },
+  amountMode: 'SIGNED',
+  extras: { fee: 6, currency: 7, keep: [{ column: 8, values: ['COMPLETED'] }, { column: 1, values: ['Current'] }] },
+}
 
 export const PROFILES: Record<ProfileKey, StatementProfile> = {
   'alpha-account': account('alpha-account', ALPHA_ACCOUNT),
   'alpha-card': card('alpha-card', ALPHA_CARD),
   'eurobank-account': account('eurobank-account', EUROBANK),
   'eurobank-card': card('eurobank-card', EUROBANK),
+  'piraeus-account': account('piraeus-account', PIRAEUS_ACCOUNT),
+  'revolut-account': account('revolut-account', REVOLUT, { dateOrder: 'YMD', decimalSeparator: '.' }),
   generic: account('generic'),
 }
 
-/** Preset families a bank can name (`Institution.statementPreset`) */
-const PRESET_BANKS = ['alpha', 'eurobank'] as const
+/**
+ * Preset families a bank can name (`Institution.statementPreset`), with the preset for its
+ * accounts and its cards. No card preset = a card of that bank reads with the generic card one
+ * (no Piraeus card export seen yet); Revolut cards are on the account's statement.
+ */
+const PRESET_BANKS: Record<string, { account: ProfileKey; card?: ProfileKey }> = {
+  alpha: { account: 'alpha-account', card: 'alpha-card' },
+  eurobank: { account: 'eurobank-account', card: 'eurobank-card' },
+  piraeus: { account: 'piraeus-account' },
+  revolut: { account: 'revolut-account', card: 'revolut-account' },
+}
 
 /** The preset an account starts from: the one saved on it, else its bank's preset family and its kind */
 export function profileFor(account: { importProfile: string | null; statementPreset: string | null; kind: AccountKind }): StatementProfile {
   if (account.importProfile && account.importProfile in PROFILES) return PROFILES[account.importProfile as ProfileKey]
-  const bank = PRESET_BANKS.find(b => b === account.statementPreset)
-  if (!bank) return account.kind === 'CREDIT_CARD' ? card('generic') : PROFILES.generic
-  return PROFILES[`${bank}-${account.kind === 'CREDIT_CARD' ? 'card' : 'account'}`]
+  const bank = account.statementPreset && Object.hasOwn(PRESET_BANKS, account.statementPreset) ? PRESET_BANKS[account.statementPreset] : null
+  const isCard = account.kind === 'CREDIT_CARD'
+  const key = isCard ? bank?.card : bank?.account
+  if (key) return PROFILES[key]
+  return isCard ? card('generic') : PROFILES.generic
 }
 
 // ── Finding the columns ──────────────────────────────────────────────────────
@@ -94,6 +137,8 @@ export interface ResolvedMapping {
   headerRow: number
   columns: Partial<Record<MappingField, number>>
   options: Omit<ColumnMapping, 'columns'>
+  /** Set when the bank's known layout was used */
+  extras?: LayoutExtras
 }
 
 /** A header row is usable when it names a date, a description and some way to read the amount */
@@ -156,6 +201,7 @@ function resolveLayout(rows: string[][], profile: StatementProfile): ResolvedMap
     headerRow,
     columns: { ...Object.fromEntries(extra), ...layout.columns },
     options: { ...profile.options, amountMode: layout.amountMode },
+    ...(layout.extras ? { extras: layout.extras } : {}),
   }
 }
 

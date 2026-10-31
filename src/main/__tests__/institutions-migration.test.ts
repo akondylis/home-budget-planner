@@ -36,3 +36,25 @@ describe('institutions_table migration', () => {
     sqlite.close()
   })
 })
+
+describe('bank_statement_presets migration', () => {
+  it('should give Piraeus and Revolut their presets by id, keep a renamed bank\'s name and leave a preset set by hand', () => {
+    const TARGET = '20261030140000_bank_statement_presets'
+    const sqlite = new Database(join(mkdtempSync(join(tmpdir(), 'home-budget-migration-')), 'test.db'))
+    const dirs = readdirSync(MIGRATIONS).filter(d => existsSync(join(MIGRATIONS, d, 'migration.sql'))).sort()
+    const run = (dir: string) => sqlite.exec(readFileSync(join(MIGRATIONS, dir, 'migration.sql'), 'utf-8'))
+    dirs.filter(d => d < TARGET).forEach(run)
+    sqlite.exec(`UPDATE "Institution" SET "name" = 'Πειραιώς' WHERE "id" = 'inst_piraeus'; UPDATE "Institution" SET "statementPreset" = 'eurobank' WHERE "id" = 'inst_revolut'`)
+
+    dirs.filter(d => d >= TARGET).forEach(run)
+
+    const rows = sqlite.prepare(`SELECT "id", "name", "statementPreset" FROM "Institution" WHERE "statementPreset" IS NOT NULL ORDER BY "sortOrder"`).all()
+    expect(rows).toEqual([
+      { id: 'inst_alpha', name: 'Alpha Bank', statementPreset: 'alpha' },
+      { id: 'inst_eurobank', name: 'Eurobank', statementPreset: 'eurobank' },
+      { id: 'inst_piraeus', name: 'Πειραιώς', statementPreset: 'piraeus' },
+      { id: 'inst_revolut', name: 'Revolut', statementPreset: 'eurobank' },
+    ])
+    sqlite.close()
+  })
+})
