@@ -49,6 +49,9 @@ cards draw on it, and know where its numbers come from (a statement, or entered 
 - **Opening date:** the day the opening balance is true. Rows dated before it still count towards the balance.
 - **Import settings live on the account:** `importProfile` (bank preset, from bank and kind) and `importMapping`
   (columns the user mapped once for a file no preset knew); see [statement-import.md](statement-import.md).
+- **IBAN** (current and savings accounts only, optional): checked (length + check digits), unique, stored without
+  spaces and shown in groups of four. An import treats money sent to it from another own account as a transfer
+  (`IBAN_INVALID`, `IBAN_IN_USE`); see [statement-import.md](statement-import.md).
 - **Imported up to** = the latest `dateTo` of the account's imports that were not undone.
 - **Holder** (`holderMemberId`, null = joint) is shown only; it never sets who an imported row is **For**
   (decided 2026-10-27). An archived parent stays on accounts and cards that already name them, but cannot be

@@ -1,8 +1,9 @@
 # Statement import
 
 **User's job:** get this month's bank and card movements into the budget once, correctly sorted, in under a
-minute, with no fear of doubles. Known formats: Alpha Bank and Eurobank (accounts and cards, CSV), Piraeus
-(account, Excel) and Revolut (account, CSV). Any other CSV or `.xlsx` goes through the column mapping step once.
+minute, with no fear of doubles. Known formats: Alpha Bank and Eurobank (accounts and cards, CSV; Eurobank's
+reserved card payments), Piraeus (account, Excel), Revolut (account, CSV) and Viva Wallet (an HTML table saved as
+`.xls`). Any other CSV or `.xlsx` goes through the column mapping step once.
 
 ## UX
 
@@ -31,7 +32,11 @@ minute, with no fear of doubles. Known formats: Alpha Bank and Eurobank (account
 - **Past imports:** file, account, period, when, rows, a balance badge (matches / differs by €x), **Show its rows**
   and **Undo** (with a confirm). Undone imports stay listed.
 - **Errors:** an unreadable or too large file, a file with no movements ("choose the statement export") and an
-  expired preview (**Read again**) are explained in place.
+  expired preview (**Read again**) are explained in place. A debit card's own export (Eurobank, Alpha, Piraeus)
+  stops with "its payments are already on the account statement; import that instead" (user, 2026-11-01).
+- **Pending and IBAN rows:** a reserved card payment carries a **Pending** badge (also in the log). Money out to the
+  IBAN of an own account (Accounts › IBAN) starts as a transfer to it ("Sent to your account Savings (its IBAN)");
+  any other IBAN gets a quiet line: add it to the account if it is yours, and read the file again.
 
 ## Behaviour
 
@@ -40,7 +45,7 @@ Each row ends with one status, from exact to fuzzy:
 | Status | When | Starts as |
 | --- | --- | --- |
 | `ALREADY_IMPORTED` | Same bank reference and amount (Alpha gives interest and its tax one reference), or same fingerprint: account, date, cents, bank text and its occurrence number inside the file | Not selectable |
-| `POSSIBLE_DUPLICATE` | A hand-entered row in the account, same amount, ±3 days | Unticked; ticking **links** it (one row); a category = import anyway |
+| `POSSIBLE_DUPLICATE` | A hand-entered row in the account (or a transfer side another import wrote), same amount, ±3 days; or a **pending** row, ±7 days | Unticked; ticking **links** it (one row); a category = import anyway. A pending twin starts ticked: the booked row replaces it ("Booked now: replaces the pending payment of…") |
 | `TRANSFER_MATCH` | The opposite amount in another own account, ±5 days, not yet paired | Paired as a transfer; the row names what it matched (bank text, amount, date) and its picker can change it to another account or a category |
 | `NEW` | Anything else | Ticked, with the rule or last-used category |
 | `INVALID` | Date or amount unreadable, or not in the account's currency (the reason names the line) | Not selectable |
@@ -52,20 +57,26 @@ Each row ends with one status, from exact to fuzzy:
   writes the other account's side too, and neither counts as spending or income. Money never leaves a meal-voucher
   account this way. **ATM withdrawals** (ΑΝΑΛΗΨΗ, ATM) start as a transfer to Cash when a cash account exists. **Card payments** (ΠΛΗΡΩΜΗ ΚΑΡΤΑΣ…) wait for the card statement, which pairs them; the review and the
   landing banner do not count them as "to categorise".
+- **Own IBANs** (decided 2026-10-31): a current or savings account may have one IBAN (valid, unique). A row whose
+  text holds an own account's IBAN is a transfer to it; an IBAN that is no account's leaves the row an expense.
+  Importers only find IBANs in the text; they never write the account's.
+- **Pending rows** (`Transaction.pending`): imported and counted like any row (user, 2026-10-31); left out of the
+  exact duplicate checks so the booked row links to them. A pending row that never books is deleted by hand.
 - **Commit** runs in one database transaction and checks every row again, so a double click or two previews of one
   file never insert twice. **Undo** removes the rows the import created (and a cash side it wrote); linked
   hand-entered rows stay, and the other side of a paired transfer goes back to "to categorise".
 - **Reading:** UTF-8 (with or without BOM), UTF-16 with BOM, else Windows-1253; `;`, `,` or tab; header row found in
   the first 30 lines by Greek or English column names; amounts in cents with the bank's decimal separator;
-  Excel-style text cells (`="…"`, Eurobank) unwrapped. **Excel (`.xlsx`):** the first sheet, read in main with no
+  Excel-style text cells (`="…"`, Eurobank) unwrapped; a reference in scientific notation (Alpha's rounded
+  *Αρ. συναλλαγής*) is dropped. **HTML table** (`html-table.ts`): `<tr>` rows of `<th>`/`<td>` cells. **Excel (`.xlsx`):** the first sheet, read in main with no
   dependency (`xlsx.ts`: zip + zlib); numbers and date cells are written out in the preset's decimal mark and date
   order, so the same presets and mapping step apply; line numbers are Excel's row numbers.
 - **Bank formats:** the bank presets know where the columns sit; an account gets one through its bank's
   `statementPreset` ([banks.md](banks.md)). These positions are taken from the household's earlier converter script:
   - **Eurobank** (account and card): header in row 0; date, description and amount in columns 1, 3 and 4.
   - **Alpha card:** the header row says `Ημ/νία συναλλαγής`; date, description and amount in columns 1, 2 and 5.
-  - **Alpha account:** the header row says `Ημερομηνία` and `Ποσό`; date, description and an unsigned amount in
-    columns 2, 3 and 7. Column 8 is the flag: `Π` means money in, `Χ` means money out.
+  - **Alpha account:** the header row says `Αιτιολογία` and `Ποσό` (the real date column says `Ημ/νία`); date,
+    description and an unsigned amount in columns 2, 3 and 7. Column 8 is the flag: `Π` money in, `Χ` money out.
 
   Taken from real exports (2026-10-30):
   - **Piraeus account** (`.xlsx`; Piraeus offers no CSV): header found by `Ημ/νία Συναλλαγής` + `Ποσό` below the
@@ -75,6 +86,13 @@ Each row ends with one status, from exact to fuzzy:
     wait), `.` decimals, ISO dates; only `COMPLETED` rows of the `Current` product; the fee is taken off the amount
     so the running balance matches; a row in another currency is `INVALID` (*in another currency than the account*).
   - **NBG:** no preset yet (no file); the mapping step reads it.
+
+  Taken from real exports (2026-10-31):
+  - **Viva Wallet** (HTML `.xls`): date = *Transaction Date*, description, signed comma amount, balance, *Transaction
+    ID* as reference; fees are rows of their own. A row with no *Post Date* is taken as pending (an assumption: the
+    sample had no pending row; check it on the first one).
+  - **Eurobank reserved** (`debit-card-reserved-transactions`): found by `ΗΜ/ΝΙΑ ΕΓΓΡΑΦΗΣ` before the account
+    preset; every row pending.
 
   Card exports print a purchase as a positive amount, so the app flips it. Order tried: the mapping saved on the
   account → the bank's layout, used only when its dated rows all have an amount and no header names those columns
@@ -90,7 +108,7 @@ Each row ends with one status, from exact to fuzzy:
 
 | Path | Role |
 | --- | --- |
-| `src/main/services/import/` | `decode`, `csv`, `xlsx`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile` (pure), `picked-files`, `import-service` (preview, commit, undo, history) |
+| `src/main/services/import/` | `decode`, `csv`, `xlsx`, `html-table`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile` (pure), `picked-files`, `import-service` (preview, commit, undo, history) |
 | `src/main/ipc/import.ts` | Thin handlers |
 | `src/renderer/src/components/import/` | `ImportWizard`, `ColumnMappingStep`, `ImportReview`, `RulePrompt`, `ImportHistory`, `ReconciliationNote` |
 | `src/renderer/src/lib/import-review.ts` | Row defaults, decisions, counts, filters, same-merchant fill, mapping form |
@@ -102,7 +120,7 @@ Each row ends with one status, from exact to fuzzy:
 | Channel | Args → result | Errors |
 | --- | --- | --- |
 | `import:pickFile` | `({ title, filterName })` → `{ fileId, fileName }` or `null` | — |
-| `import:preview` | `(accountId, fileId, mapping?)` → `PreviewResult` (`ok: false` with `NO_ROWS`/`UNKNOWN_FORMAT` and a sample) | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND`, `IMPORT_FILE_UNREADABLE`, `IMPORT_FILE_TOO_LARGE` |
+| `import:preview` | `(accountId, fileId, mapping?)` → `PreviewResult` (`ok: false` with `NO_ROWS`/`UNKNOWN_FORMAT`/`DEBIT_CARD_FILE` and a sample) | `INVALID_INPUT`, `ACCOUNT_NOT_FOUND`, `IMPORT_FILE_UNREADABLE`, `IMPORT_FILE_TOO_LARGE` |
 | `import:commit` | `({ previewId, decisions })` → `CommitResult` (counts, batch id, reconciliation) | `INVALID_INPUT`, `IMPORT_PREVIEW_EXPIRED`, `IMPORT_NOTHING_TO_IMPORT`, `SAME_ACCOUNT`, `ACCOUNT_NOT_FOUND` |
 | `import:history` | `(accountId?)` → `ImportHistoryItem[]` | — |
 | `import:undo` | `(batchId)` → `{ removedCount }` | `INVALID_INPUT`, `IMPORT_NOT_FOUND`, `IMPORT_ALREADY_UNDONE` |
@@ -111,7 +129,7 @@ Rules (`rule:*`) are listed in [transactions.md](transactions.md#ipc).
 
 ## Tests
 
-`services/import/import-engine.test.ts` (decode, CSV, `.xlsx`, presets and header search, Piraeus and Revolut
-shapes, amounts, dates, fingerprints, dedupe, transfers, rules), `reconcile.test.ts`, `src/main/__tests__/statement-import.test.ts` (overlapping files,
-same file, double click, twin link, card payment pairing, ATM → Cash, column mapping saved, balance check, undo)
+`services/import/import-engine.test.ts` (decode, CSV, `.xlsx`, HTML table, presets and header search, Piraeus,
+Revolut, Viva, Eurobank reserved and Alpha shapes, debit-card files, own IBANs, pending twins, amounts, dates, fingerprints, dedupe, transfers, rules), `reconcile.test.ts`, `src/main/__tests__/statement-import.test.ts` (overlapping files,
+same file, double click, twin link, pending → booked, own-IBAN transfer, card payment pairing, ATM → Cash, column mapping saved, balance check, undo)
 and `lib/import-review.test.ts` (row defaults, decisions, filters, same-merchant fill, mapping form).
