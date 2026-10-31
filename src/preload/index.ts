@@ -60,6 +60,7 @@ contextBridge.exposeInMainWorld('api', {
   // ── Statement import ────────────────────────────────────────────────────────
   pickStatement:     (labels: unknown)                => ipcRenderer.invoke('import:pickFile', labels),
   previewImport:     (accountId: string, fileId: string, mapping?: unknown) => ipcRenderer.invoke('import:preview', accountId, fileId, mapping),
+  previewImportText: (accountId: string, text: string) => ipcRenderer.invoke('import:previewText', accountId, text),
   commitImport:      (input: unknown)                 => ipcRenderer.invoke('import:commit', input),
   listImports:       (accountId?: string)             => ipcRenderer.invoke('import:history', accountId),
   undoImport:        (batchId: string)                => ipcRenderer.invoke('import:undo', batchId),

@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { pickStatementFile, readPickedFile } from '../services/import/picked-files'
-import { commitImport, listImports, previewImport, undoImport } from '../services/import/import-service'
+import { commitImport, listImports, previewImport, previewImportText, undoImport } from '../services/import/import-service'
 
 export function registerImportHandlers(): void {
   ipcMain.handle('import:pickFile', (_e, labels: unknown) => pickStatementFile(labels))
@@ -10,6 +10,9 @@ export function registerImportHandlers(): void {
     const { fileName, bytes } = await readPickedFile(fileId)
     return previewImport(accountId, fileName, bytes, mapping)
   })
+
+  /** A meal card's list pasted from its web page. Throws: 'INVALID_INPUT', 'ACCOUNT_NOT_FOUND', 'IMPORT_TEXT_TOO_LONG' */
+  ipcMain.handle('import:previewText', (_e, accountId: unknown, text: unknown) => previewImportText(accountId, text))
 
   /** Throws: 'INVALID_INPUT', 'IMPORT_PREVIEW_EXPIRED', 'IMPORT_NOTHING_TO_IMPORT', 'SAME_ACCOUNT', 'ACCOUNT_NOT_FOUND' */
   ipcMain.handle('import:commit', (_e, input: unknown) => commitImport(input))

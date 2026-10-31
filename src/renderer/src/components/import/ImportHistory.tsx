@@ -7,7 +7,7 @@ import { useImportStore } from '../../store/import'
 import { formatDate, formatDateTime } from '../../lib/date-format'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
 import { isImportable } from '../../lib/ledger'
-import type { ImportHistoryItem } from '../../../../shared/statement-import'
+import { PASTED_TEXT, type ImportHistoryItem } from '../../../../shared/statement-import'
 
 export interface ImportHistoryProps {
   /** Start with one account's imports; null = all */
@@ -97,7 +97,7 @@ export function ImportHistory({ accountId: initialAccountId, onClose, onShowRows
             <div key={item.id} className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <RowTitle
-                  title={item.fileName}
+                  title={item.fileName === PASTED_TEXT ? t('import.paste.name') : item.fileName}
                   meta={[
                     accountId ? null : item.accountName,
                     `${formatDate(item.dateFrom)}–${formatDate(item.dateTo)}`,

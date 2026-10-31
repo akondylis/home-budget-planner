@@ -4,8 +4,9 @@
 import { decodeStatement, type StatementEncoding } from './decode'
 import { parseCsv, sniffDelimiter, type Delimiter } from './csv'
 import { isHtmlTable, readHtmlTable } from './html-table'
+import { htmlText, isHtmlPage, isMhtml, mhtmlHtml, readCardList } from './card-list'
 import {
-  isDebitCardFile, parseSavedMapping, profileFor, resolveColumns, resolveLayout, resolveSavedMapping, variantsFor,
+  PROFILES, isDebitCardFile, parseSavedMapping, profileFor, resolveColumns, resolveLayout, resolveSavedMapping, variantsFor,
   type ProfileKey, type ResolvedMapping,
 } from './profiles'
 import { parseRows, type ParsedRow } from './parse-rows'
@@ -27,11 +28,18 @@ export type ReadResult =
   | {
       ok: true
       /** How the file was read: a CSV's text encoding and separator, an HTML table (Viva's ".xls") or an Excel workbook */
-      source: { format: 'csv'; encoding: StatementEncoding; delimiter: Delimiter } | { format: 'html'; encoding: StatementEncoding } | { format: 'xlsx' }
+      source:
+        | { format: 'csv'; encoding: StatementEncoding; delimiter: Delimiter }
+        | { format: 'html'; encoding: StatementEncoding }
+        | { format: 'xlsx' }
+        /** A meal card's list: pasted text, or the page the browser saved */
+        | { format: 'text' | 'page' }
       /** 'saved' = the column mapping stored on the account */
       profile: ProfileKey | 'saved'
       mapping: ResolvedMapping
       rows: ParsedRow[]
+      /** Declined payments on a meal card's page, left out */
+      declined: number
     }
   /**
    * NO_ROWS: nothing that looks like a movement; UNKNOWN_FORMAT: columns not found (the mapping step shows `sample`);
@@ -48,6 +56,7 @@ type CellStyle = Pick<ColumnMapping, 'decimalSeparator' | 'dateOrder'>
  * Throws: 'IMPORT_FILE_UNREADABLE' (an .xlsx that is not a readable workbook)
  */
 export function readStatement(bytes: Uint8Array, account: StatementAccount, mapping?: ColumnMapping): ReadResult {
+  if (account.kind === 'MEAL_VOUCHER' && !isXlsx(bytes)) return readCardPage(bytes, account)
   // A workbook keeps numbers and dates as values: they are written out the way each mapping reads them
   let source: Extract<ReadResult, { ok: true }>['source']
   let cellsFor: (style: CellStyle) => string[][]
@@ -101,5 +110,18 @@ export function readStatement(bytes: Uint8Array, account: StatementAccount, mapp
 
   const rows = parseRows(cells, resolved, account.currency)
   if (rows.length === 0) return { ok: false, reason: 'NO_ROWS', sample }
-  return { ok: true, source, profile, mapping: resolved, rows }
+  return { ok: true, source, profile, mapping: resolved, rows, declined: 0 }
+}
+
+/** A meal card's pasted list or saved page (.mhtml / .html): no column mapping, the list has one shape */
+function readCardPage(bytes: Uint8Array, account: StatementAccount): ReadResult {
+  const { text } = decodeStatement(bytes)
+  const page = isMhtml(text) ? mhtmlHtml(text) : isHtmlPage(text) ? text : null
+  const { cells, declined } = readCardList(page !== null ? htmlText(page) : text)
+  const sample = cells.slice(0, 12)
+  const profile = PROFILES['card-list']
+  const resolved = cells.length > 1 ? resolveLayout(cells, profile) : null
+  const rows = resolved ? parseRows(cells, resolved, account.currency) : []
+  if (!resolved || rows.length === 0) return { ok: false, reason: 'NO_ROWS', sample }
+  return { ok: true, source: { format: page !== null ? 'page' : 'text' }, profile: profile.key, mapping: resolved, rows, declined }
 }

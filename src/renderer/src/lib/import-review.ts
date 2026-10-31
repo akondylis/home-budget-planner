@@ -38,8 +38,14 @@ export function cashAccounts(accounts: AccountSummary[], importingInto: string):
  * What each row starts as: new rows in with their suggestion, transfers paired,
  * possible duplicates out (ticking one links it) unless they settle a pending row,
  * an ATM withdrawal to Cash when there is one, money sent to an own IBAN as a transfer to that account.
+ * A row dated after today starts unticked (likely a typo on the bank's page; user, 2026-11-01).
  */
 export function initialChoice(row: PreviewRow, cashAccountId: string | null): RowChoice {
+  const choice = startChoice(row, cashAccountId)
+  return row.futureDate ? { ...choice, include: false } : choice
+}
+
+function startChoice(row: PreviewRow, cashAccountId: string | null): RowChoice {
   switch (row.status) {
     case 'NEW':
       if (row.transferHint === 'ATM' && cashAccountId) return { include: true, target: { kind: 'transfer', toAccountId: cashAccountId } }

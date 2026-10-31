@@ -41,7 +41,8 @@ export interface CategorySuggestion {
   categoryId: string
   payee: string | null
   /** A rule (with its pattern) or the category last used for this payee */
-  source: { kind: 'rule'; ruleId: string; pattern: string } | { kind: 'history' }
+  /** voucher: a top-up on a meal card goes to the Meal vouchers income category */
+  source: { kind: 'rule'; ruleId: string; pattern: string } | { kind: 'history' } | { kind: 'voucher' }
 }
 
 export interface PreviewRow {
@@ -70,6 +71,8 @@ export interface PreviewRow {
   ibanAccount: { id: string; name: string } | null
   /** An IBAN in the description that is not one of the household's accounts (the row stays an expense or income) */
   otherIban: string | null
+  /** Booked after today: likely a typo on the bank's page, so it starts unticked */
+  futureDate: boolean
 }
 
 export interface PreviewSummary {
@@ -79,12 +82,22 @@ export interface PreviewSummary {
   toCategorise: number
   dateFrom: string | null
   dateTo: string | null
+  /** Declined payments on a meal card's page, left out */
+  declined: number
 }
 
 /** Bank presets the engine knows (src/main/services/import/profiles.ts) */
 export type ProfileKey =
   | 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'eurobank-reserved' | 'piraeus-account' | 'revolut-account' | 'viva-account'
+  /** A meal card's pasted list or saved page (no export exists) */
+  | 'card-list'
   | 'generic'
+
+/** The file name an import from pasted text keeps (the history shows it in the app language) */
+export const PASTED_TEXT = 'pasted-text'
+
+/** Longest paste read, in characters: a meal card's page is a few dozen KB */
+export const MAX_PASTE_CHARS = 1_000_000
 
 /** A statement chosen in the native dialog; main keeps the path, the renderer only sees this */
 export interface PickedFile {

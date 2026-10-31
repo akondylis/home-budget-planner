@@ -124,6 +124,9 @@ const VIVA: StatementLayout = {
   extras: { currency: 6, pending: { whenEmpty: 1 } },
 }
 
+// Meal-card list (card-list.ts makes this table from a pasted or saved page): Date, Description, Amount (signed, dot decimal)
+const CARD_LIST: StatementLayout = { header: { row: 0 }, columns: { date: 0, description: 1, amount: 2 }, amountMode: 'SIGNED' }
+
 export const PROFILES: Record<ProfileKey, StatementProfile> = {
   'alpha-account': account('alpha-account', ALPHA_ACCOUNT),
   'alpha-card': card('alpha-card', ALPHA_CARD),
@@ -133,6 +136,7 @@ export const PROFILES: Record<ProfileKey, StatementProfile> = {
   'piraeus-account': account('piraeus-account', PIRAEUS_ACCOUNT),
   'revolut-account': account('revolut-account', REVOLUT, { dateOrder: 'YMD', decimalSeparator: '.' }),
   'viva-account': account('viva-account', VIVA),
+  'card-list': account('card-list', CARD_LIST, { dateOrder: 'DMY', decimalSeparator: '.' }),
   generic: account('generic'),
 }
 
@@ -181,6 +185,8 @@ export function isDebitCardFile(rows: string[][], kind: AccountKind): boolean {
 
 /** The preset an account starts from: the one saved on it, else its bank's preset family and its kind */
 export function profileFor(account: { importProfile: string | null; statementPreset: string | null; kind: AccountKind }): StatementProfile {
+  // Meal-card issuers have no export: their page's list is read whatever the issuer
+  if (account.kind === 'MEAL_VOUCHER') return PROFILES['card-list']
   if (account.importProfile && account.importProfile in PROFILES) return PROFILES[account.importProfile as ProfileKey]
   const bank = account.statementPreset && Object.hasOwn(PRESET_BANKS, account.statementPreset) ? PRESET_BANKS[account.statementPreset] : null
   const isCard = account.kind === 'CREDIT_CARD'

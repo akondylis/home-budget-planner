@@ -4,6 +4,7 @@ import { Banner, Button, Field, Modal, SelectMenu, joinMeta } from '../ui'
 import { Icon } from '../shell/icons'
 import { ImportReview } from './ImportReview'
 import { ColumnMappingStep } from './ColumnMappingStep'
+import { PasteStep } from './PasteStep'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { useImportStore } from '../../store/import'
 import { useUiStore } from '../../store/ui'
@@ -23,7 +24,7 @@ import {
   type MappingForm,
 } from '../../lib/import-review'
 import type { AccountSummary } from '../../../../shared/ledger'
-import type { PickedFile, PreviewResult } from '../../../../shared/statement-import'
+import { PASTED_TEXT, type PickedFile, type PreviewResult } from '../../../../shared/statement-import'
 
 type Preview = Extract<PreviewResult, { ok: true }>
 
@@ -40,7 +41,7 @@ const EMPTY_MAPPING = (account: AccountSummary | undefined): MappingForm => ({
   invertSign: account?.kind === 'CREDIT_CARD',
 })
 
-/** Accounts with a bank statement (cash and meal-voucher cards have none) */
+/** Accounts with a statement: a file, or a meal card's pasted list (cash has none) */
 const importable = (accounts: AccountSummary[]) => activeAccounts(accounts).filter(a => isImportable(a.kind))
 
 export interface ImportWizardProps {
@@ -51,7 +52,7 @@ export interface ImportWizardProps {
   onImported: (batchId: string) => void
 }
 
-/** Account + file → (column mapping, only for an unknown file) → review → import */
+/** Account + file or pasted list → (column mapping, only for an unknown file) → review → import */
 export function ImportWizard({ accountId: initialAccountId, onClose, onImported }: ImportWizardProps) {
   const { t } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
@@ -70,8 +71,12 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
   const [missing, setMissing] = useState<MappingField[]>([])
   const [preview, setPreview] = useState<Preview | null>(null)
   const [rowChoices, setRowChoices] = useState<Choices>({})
+  // A meal card's list, pasted from the issuer's page (no export exists)
+  const [pasteText, setPasteText] = useState('')
+  const [pasted, setPasted] = useState<Preview | null>(null)
 
   const account = accounts.find(a => a.id === accountId)
+  const voucher = account?.kind === 'MEAL_VOUCHER'
 
   async function read(picked: PickedFile, withMapping?: MappingForm) {
     if (!accountId) return
@@ -93,7 +98,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
         }
         setStep('mapping')
       } else {
-        setError({ message: t(result.reason === 'DEBIT_CARD_FILE' ? 'import.debit_card_file' : 'import.no_rows') })
+        setError({ message: t(result.reason === 'DEBIT_CARD_FILE' ? 'import.debit_card_file' : voucher ? 'import.paste.page_none_found' : 'import.no_rows') })
         setStep('choose')
       }
     } catch (err) {
@@ -106,13 +111,25 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
   async function choose() {
     setError(null)
     try {
-      const picked = await window.api.pickStatement({ title: t('import.pick_title'), filterName: t('import.pick_filter') })
+      const picked = await window.api.pickStatement(voucher
+        ? { title: t('import.paste.pick_title'), filterName: t('import.paste.pick_filter') }
+        : { title: t('import.pick_title'), filterName: t('import.pick_filter') })
       if (!picked) return
       setFile(picked)
       await read(picked)
     } catch (err) {
       setError({ message: ipcErrorMessage(err, t) })
     }
+  }
+
+  function reviewPasted() {
+    if (!pasted) return
+    setFile(null)
+    setError(null)
+    setPreview(pasted)
+    // No ATM to Cash: money never leaves a meal card by transfer
+    setRowChoices(initialChoices(pasted.rows, null))
+    setStep('review')
   }
 
   function readMapped() {
@@ -144,6 +161,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
     setStep('choose')
     setPreview(null)
     setFile(null)
+    setPasted(null)
     setError(null)
   }
 
@@ -152,8 +170,8 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
     <Banner
       tone="warning"
       className="mb-4"
-      action={error.code === 'IMPORT_PREVIEW_EXPIRED' && file
-        ? <Button size="sm" icon="refresh" onClick={() => void read(file)}>{t('import.read_again')}</Button>
+      action={error.code === 'IMPORT_PREVIEW_EXPIRED' && (file || pasteText)
+        ? <Button size="sm" icon="refresh" onClick={() => (file ? void read(file) : startOver())}>{t('import.read_again')}</Button>
         : undefined}
     >
       <span role="alert">{error.message}</span>
@@ -161,7 +179,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
   )
   const cancel = <Button variant="ghost" icon="close" onClick={onClose} disabled={busy}>{t('common.cancel')}</Button>
   const back = (
-    <Button variant="ghost" icon="arrow-left" className="mr-auto" onClick={startOver} disabled={busy}>{t('import.other_file')}</Button>
+    <Button variant="ghost" icon="arrow-left" className="mr-auto" onClick={startOver} disabled={busy}>{voucher && !file ? t('import.paste.back') : t('import.other_file')}</Button>
   )
 
   if (step === 'review' && preview) {
@@ -173,7 +191,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
         title={t('import.review_title')}
         subtitle={joinMeta([
           account?.name,
-          preview.fileName,
+          preview.fileName === PASTED_TEXT ? t('import.paste.name') : preview.fileName,
           period,
           preview.profile === 'saved' ? t('import.profile_saved') : t('import.detected', { profile: t(`import.profile.${preview.profile}`) }),
         ])}
@@ -246,16 +264,27 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
 
   return (
     <Modal
-      title={t('import.title')}
+      title={voucher ? t('import.paste.title') : t('import.title')}
       onClose={onClose}
       closeDisabled={busy}
-      size="md"
+      size={voucher ? 'lg' : 'md'}
       footer={
         <>
+          {voucher && (
+            <Button variant="ghost" icon="folder" className="mr-auto" onClick={() => void choose()} disabled={busy}>
+              {t('import.paste.open_page')}
+            </Button>
+          )}
           {cancel}
-          <Button variant="primary" icon="folder" onClick={() => void choose()} disabled={busy || !accountId}>
-            {busy ? t('import.reading') : t('import.choose_file')}
-          </Button>
+          {voucher ? (
+            <Button variant="primary" icon="arrow-right" onClick={reviewPasted} disabled={busy || !pasted}>
+              {t('import.paste.review')}
+            </Button>
+          ) : (
+            <Button variant="primary" icon="folder" onClick={() => void choose()} disabled={busy || !accountId}>
+              {busy ? t('import.reading') : t('import.choose_file')}
+            </Button>
+          )}
         </>
       }
     >
@@ -273,9 +302,22 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
               triggerClassName="w-full"
             />
           </Field>
+          {voucher && accountId && (
+            <>
+              <p className="text-sm text-fg-muted">{t('import.paste.how_to', { issuer: account?.institutionName ?? t('import.paste.issuer_page') })}</p>
+              <PasteStep
+                accountId={accountId}
+                edenred={account?.institutionId === 'inst_edenred'}
+                text={pasteText}
+                onText={setPasteText}
+                onRead={setPasted}
+                onSubmit={reviewPasted}
+              />
+            </>
+          )}
           <div className="flex items-start gap-2 text-xs text-fg-muted">
             <Icon name="lock" size={14} className="mt-0.5 shrink-0" />
-            <p>{t('import.choose_hint')}</p>
+            <p>{t(voucher ? 'import.paste.private' : 'import.choose_hint')}</p>
           </div>
         </div>
       )}

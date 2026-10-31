@@ -56,6 +56,7 @@ interface Window {
     pickStatement:     (labels: { title: string; filterName: string }) => Promise<import('../../shared/statement-import').PickedFile | null>
     previewImport:     (accountId: string, fileId: string, mapping?: import('../../shared/statement-import').ColumnMapping) =>
                          Promise<import('../../shared/statement-import').PreviewResult>
+    previewImportText: (accountId: string, text: string) => Promise<import('../../shared/statement-import').PreviewResult>
     commitImport:      (input: { previewId: string; decisions: import('../../shared/statement-import').ImportDecision[]; createdByMemberId?: string | null }) =>
                          Promise<import('../../shared/statement-import').CommitResult>
     listImports:       (accountId?: string) => Promise<import('../../shared/statement-import').ImportHistoryItem[]>

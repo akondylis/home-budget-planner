@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { Badge, FilterChip, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SortHeader, cx, type BadgeTone, type SelectMenuOption } from '../ui'
-import type { IconName } from '../shell/icons'
+import { Icon, type IconName } from '../shell/icons'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { RulePrompt } from './RulePrompt'
 import { useLedgerStore } from '../../store/ledger'
@@ -154,6 +154,12 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
             {t(`import.chip.${c.filter}`, { count: c.count })}
           </FilterChip>
         ))}
+        {summary.declined > 0 && (
+          <span className="ml-1 flex items-center gap-1 text-xs text-fg-muted">
+            <Icon name="info" size={14} />
+            {t('import.declined_left_out', { count: summary.declined })}
+          </span>
+        )}
       </div>
 
       {prompt && (
@@ -235,6 +241,7 @@ export function ImportReview({ accountId, rows, summary, choices, onChoices }: I
               <div className="flex flex-wrap gap-1">
                 <Badge tone={badge.tone} icon={badge.icon}>{settles ? t('import.status_settles') : t(`import.status.${status}`)}</Badge>
                 {row.pending && <Badge tone="neutral" icon="calendar">{t('import.pending')}</Badge>}
+                {row.futureDate && selectable && <Badge tone="warning" icon="calendar">{t('import.future_date')}</Badge>}
               </div>
             </ListRow>
           )
@@ -295,12 +302,14 @@ function explain(row: PreviewRow, choice: RowChoice, t: TFunction, accounts: Acc
     }
     return t(isIncoming(row) ? 'import.why_transfer_from' : 'import.why_transfer_to', { account })
   }
+  if (row.futureDate && !choice.include) return t('import.why_future_date')
   if (row.transferHint === 'CARD_PAYMENT') return t('import.why_card_payment')
   // Someone else's IBAN unless the user says it is theirs: a quiet hint, the row stays as it is
   // (the IBAN itself is in the bank text above)
   if (row.otherIban && row.status === 'NEW' && choice.target.kind === 'category') return t('import.why_other_iban')
   const s = row.suggestion
   if (s && choice.target.kind === 'category' && choice.target.categoryId === s.categoryId) {
+    if (s.source.kind === 'voucher') return t('import.why_voucher')
     return s.source.kind === 'rule' ? t('import.why_rule', { merchant: s.payee ?? (merchantText(row.description) || row.description) }) : t('import.why_history')
   }
   return null

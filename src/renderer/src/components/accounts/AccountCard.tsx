@@ -31,7 +31,7 @@ export function AccountCard({
   const Heading = groupedBy === 'none' ? 'h2' : 'h3'
   const holderLine = showHolder && groupedBy !== 'holder'
   const voucher = account.kind === 'MEAL_VOUCHER'
-  // Cash and meal-voucher cards are entered by hand; the rest come from statements
+  // Cash is entered by hand; the rest come from statements (a meal card from its pasted list)
   const importable = isImportable(account.kind)
   const source = !importable ? t('accounts.source_cash') : account.importedUntil ? null : t('accounts.not_imported')
   const balanceLabel = account.kind === 'CREDIT_CARD' ? t('accounts.balance_card') : voucher ? t('accounts.balance_voucher') : t('accounts.balance')

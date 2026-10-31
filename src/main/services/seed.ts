@@ -203,6 +203,15 @@ export async function seedDefaults(lang: AppLanguage): Promise<boolean> {
 /** Where a meal-voucher card's monthly top-up is booked */
 export const VOUCHER_CATEGORY = SEED_GROUPS[0].categories.find(c => c.key === 'meal_vouchers')!.name
 
+/** The active Meal vouchers income category (either language's name), for top-ups read from a meal card; null = none */
+export async function findVoucherCategoryId(db: Pick<Prisma.TransactionClient, 'category'>): Promise<string | null> {
+  const found = await db.category.findFirst({
+    where: { type: 'INCOME', parentId: { not: null }, archivedAt: null, name: { in: Object.values(VOUCHER_CATEGORY) } },
+    select: { id: true },
+  })
+  return found?.id ?? null
+}
+
 /**
  * Makes sure an income category for meal-voucher top-ups exists (in either
  * language), for databases seeded before it was a starter category. Adds it

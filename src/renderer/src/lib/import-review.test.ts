@@ -38,6 +38,7 @@ function row(patch: Partial<PreviewRow>): PreviewRow {
     transferHint: null,
     ibanAccount: null,
     otherIban: null,
+    futureDate: false,
     ...patch,
   }
 }
@@ -79,6 +80,13 @@ describe('import review', () => {
     const toAccount = { include: true, target: { kind: 'transfer' as const, toAccountId: 'alpha' } }
     expect(shownStatus(pair, toAccount)).toBe('NEW')
     expect(toDecisions([pair], { [pair.line]: toAccount })).toEqual([{ line: pair.line, action: 'TRANSFER', toAccountId: 'alpha' }])
+  })
+
+  it('should start a row dated after today unticked, keeping where it would go', () => {
+    const later = row({ futureDate: true, suggestion: rule('groceries') })
+    const choice = initialChoices([later], null)[later.line]
+    expect(choice).toEqual({ include: false, target: { kind: 'category', categoryId: 'groceries' } })
+    expect(toDecisions([later], { [later.line]: { ...choice, include: true } })).toEqual([{ line: later.line, action: 'IMPORT', categoryId: 'groceries' }])
   })
 
   it('should leave an ATM withdrawal to categorise when there is no Cash account', () => {

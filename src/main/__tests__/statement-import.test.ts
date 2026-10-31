@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../db/prisma', async () => (await import('./test-db')).createTestDb())
 
@@ -9,7 +9,7 @@ import { createTransaction, listTransactions } from '../services/transactions'
 import { seedDefaults } from '../services/seed'
 import { createMember } from '../services/members'
 import { listSubscriptionHints } from '../services/subscriptions'
-import { clearPreviews, commitImport, listImports, previewImport, undoImport, type PreviewResult } from '../services/import/import-service'
+import { clearPreviews, commitImport, listImports, previewImport, previewImportText, undoImport, type PreviewResult } from '../services/import/import-service'
 
 const csv = (lines: string[]) => new TextEncoder().encode(['Ημερομηνία;Περιγραφή;Ποσό', ...lines].join('\r\n'))
 
@@ -46,8 +46,15 @@ async function preview(accountId: string, bytes: Uint8Array, fileName = 'stateme
 const balanceOf = async (id: string) => (await listAccounts()).find(a => a.id === id)!.balanceCents
 
 beforeEach(() => {
+  // Rows dated after today start skipped: the fixtures' dates are in the past for these tests
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2027-01-15T12:00:00'))
   resetTestDb()
   clearPreviews()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('statement import', () => {
@@ -293,6 +300,53 @@ describe('statement import', () => {
 
     const debitCard = new TextEncoder().encode('"ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ";"ΗΜ/ΝΙΑ ΑΞΙΑΣ";"ΠΕΡΙΓΡΑΦΗ";"ΠΟΣΟ"\n30/10/26;30/10/26;"CINOBO";-9,99')
     expect(await previewImport(bankId, 'debit-card-transactions.csv', debitCard)).toMatchObject({ ok: false, reason: 'DEBIT_CARD_FILE' })
+  })
+})
+
+describe('meal-card paste', () => {
+  // The shape of Up Hellas' page, made-up rows
+  const PASTE = ['My Balance32,89€', 'CORNER MARKET03/10/2026', '-12.40€', 'ACME SOFTWARE30/09/2026', '+130.00€', 'KIOSK31/12/2099', '-1.00€'].join('\n')
+
+  const anyExpense = async () => (await prisma.category.findFirst({ where: { type: 'EXPENSE', parentId: { not: null } } }))!.id
+
+  async function voucherSetup() {
+    const { bankId } = await setup()
+    const holder = await createMember({ name: 'Parent', colour: 'blue' })
+    const [cardId] = await createAccounts([
+      { name: 'Up card', kind: 'MEAL_VOUCHER', institutionId: 'inst_up_hellas', holderMemberId: holder, openingBalanceCents: 0, openingDate: '2026-09-01' },
+    ])
+    return { bankId, cardId }
+  }
+
+  it('should read pasted rows: top-up to Meal vouchers, no transfer pairing, a future date flagged and skipped', async () => {
+    const { bankId, cardId } = await voucherSetup()
+    // The employer's money also left a bank the same day: a bank file would pair them, a meal card never does
+    await createTransaction({ kind: 'EXPENSE', accountId: bankId, amountCents: 13000, bookedAt: '2026-09-30', categoryId: await anyExpense() })
+    const p = await previewImportText(cardId, PASTE)
+    if (!p.ok) throw new Error(p.reason)
+    expect(p).toMatchObject({ fileName: 'pasted-text', profile: 'card-list' })
+    const vouchers = await prisma.category.findFirst({ where: { name: 'Κουπόνια σίτισης' } })
+    expect(p.rows.map(r => [r.status, r.amountCents, r.futureDate, r.transferWith])).toEqual([
+      ['NEW', -1240, false, null], ['NEW', 13000, false, null], ['NEW', -100, true, null],
+    ])
+    expect(p.rows[1].suggestion).toMatchObject({ categoryId: vouchers?.id, source: { kind: 'voucher' } })
+
+    const result = await commitImport({ previewId: p.previewId })
+    expect(result.importedCount).toBe(2)
+    expect(await balanceOf(cardId)).toBe(13000 - 1240)
+    expect((await listImports(cardId))[0].fileName).toBe('pasted-text')
+
+    const again = await previewImportText(cardId, PASTE)
+    expect(again.ok && again.rows.map(r => r.status)).toEqual(['ALREADY_IMPORTED', 'ALREADY_IMPORTED', 'NEW'])
+  })
+
+  it('should offer a row typed in by hand as its twin, and refuse a huge paste', async () => {
+    const { cardId } = await voucherSetup()
+    await createTransaction({ kind: 'EXPENSE', accountId: cardId, amountCents: 1240, bookedAt: '2026-10-02', categoryId: await anyExpense() })
+    const p = await previewImportText(cardId, PASTE)
+    expect(p.ok && p.rows[0].status).toBe('POSSIBLE_DUPLICATE')
+    await expect(previewImportText(cardId, 'x'.repeat(1_000_001))).rejects.toThrow('IMPORT_TEXT_TOO_LONG')
+    expect(await previewImportText(cardId, 'Home\nMap')).toMatchObject({ ok: false, reason: 'NO_ROWS' })
   })
 })
 

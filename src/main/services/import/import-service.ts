@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { dateOnlyToDate, dateToDateOnly } from '../../../shared/date-only'
+import { MAX_PASTE_CHARS, PASTED_TEXT } from '../../../shared/statement-import'
 import type {
   ColumnMapping,
   CommitResult,
@@ -25,6 +26,7 @@ import { parseSavedMapping } from './profiles'
 import { closingBalance, type StatementBalance } from './reconcile'
 import { balanceOn } from '../accounts'
 import { assertMember } from '../members'
+import { findVoucherCategoryId } from '../seed'
 
 export type { CommitResult, ImportDecision, ImportHistoryItem, PreviewResult }
 
@@ -77,7 +79,8 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
   const to = dates[dates.length - 1] ?? '1970-01-01'
   const hash = fileHash(bytes)
 
-  const [known, manual, others, rules, categorised, sameBatch, withIban] = await Promise.all([
+  const voucherCard = account.kind === 'MEAL_VOUCHER'
+  const [known, manual, others, rules, categorised, sameBatch, withIban, voucherCategoryId] = await Promise.all([
     // Pending rows are not "already imported": the booked row replaces them (as a twin below)
     prisma.transaction.findMany({
       where: { accountId, pending: false, OR: [{ fingerprint: { not: null } }, { bankReference: { not: null } }] },
@@ -95,9 +98,9 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
       },
       select: { id: true, bookedAt: true, amountCents: true, payee: true, pending: true },
     }),
-    prisma.transaction.findMany({
+    // Meal-voucher cards never send or get money from a bank
+    voucherCard ? Promise.resolve([]) : prisma.transaction.findMany({
       where: {
-        // Meal-voucher cards never send or get money from a bank
         accountId: { not: accountId }, transferId: null, account: { archivedAt: null, kind: { not: 'MEAL_VOUCHER' } },
         bookedAt: { gte: shift(from, -TRANSFER_WINDOW_DAYS), lte: shift(to, TRANSFER_WINDOW_DAYS) },
       },
@@ -112,6 +115,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     }),
     prisma.importBatch.findFirst({ where: { accountId, fileHash: hash, undoneAt: null }, orderBy: { importedAt: 'desc' } }),
     prisma.account.findMany({ where: { id: { not: accountId }, archivedAt: null, iban: { not: null } }, select: { id: true, name: true, iban: true } }),
+    voucherCard ? findVoucherCategoryId(prisma) : Promise.resolve(null),
   ])
 
   const history = new Map<string, string>()
@@ -131,7 +135,8 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     rules: sortRules(rules),
     history,
     ownIbans: new Map(withIban.map(a => [a.iban!, { id: a.id, name: a.name }])),
-  })
+    ...(voucherCard ? { voucher: { categoryId: voucherCategoryId } } : {}),
+  }, read.declined)
 
   const previewId = cachePreview({
     accountId, fileName, fileHash: hash, rows, summary, mapping: userMapping,
@@ -148,6 +153,16 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     summary,
     rows,
   }
+}
+
+/**
+ * A meal card's list pasted from its web page (Up Hellas, Edenred: no export). Read like a file.
+ * Throws: 'INVALID_INPUT', 'ACCOUNT_NOT_FOUND', 'IMPORT_TEXT_TOO_LONG'
+ */
+export async function previewImportText(accountId: unknown, text: unknown): Promise<PreviewResult> {
+  if (typeof text !== 'string') throw new Error('INVALID_INPUT')
+  if (text.length > MAX_PASTE_CHARS) throw new Error('IMPORT_TEXT_TOO_LONG')
+  return previewImport(accountId, PASTED_TEXT, new TextEncoder().encode(text))
 }
 
 // ── Commit ───────────────────────────────────────────────────────────────────
@@ -170,6 +185,8 @@ const commitSchema = z.object({
 })
 
 function defaultAction(row: PreviewRow): ImportDecision['action'] {
+  // A date in the future is likely a typo on the bank's page: in only when the user ticks it
+  if (row.futureDate) return 'SKIP'
   if (row.status === 'NEW') return 'IMPORT'
   if (row.status === 'TRANSFER_MATCH') return 'TRANSFER'
   // The booked row replaces the pending one the bank had reserved

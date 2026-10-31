@@ -8,6 +8,7 @@ import { matchTransfers, transferHint, type TransferCandidate } from './transfer
 import { suggestCategory, type RuleLike } from './apply-rules'
 import type { ParsedRow } from './parse-rows'
 import { findIbans } from '../../../shared/iban'
+import { todayDateOnly } from '../../../shared/date-only'
 
 export interface PreviewContext extends ExistingRows {
   /** Untransferred rows in the other own accounts, around the statement's dates */
@@ -18,6 +19,13 @@ export interface PreviewContext extends ExistingRows {
   history: Map<string, string>
   /** IBAN → the own account (not this one) that has it */
   ownIbans: Map<string, { id: string; name: string }>
+  /**
+   * Set when importing into a meal-voucher card: no transfers or IBAN hints (money never leaves the card
+   * by transfer), and a top-up without a rule or history goes to the Meal vouchers category (null = none found)
+   */
+  voucher?: { categoryId: string | null }
+  /** Rows booked after this day are flagged; default: today */
+  today?: string
 }
 
 /**
@@ -30,14 +38,20 @@ function ibanIn(description: string, ownIbans: PreviewContext['ownIbans']): { ow
   return own ? { own, other: null } : { own: null, other: ibans[0] ?? null }
 }
 
-export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: PreviewContext): { rows: PreviewRow[]; summary: PreviewSummary } {
+export function buildPreview(
+  accountId: string,
+  parsed: ParsedRow[],
+  ctx: PreviewContext,
+  declined = 0,
+): { rows: PreviewRow[]; summary: PreviewSummary } {
+  const today = ctx.today ?? todayDateOnly()
   const fingerprints = fingerprintRows(accountId, parsed)
   const withPrints = parsed.map((row, i) => ({ ...row, fingerprint: fingerprints[i] }))
   const dedupe = classifyRows(withPrints, ctx)
   const transfers = matchTransfers(
     withPrints.map((row, i) => ({ ...row, eligible: dedupe[i].status === 'NEW' })),
     accountId,
-    ctx.transferCandidates,
+    ctx.voucher ? [] : ctx.transferCandidates,
   )
 
   const rows = withPrints.map((row, i): PreviewRow => {
@@ -48,7 +62,7 @@ export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: Previe
     const needsCategory = status === 'NEW' || status === 'POSSIBLE_DUPLICATE' || status === 'TRANSFER_MATCH'
     const key = payeeKey(row.description)
     // An exact match already found the other side; otherwise an own IBAN in the text says where it went
-    const iban = status === 'NEW' ? ibanIn(row.description, ctx.ownIbans) : { own: null, other: null }
+    const iban = status === 'NEW' && !ctx.voucher ? ibanIn(row.description, ctx.ownIbans) : { own: null, other: null }
     return {
       line: row.line,
       status,
@@ -62,20 +76,27 @@ export function buildPreview(accountId: string, parsed: ParsedRow[], ctx: Previe
       balanceAfterCents: row.balanceAfterCents,
       fingerprint: row.fingerprint,
       pending: row.pending,
-      suggestion: needsCategory ? suggestCategory(key, accountId, ctx.rules, ctx.history) : null,
+      suggestion: needsCategory ? (suggestCategory(key, accountId, ctx.rules, ctx.history) ?? topUp(row.amountCents, ctx.voucher)) : null,
       duplicateOf: twin ? { id: twin.id, bookedAt: twin.bookedAt, amountCents: twin.amountCents, payee: twin.payee, pending: twin.pending } : null,
       transferWith: other
         ? { id: other.id, accountId: other.accountId, accountName: other.accountName, bookedAt: other.bookedAt, amountCents: other.amountCents, description: other.description }
         : null,
-      transferHint: iban.own ? 'OWN_IBAN' : status === 'NEW' ? transferHint(row.description) : null,
+      transferHint: iban.own ? 'OWN_IBAN' : status === 'NEW' && !ctx.voucher ? transferHint(row.description) : null,
       ibanAccount: iban.own,
       otherIban: iban.other,
+      futureDate: row.bookedAt !== null && row.bookedAt > today,
     }
   })
-  return { rows, summary: summarise(rows) }
+  return { rows, summary: summarise(rows, declined) }
 }
 
-export function summarise(rows: PreviewRow[]): PreviewSummary {
+/** Money in on a meal card is the employer's top-up */
+function topUp(amountCents: number | null, voucher: PreviewContext['voucher']): PreviewRow['suggestion'] {
+  if (!voucher?.categoryId || amountCents === null || amountCents <= 0) return null
+  return { categoryId: voucher.categoryId, payee: null, source: { kind: 'voucher' } }
+}
+
+export function summarise(rows: PreviewRow[], declined = 0): PreviewSummary {
   const counts = Object.fromEntries(ROW_STATUSES.map(s => [s, 0])) as Record<RowStatus, number>
   for (const row of rows) counts[row.status]++
   const dates = rows.map(r => r.bookedAt).filter((d): d is string => d !== null).sort()
@@ -84,5 +105,6 @@ export function summarise(rows: PreviewRow[]): PreviewSummary {
     toCategorise: rows.filter(r => r.status === 'NEW' && !r.suggestion && !r.transferHint).length,
     dateFrom: dates[0] ?? null,
     dateTo: dates[dates.length - 1] ?? null,
+    declined,
   }
 }
