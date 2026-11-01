@@ -170,8 +170,9 @@ export function applyToSamePayee(
     const choice = choices[row.line]
     if (row.payeeKey !== payeeKey || touched.has(row.line) || !SELECTABLE.has(row.status)) continue
     if (choice.target.kind !== 'category' || choice.target.categoryId === categoryId) continue
-    // A rule's suggestion stays: the user only taught this merchant, not that one
-    if (choice.target.categoryId !== null && row.suggestion?.source.kind === 'rule') continue
+    // A rule's suggestion stays (the user only taught this merchant, not that one), and so does a category typed in the file
+    const kept = row.suggestion?.source.kind === 'rule' || row.suggestion?.source.kind === 'file'
+    if (choice.target.categoryId !== null && kept) continue
     next[row.line] = { ...choice, target: { kind: 'category', categoryId } }
     changed++
   }

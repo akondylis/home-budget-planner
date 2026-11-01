@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Badge, Button, IconButton, ListCard, MetaLine, Money } from '../ui'
 import { MemberDot } from '../members/MemberDot'
 import { Icon } from '../shell/icons'
-import { ACCOUNT_KIND_ICON, isImportable } from '../../lib/ledger'
+import { ACCOUNT_KIND_ICON, isEnteredByHand } from '../../lib/ledger'
 import type { AccountGroupBy } from '../../lib/account-groups'
 import { formatDate } from '../../lib/date-format'
 import type { AccountSummary } from '../../../../shared/ledger'
@@ -31,9 +31,9 @@ export function AccountCard({
   const Heading = groupedBy === 'none' ? 'h2' : 'h3'
   const holderLine = showHolder && groupedBy !== 'holder'
   const voucher = account.kind === 'MEAL_VOUCHER'
-  // Cash is entered by hand; the rest come from statements (a meal card from its pasted list)
-  const importable = isImportable(account.kind)
-  const source = !importable ? t('accounts.source_cash') : account.importedUntil ? null : t('accounts.not_imported')
+  // Cash is entered by hand (or from the CSV template); the rest come from statements (a meal card from its pasted list)
+  const byHand = isEnteredByHand(account.kind)
+  const source = account.importedUntil ? null : byHand ? t('accounts.source_cash') : t('accounts.not_imported')
   const balanceLabel = account.kind === 'CREDIT_CARD' ? t('accounts.balance_card') : voucher ? t('accounts.balance_voucher') : t('accounts.balance')
 
   return (
@@ -87,7 +87,7 @@ export function AccountCard({
           )}
         </div>
         <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-          {account.importedUntil && importable && <>
+          {account.importedUntil && <>
             {/* Where the imports are, with Undo */}
             <button type="button" onClick={onHistory} title={t('import.history_title')} className="shrink-0 underline decoration-dotted underline-offset-2 hover:text-fg">
               {t('accounts.imported_until', { date: formatDate(account.importedUntil) })}
@@ -99,8 +99,9 @@ export function AccountCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {importable && <Button size="sm" icon="download" onClick={onImport}>{t('import.command')}</Button>}
-        <Button size="sm" variant={importable ? 'ghost' : 'secondary'} icon="plus" onClick={onAddTransaction}>{t('log.add')}</Button>
+        {byHand && <Button size="sm" icon="plus" onClick={onAddTransaction}>{t('log.add')}</Button>}
+        <Button size="sm" variant={byHand ? 'ghost' : 'secondary'} icon="download" onClick={onImport}>{t('import.command')}</Button>
+        {!byHand && <Button size="sm" variant="ghost" icon="plus" onClick={onAddTransaction}>{t('log.add')}</Button>}
       </div>
     </ListCard>
   )

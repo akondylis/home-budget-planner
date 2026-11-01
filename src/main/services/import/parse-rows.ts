@@ -18,6 +18,8 @@ export interface ParsedRow {
   balanceAfterCents: number | null
   /** Reserved by the bank, not booked yet */
   pending: boolean
+  /** The category name typed in the cash template's Category column */
+  categoryText?: string
   problem?: RowProblem
 }
 
@@ -108,6 +110,7 @@ export function parseRows(rows: string[][], mapping: ResolvedMapping, currency =
     const valueText = cell(row, c.valueDate)
     const balanceText = cell(row, c.balance)
     const reference = cell(row, c.reference)
+    const categoryText = cell(row, x.category)
     out.push({
       line: r + 1,
       bookedAt,
@@ -118,6 +121,7 @@ export function parseRows(rows: string[][], mapping: ResolvedMapping, currency =
       // A balance in another currency says nothing about this account
       balanceAfterCents: balanceText && !foreign ? parseStatementAmount(balanceText, o.decimalSeparator) : null,
       pending: x.pending === 'all' || (x.pending !== undefined && cell(row, x.pending.whenEmpty) === ''),
+      ...(categoryText ? { categoryText } : {}),
       ...(bookedAt === null ? { problem: 'DATE' as const }
         : foreign ? { problem: 'CURRENCY' as const }
           : amountCents === null || amountCents === 0 ? { problem: 'AMOUNT' as const } : {}),

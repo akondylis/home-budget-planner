@@ -40,7 +40,6 @@ import { useRecurringStore } from './store/recurring'
 import { useDebtsStore } from './store/debts'
 import { useNotificationsStore } from './store/notifications'
 import { changeLanguage, changeTheme, swapSidebar, toggleSidebar } from './lib/ui-actions'
-import { isImportable } from './lib/ledger'
 import { BANKS_SECTION_ID } from './components/banks/BanksSection'
 import type { PaletteTarget } from './lib/command-palette'
 import type { View } from './types'
@@ -174,7 +173,7 @@ export default function App() {
 
   // Statements need an account to go into: Accounts (Quick setup) comes first
   function importStatement(accountId?: string) {
-    if (activeAccounts(useLedgerStore.getState().accounts).every(a => !isImportable(a.kind))) setView('accounts')
+    if (activeAccounts(useLedgerStore.getState().accounts).length === 0) setView('accounts')
     else useImportStore.getState().openWizard(accountId)
   }
 

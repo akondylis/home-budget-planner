@@ -8,10 +8,9 @@ export: their list is pasted from the issuer's page (below).
 
 ## UX
 
-- **Entry points:** **Import statement** on each bank/card account card (account pre-selected), on the
+- **Entry points:** **Import statement** on each account card (account pre-selected; on Cash it sits after **Add**), on the
   Transactions header, and `Ctrl+K`. Past imports: the "Imported up to…" link on an account card, the wizard, `Ctrl+K`.
-- **Step 1, account + file:** the account (bank accounts and cards; cash has no statement) and **Choose statement
-  file…** (primary), which opens the Windows file dialog and reads the file at once. A lock line says the file is
+- **Step 1, account + file:** the account (any kind) and **Choose statement file…** (primary), which opens the Windows file dialog and reads the file at once. A lock line says the file is
   read on this computer and never sent anywhere.
 - **Step 2, which column is which** (only when no preset knows the file): the first rows as a table, the row with
   the column names (guessed), date, description, one signed amount or money out/in columns, optional balance, date
@@ -40,6 +39,10 @@ export: their list is pasted from the issuer's page (below).
   1 declined payment left out" or "No transactions found…". **Review transactions** (primary, Ctrl+Enter) goes to
   the usual review; **Open saved page…** reads the page the browser saved (`.mhtml`/`.html`) instead. Top-ups start
   in **Meal vouchers**; nothing pairs as a transfer; the history names it "Pasted text" (user, 2026-11-01).
+- **Cash template:** for a Cash account step 1 is **Import cash**: *Fill in the template* with two example rows,
+  **Download template** (`Ημερομηνία;Περιγραφή;Έξοδο;Έσοδο;Κατηγορία` in the app language, BOM, `;`) then **Open
+  it**, and **Choose the filled-in template…**. Amount under Expense or Income, no sign; a Category name that matches
+  one of the right direction starts selected ("From your file") and outlives same-merchant fills (user, 2026-11-01).
 - **Dates after today:** a row booked after today (a typo on the bank's page) gets an **After today** badge and
   starts unticked, with "check the date on the card's page" (user, 2026-11-01).
 - **Pending and IBAN rows:** a reserved card payment carries a **Pending** badge (also in the log). Money out to the
@@ -116,9 +119,9 @@ Each row ends with one status, from exact to fuzzy:
 
 | Path | Role |
 | --- | --- |
-| `src/main/services/import/` | `decode`, `csv`, `xlsx`, `html-table`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile`, `card-list` (meal-card page/paste) (pure), `picked-files`, `import-service` (preview, commit, undo, history) |
+| `src/main/services/import/` | `decode`, `csv`, `xlsx`, `html-table`, `profiles`, `parse-rows`, `fingerprint`, `dedupe`, `transfer-match`, `apply-rules`, `read-statement`, `build-preview`, `reconcile`, `card-list` (meal-card page/paste) (pure; the `cash-template` preset reads `src/shared/cash-template.ts`), `picked-files`, `import-service` (preview, commit, undo, history) |
 | `src/main/ipc/import.ts` | Thin handlers |
-| `src/renderer/src/components/import/` | `ImportWizard`, `PasteStep`, `ColumnMappingStep`, `ImportReview`, `RulePrompt`, `ImportHistory`, `ReconciliationNote` |
+| `src/renderer/src/components/import/` | `ImportWizard`, `PasteStep`, `CashTemplateHint`, `ColumnMappingStep`, `ImportReview`, `RulePrompt`, `ImportHistory`, `ReconciliationNote` |
 | `src/renderer/src/lib/import-review.ts` | Row defaults, decisions, counts, filters, same-merchant fill, mapping form |
 | `src/renderer/src/store/import.ts` | Wizard and history open state; the last import for the banner |
 | `src/shared/statement-import.ts` | Shared shapes |
@@ -139,7 +142,7 @@ Rules (`rule:*`) are listed in [transactions.md](transactions.md#ipc).
 ## Tests
 
 `services/import/import-engine.test.ts` (decode, CSV, `.xlsx`, HTML table, presets and header search, Piraeus,
-Revolut, Viva, Eurobank reserved and Alpha shapes, debit-card files, own IBANs, pending twins, amounts, dates, fingerprints, dedupe, transfers, rules), `reconcile.test.ts`, `src/main/__tests__/statement-import.test.ts` (overlapping files,
+Revolut, Viva, Eurobank reserved and Alpha shapes, debit-card files, own IBANs, pending twins, amounts, dates, fingerprints, dedupe, transfers, rules), `reconcile.test.ts`, `cash-template.test.ts`, `src/main/__tests__/statement-import.test.ts` (+ cash template) (overlapping files,
 same file, double click, twin link, pending → booked, own-IBAN transfer, card payment pairing, ATM → Cash, column mapping saved, balance check, undo)
 `card-list.test.ts` (Up Hellas and Edenred shapes, declined rows, `.mhtml`, top-ups, no pairing, dates after today), the
 *meal-card paste* cases in `statement-import.test.ts` (top-up category, re-paste, hand-typed twin, too long),

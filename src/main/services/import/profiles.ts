@@ -48,6 +48,8 @@ export interface LayoutExtras {
    * reserved file), or rows whose column is empty (Viva: no post date yet)
    */
   pending?: 'all' | { whenEmpty: number }
+  /** A category name typed by the household (the cash template); matched to a category in the preview */
+  category?: number
 }
 
 // Words Greek banks put in their column headers
@@ -56,8 +58,9 @@ const COMMON: Partial<Record<MappingField, string[]>> = {
   valueDate: ['Ημερομηνία Αξίας', 'Ημ/νία Αξίας', 'Αξία', 'Value Date'],
   description: ['Περιγραφή', 'Αιτιολογία', 'Περιγραφή Συναλλαγής', 'Περιγραφή Κίνησης', 'Description', 'Details'],
   amount: ['Ποσό', 'Ποσό Συναλλαγής', 'Ποσό σε EUR', 'Ποσό (EUR)', 'Amount'],
-  debit: ['Χρέωση', 'Χρεώσεις', 'Ανάληψη', 'Debit'],
-  credit: ['Πίστωση', 'Πιστώσεις', 'Κατάθεση', 'Credit'],
+  // Έξοδο / Έσοδο: the cash template's columns, so a template with its columns moved still reads
+  debit: ['Χρέωση', 'Χρεώσεις', 'Ανάληψη', 'Debit', 'Έξοδο', 'Έξοδα', 'Expense'],
+  credit: ['Πίστωση', 'Πιστώσεις', 'Κατάθεση', 'Credit', 'Έσοδο', 'Έσοδα', 'Income'],
   dcFlag: ['Χ/Π', 'Χ-Π', 'Πρόσημο', 'Πρόσημο Ποσού', 'D/C', 'DC'],
   balance: ['Υπόλοιπο', 'Λογιστικό Υπόλοιπο', 'Balance'],
   reference: ['Αρ. Συναλλαγής', 'Αριθμός Συναλλαγής', 'Αρ. Αναφοράς', 'Αριθμός Αναφοράς', 'Κωδικός Συναλλαγής', 'Reference'],
@@ -127,6 +130,14 @@ const VIVA: StatementLayout = {
 // Meal-card list (card-list.ts makes this table from a pasted or saved page): Date, Description, Amount (signed, dot decimal)
 const CARD_LIST: StatementLayout = { header: { row: 0 }, columns: { date: 0, description: 1, amount: 2 }, amountMode: 'SIGNED' }
 
+// Cash template (src/shared/cash-template.ts): Date, Description, Expense, Income, Category; one of the two amounts per row
+const CASH_TEMPLATE: StatementLayout = {
+  header: { row: 0 },
+  columns: { date: 0, description: 1, debit: 2, credit: 3 },
+  amountMode: 'DEBIT_CREDIT_COLUMNS',
+  extras: { category: 4 },
+}
+
 export const PROFILES: Record<ProfileKey, StatementProfile> = {
   'alpha-account': account('alpha-account', ALPHA_ACCOUNT),
   'alpha-card': card('alpha-card', ALPHA_CARD),
@@ -137,6 +148,7 @@ export const PROFILES: Record<ProfileKey, StatementProfile> = {
   'revolut-account': account('revolut-account', REVOLUT, { dateOrder: 'YMD', decimalSeparator: '.' }),
   'viva-account': account('viva-account', VIVA),
   'card-list': account('card-list', CARD_LIST, { dateOrder: 'DMY', decimalSeparator: '.' }),
+  'cash-template': account('cash-template', CASH_TEMPLATE),
   generic: account('generic'),
 }
 
@@ -188,6 +200,8 @@ export function profileFor(account: { importProfile: string | null; statementPre
   // Meal-card issuers have no export: their page's list is read whatever the issuer
   if (account.kind === 'MEAL_VOUCHER') return PROFILES['card-list']
   if (account.importProfile && account.importProfile in PROFILES) return PROFILES[account.importProfile as ProfileKey]
+  // Cash has no bank: the household fills in the app's template
+  if (account.kind === 'CASH') return PROFILES['cash-template']
   const bank = account.statementPreset && Object.hasOwn(PRESET_BANKS, account.statementPreset) ? PRESET_BANKS[account.statementPreset] : null
   const isCard = account.kind === 'CREDIT_CARD'
   const key = isCard ? bank?.card : bank?.account
@@ -252,9 +266,16 @@ export function resolveLayout(rows: string[][], profile: StatementProfile): Reso
     : rows.slice(0, 30).findIndex(row => header.contains.every(m => row.some(c => normalise(c).includes(normalise(m)))))
   if (headerRow < 0 || headerRow >= rows.length) return null
 
-  const { date, amount } = layout.columns
+  const { date, amount, debit, credit } = layout.columns
   const dated = rows.slice(headerRow + 1, headerRow + 11).filter(row => parseStatementDate(row[date!] ?? '', profile.options.dateOrder) !== null)
-  if (dated.length === 0 || dated.some(row => parseStatementAmount(row[amount!] ?? '', profile.options.decimalSeparator) === null)) return null
+  const text = (row: string[], i: number | undefined) => (i === undefined ? '' : (row[i] ?? '').trim())
+  const parses = (row: string[], i: number | undefined) => parseStatementAmount(text(row, i), profile.options.decimalSeparator) !== null
+  if (dated.length === 0) return null
+  if (layout.amountMode === 'DEBIT_CREDIT_COLUMNS') {
+    // Each row fills one of the two; what is filled must be a number (a row with neither is flagged later, not a sign of another layout)
+    const filled = dated.flatMap(row => [debit, credit].filter(i => text(row, i) !== '').map(i => parses(row, i)))
+    if (filled.length === 0 || filled.includes(false)) return null
+  } else if (!dated.every(row => parses(row, amount))) return null
 
   // e.g. a balance column where the layout expects the amount
   const named = Object.entries(matchHeader(rows[headerRow], profile.aliases))

@@ -17,7 +17,8 @@ import type {
   PreviewSummary,
 } from '../../../shared/statement-import'
 import { readStatement } from './read-statement'
-import { buildPreview } from './build-preview'
+import { buildPreview, type PreviewContext } from './build-preview'
+import { normalise } from '../../../shared/search-normalise'
 import { fileHash, payeeKey } from './fingerprint'
 import { sortRules } from './apply-rules'
 import { PENDING_WINDOW_DAYS, refKey } from './dedupe'
@@ -60,6 +61,25 @@ function cachePreview(preview: CachedPreview): string {
 const shift = (date: string, days: number) => new Date(dateOnlyToDate(date).getTime() + days * 86_400_000)
 
 /**
+ * Category names for the cash template's Category column, expense and income apart. A category
+ * inside a group wins over a group of the same name; then the order the household sees.
+ */
+async function loadCategoriesByName(): Promise<NonNullable<PreviewContext['categoriesByName']>> {
+  const categories = await prisma.category.findMany({
+    where: { archivedAt: null },
+    select: { id: true, name: true, type: true, parentId: true },
+    orderBy: { sortOrder: 'asc' },
+  })
+  const byName = { expense: new Map<string, string>(), income: new Map<string, string>() }
+  for (const c of [...categories.filter(c => c.parentId !== null), ...categories.filter(c => c.parentId === null)]) {
+    const map = c.type === 'INCOME' ? byName.income : byName.expense
+    const key = normalise(c.name)
+    if (key && !map.has(key)) map.set(key, c.id)
+  }
+  return byName
+}
+
+/**
  * Reads a statement for an account and says what would happen to each row.
  * `mapping` comes from the column mapping step, when no preset knew the file.
  * Throws: 'INVALID_INPUT', 'ACCOUNT_NOT_FOUND'
@@ -80,7 +100,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
   const hash = fileHash(bytes)
 
   const voucherCard = account.kind === 'MEAL_VOUCHER'
-  const [known, manual, others, rules, categorised, sameBatch, withIban, voucherCategoryId] = await Promise.all([
+  const [known, manual, others, rules, categorised, sameBatch, withIban, voucherCategoryId, categoriesByName] = await Promise.all([
     // Pending rows are not "already imported": the booked row replaces them (as a twin below)
     prisma.transaction.findMany({
       where: { accountId, pending: false, OR: [{ fingerprint: { not: null } }, { bankReference: { not: null } }] },
@@ -116,6 +136,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     prisma.importBatch.findFirst({ where: { accountId, fileHash: hash, undoneAt: null }, orderBy: { importedAt: 'desc' } }),
     prisma.account.findMany({ where: { id: { not: accountId }, archivedAt: null, iban: { not: null } }, select: { id: true, name: true, iban: true } }),
     voucherCard ? findVoucherCategoryId(prisma) : Promise.resolve(null),
+    read.rows.some(r => r.categoryText) ? loadCategoriesByName() : Promise.resolve(undefined),
   ])
 
   const history = new Map<string, string>()
@@ -136,6 +157,7 @@ export async function previewImport(accountId: unknown, fileName: string, bytes:
     history,
     ownIbans: new Map(withIban.map(a => [a.iban!, { id: a.id, name: a.name }])),
     ...(voucherCard ? { voucher: { categoryId: voucherCategoryId } } : {}),
+    ...(categoriesByName ? { categoriesByName } : {}),
   }, read.declined)
 
   const previewId = cachePreview({

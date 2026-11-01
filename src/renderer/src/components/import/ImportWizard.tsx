@@ -5,12 +5,12 @@ import { Icon } from '../shell/icons'
 import { ImportReview } from './ImportReview'
 import { ColumnMappingStep } from './ColumnMappingStep'
 import { PasteStep } from './PasteStep'
+import { CashTemplateHint } from './CashTemplateHint'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { useImportStore } from '../../store/import'
 import { useUiStore } from '../../store/ui'
 import { formatDate, formatDateTime } from '../../lib/date-format'
 import { ipcErrorCode, ipcErrorMessage } from '../../lib/ipc-errors'
-import { isImportable } from '../../lib/ledger'
 import {
   cashAccounts,
   guessHeaderRow,
@@ -41,8 +41,6 @@ const EMPTY_MAPPING = (account: AccountSummary | undefined): MappingForm => ({
   invertSign: account?.kind === 'CREDIT_CARD',
 })
 
-/** Accounts with a statement: a file, or a meal card's pasted list (cash has none) */
-const importable = (accounts: AccountSummary[]) => activeAccounts(accounts).filter(a => isImportable(a.kind))
 
 export interface ImportWizardProps {
   /** Pre-selected from the entry point (an account card) */
@@ -56,7 +54,8 @@ export interface ImportWizardProps {
 export function ImportWizard({ accountId: initialAccountId, onClose, onImported }: ImportWizardProps) {
   const { t } = useTranslation()
   const accounts = useLedgerStore(s => s.accounts)
-  const choices = importable(accounts)
+  // Every account: a statement, a meal card's pasted list, or cash from the CSV template
+  const choices = activeAccounts(accounts)
   const lastAccountId = useLedgerStore(s => s.lastAccountId)
   const [accountId, setAccountId] = useState<string | null>(
     initialAccountId ?? choices.find(a => a.id === lastAccountId)?.id ?? choices[0]?.id ?? null,
@@ -77,6 +76,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
 
   const account = accounts.find(a => a.id === accountId)
   const voucher = account?.kind === 'MEAL_VOUCHER'
+  const cash = account?.kind === 'CASH'
 
   async function read(picked: PickedFile, withMapping?: MappingForm) {
     if (!accountId) return
@@ -113,7 +113,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
     try {
       const picked = await window.api.pickStatement(voucher
         ? { title: t('import.paste.pick_title'), filterName: t('import.paste.pick_filter') }
-        : { title: t('import.pick_title'), filterName: t('import.pick_filter') })
+        : { title: t(cash ? 'import.cash.pick_title' : 'import.pick_title'), filterName: t('import.pick_filter') })
       if (!picked) return
       setFile(picked)
       await read(picked)
@@ -264,7 +264,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
 
   return (
     <Modal
-      title={voucher ? t('import.paste.title') : t('import.title')}
+      title={voucher ? t('import.paste.title') : cash ? t('import.cash.title') : t('import.title')}
       onClose={onClose}
       closeDisabled={busy}
       size={voucher ? 'lg' : 'md'}
@@ -282,7 +282,7 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
             </Button>
           ) : (
             <Button variant="primary" icon="folder" onClick={() => void choose()} disabled={busy || !accountId}>
-              {busy ? t('import.reading') : t('import.choose_file')}
+              {busy ? t('import.reading') : t(cash ? 'import.cash.choose_file' : 'import.choose_file')}
             </Button>
           )}
         </>
@@ -315,9 +315,10 @@ export function ImportWizard({ accountId: initialAccountId, onClose, onImported 
               />
             </>
           )}
+          {cash && <CashTemplateHint onError={message => setError({ message })} />}
           <div className="flex items-start gap-2 text-xs text-fg-muted">
             <Icon name="lock" size={14} className="mt-0.5 shrink-0" />
-            <p>{t(voucher ? 'import.paste.private' : 'import.choose_hint')}</p>
+            <p>{t(voucher ? 'import.paste.private' : cash ? 'import.cash.private' : 'import.choose_hint')}</p>
           </div>
         </div>
       )}

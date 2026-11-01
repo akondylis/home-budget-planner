@@ -9,6 +9,7 @@ import { createTransaction, listTransactions } from '../services/transactions'
 import { seedDefaults } from '../services/seed'
 import { createMember } from '../services/members'
 import { listSubscriptionHints } from '../services/subscriptions'
+import { cashTemplateCsv } from '../../shared/cash-template'
 import { clearPreviews, commitImport, listImports, previewImport, previewImportText, undoImport, type PreviewResult } from '../services/import/import-service'
 
 const csv = (lines: string[]) => new TextEncoder().encode(['Ημερομηνία;Περιγραφή;Ποσό', ...lines].join('\r\n'))
@@ -300,6 +301,28 @@ describe('statement import', () => {
 
     const debitCard = new TextEncoder().encode('"ΗΜ/ΝΙΑ ΣΥΝΑΛΛΑΓΗΣ";"ΗΜ/ΝΙΑ ΑΞΙΑΣ";"ΠΕΡΙΓΡΑΦΗ";"ΠΟΣΟ"\n30/10/26;30/10/26;"CINOBO";-9,99')
     expect(await previewImport(bankId, 'debit-card-transactions.csv', debitCard)).toMatchObject({ ok: false, reason: 'DEBIT_CARD_FILE' })
+  })
+})
+
+describe('cash template', () => {
+  it('should import the filled-in template into Cash with the categories it names, and undo it', async () => {
+    const { cashId } = await setup()
+    const file = new TextEncoder().encode(cashTemplateCsv('el') + [
+      '01/10/2026;Λαϊκή;23,40;;σουπερ μαρκετ',
+      '02/10/2026;Χαρτζιλίκι;;50,00;Μισθός',
+      '03/10/2026;Περίπτερο;1,50;;',
+    ].join('\r\n'))
+    const p = await preview(cashId, file, 'μετρητά.csv')
+    expect(p.profile).toBe('cash-template')
+    expect(p.rows.map(r => [r.amountCents, r.suggestion?.source.kind ?? null])).toEqual([[-2340, 'file'], [5000, 'file'], [-150, null]])
+
+    const { batchId } = await commitImport({ previewId: p.previewId })
+    expect(await balanceOf(cashId)).toBe(-2340 + 5000 - 150)
+    const rows = (await listTransactions({ accountId: cashId })).rows
+    expect(rows.find(r => r.amountCents === -2340)?.categoryName).toBe('Σούπερ μάρκετ')
+    expect(rows.find(r => r.amountCents === 5000)?.categoryName).toBe('Μισθός')
+    await undoImport(batchId)
+    expect(await balanceOf(cashId)).toBe(0)
   })
 })
 

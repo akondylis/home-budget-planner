@@ -27,9 +27,12 @@ export const ACCOUNT_KIND_ICON: Record<AccountKind, IconName> = {
   MEAL_VOUCHER: 'utensils',
 }
 
-/** Kinds with something to import: a statement, or a meal card's list pasted from its page. Cash is entered by hand */
-export function isImportable(kind: AccountKind): boolean {
-  return kind !== 'CASH'
+/**
+ * Cash is mostly entered by hand (adding is its main action); it can still import the app's CSV template.
+ * Every other kind comes from a statement, or a meal card's list pasted from its page.
+ */
+export function isEnteredByHand(kind: AccountKind): boolean {
+  return kind === 'CASH'
 }
 
 /** Money can move out of it: a meal-voucher card is never the source of a transfer */

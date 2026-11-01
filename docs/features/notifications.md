@@ -26,7 +26,7 @@ what is due today or late. Ported from Matchday's bell (`../chess-board`). Plan:
 | Income late | An income rule's date passed with nothing booked | **Mark as received** (Skip, Open bills) |
 | Over budget | A *planned* outgoing category spent past what was available this month | **Open budget** (that month) |
 | To categorise | Any rows without a category (transfers aside) | **Categorise** (the log, every month, uncategorised) |
-| No import lately | An account's last imported statement ended 30+ days ago | **Import statement** (wizard on that account) |
+| No import lately | An account's last imported statement ended 30+ days ago (not Cash, whose template import is occasional) | **Import statement** (wizard on that account) |
 
 - **Mark as paid** opens the same dialog as the Subscriptions & bills page, so nothing new has to be learned.
 - **Empty state:** "All caught up" with a line naming what would show. It has no disabled buttons.

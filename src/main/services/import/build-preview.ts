@@ -9,6 +9,7 @@ import { suggestCategory, type RuleLike } from './apply-rules'
 import type { ParsedRow } from './parse-rows'
 import { findIbans } from '../../../shared/iban'
 import { todayDateOnly } from '../../../shared/date-only'
+import { normalise } from '../../../shared/search-normalise'
 
 export interface PreviewContext extends ExistingRows {
   /** Untransferred rows in the other own accounts, around the statement's dates */
@@ -26,6 +27,8 @@ export interface PreviewContext extends ExistingRows {
   voucher?: { categoryId: string | null }
   /** Rows booked after this day are flagged; default: today */
   today?: string
+  /** normalise(name) → category, for the cash template's Category column (expense and income kept apart) */
+  categoriesByName?: { expense: Map<string, string>; income: Map<string, string> }
 }
 
 /**
@@ -76,7 +79,9 @@ export function buildPreview(
       balanceAfterCents: row.balanceAfterCents,
       fingerprint: row.fingerprint,
       pending: row.pending,
-      suggestion: needsCategory ? (suggestCategory(key, accountId, ctx.rules, ctx.history) ?? topUp(row.amountCents, ctx.voucher)) : null,
+      suggestion: needsCategory
+        ? (named(row, ctx.categoriesByName) ?? suggestCategory(key, accountId, ctx.rules, ctx.history) ?? topUp(row.amountCents, ctx.voucher))
+        : null,
       duplicateOf: twin ? { id: twin.id, bookedAt: twin.bookedAt, amountCents: twin.amountCents, payee: twin.payee, pending: twin.pending } : null,
       transferWith: other
         ? { id: other.id, accountId: other.accountId, accountName: other.accountName, bookedAt: other.bookedAt, amountCents: other.amountCents, description: other.description }
@@ -88,6 +93,13 @@ export function buildPreview(
     }
   })
   return { rows, summary: summarise(rows, declined) }
+}
+
+/** The category the household typed in the file, when it names one that fits the row's direction */
+function named(row: ParsedRow, byName: PreviewContext['categoriesByName']): PreviewRow['suggestion'] {
+  if (!byName || !row.categoryText || row.amountCents === null) return null
+  const id = (row.amountCents < 0 ? byName.expense : byName.income).get(normalise(row.categoryText))
+  return id ? { categoryId: id, payee: null, source: { kind: 'file' } } : null
 }
 
 /** Money in on a meal card is the employer's top-up */

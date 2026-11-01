@@ -137,6 +137,15 @@ describe('import review', () => {
     expect(next[other.line].target).toEqual({ kind: 'category', categoryId: null })
   })
 
+  it('should keep a category typed in the cash template when the same payee gets another one', () => {
+    const typed = row({ payeeKey: 'laiki', suggestion: { categoryId: 'groceries', payee: null, source: { kind: 'file' } } })
+    const plain = row({ payeeKey: 'laiki' })
+    const list = [typed, plain]
+    const { choices: next, changed } = applyToSamePayee(list, initialChoices(list, null), 'laiki', 'eating-out', new Set())
+    expect(changed).toBe(1)
+    expect(next[typed.line].target).toEqual({ kind: 'category', categoryId: 'groceries' })
+  })
+
   it('should offer a rule only when none already puts the row there', () => {
     expect(offersRule(fresh, 'groceries')).toBe(false)
     expect(offersRule(fresh, 'kids')).toBe(true)

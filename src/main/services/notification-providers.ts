@@ -144,7 +144,8 @@ export const categoriseProvider: NotificationProvider = async now => {
 
 export const importProvider: NotificationProvider = async now => {
   const batches = await prisma.importBatch.findMany({
-    where: { undoneAt: null, account: { archivedAt: null } },
+    // Cash imports the CSV template now and then, between rows added by hand: no statement to fall behind on
+    where: { undoneAt: null, account: { archivedAt: null, kind: { not: 'CASH' } } },
     orderBy: [{ dateTo: 'desc' }, { importedAt: 'desc' }],
     select: { id: true, accountId: true, dateTo: true, account: { select: { name: true } } },
   })

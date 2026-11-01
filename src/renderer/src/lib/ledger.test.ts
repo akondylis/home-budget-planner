@@ -8,7 +8,7 @@ import {
   draftFromRow,
   findCategory,
   groupsFor,
-  isImportable,
+  isEnteredByHand,
   kindForAmount,
   kindForAmounts,
   parseAccountDraft,
@@ -168,8 +168,8 @@ describe('draftFromRow', () => {
 })
 
 describe('meal-voucher cards', () => {
-  it('should be importable (pasted list) and never be the source of a transfer', () => {
-    expect(['CURRENT', 'CREDIT_CARD', 'CASH', 'MEAL_VOUCHER'].map(k => isImportable(k as AccountSummary['kind']))).toEqual([true, true, false, true])
+  it('should come from a list (only cash is entered by hand) and never be the source of a transfer', () => {
+    expect(['CURRENT', 'CREDIT_CARD', 'CASH', 'MEAL_VOUCHER'].map(k => isEnteredByHand(k as AccountSummary['kind']))).toEqual([false, false, true, false])
     expect(canSendTransfer('MEAL_VOUCHER')).toBe(false)
     expect(canSendTransfer('CASH')).toBe(true)
   })

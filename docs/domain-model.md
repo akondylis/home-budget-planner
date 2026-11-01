@@ -92,5 +92,5 @@ same change. **In schema** marks what exists; the rest is a draft. Open question
 3. ~~Children: members with pocket money, or only as a spending tag?~~ Parents only; children are not tracked
    (2026-10-27).
 4. ~~Cash: tracked as an account, or only as "cash withdrawal" expenses?~~ An account of kind `CASH`; ATM withdrawals
-   are transfers to it (2026-10-26).
+   are transfers to it (2026-10-26). It can also import the app's CSV template (2026-11-01).
 5. Shared vs personal money: do the parents want private accounts hidden from each other?

@@ -129,8 +129,14 @@ describe('budget, categorise and import providers', () => {
     await prisma.importBatch.create({
       data: { accountId: bankId, fileName: 'a.csv', fileHash: 'h', dateFrom: new Date('2026-08-01T12:00:00Z'), dateTo: new Date('2026-09-15T12:00:00Z'), rowCount: 1, importedCount: 1, skippedCount: 0 },
     })
-    const [stale] = await importProvider(NOW)
-    expect(stale).toMatchObject({ kind: 'import-stale', params: { account: 'Alpha', days: 35 }, actions: [{ kind: 'importStatement', accountId: bankId }] })
+    // Cash imports the template now and then: never nudged
+    const [cashId] = await createAccounts([{ name: 'Cash', kind: 'CASH', institutionId: null, openingBalanceCents: 0, openingDate: '2026-01-01' }])
+    await prisma.importBatch.create({
+      data: { accountId: cashId, fileName: 'c.csv', fileHash: 'c', dateFrom: new Date('2026-08-01T12:00:00Z'), dateTo: new Date('2026-08-15T12:00:00Z'), rowCount: 1, importedCount: 1, skippedCount: 0 },
+    })
+    const reminders = await importProvider(NOW)
+    expect(reminders).toHaveLength(1)
+    expect(reminders[0]).toMatchObject({ kind: 'import-stale', params: { account: 'Alpha', days: 35 }, actions: [{ kind: 'importStatement', accountId: bankId }] })
     expect(computeImportStale([{ accountId: 'a', accountName: 'A', batchId: 'b', dateTo: '2026-09-21' }], '2026-10-20')).toEqual([])
   })
 })

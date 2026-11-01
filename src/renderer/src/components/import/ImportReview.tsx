@@ -310,6 +310,7 @@ function explain(row: PreviewRow, choice: RowChoice, t: TFunction, accounts: Acc
   const s = row.suggestion
   if (s && choice.target.kind === 'category' && choice.target.categoryId === s.categoryId) {
     if (s.source.kind === 'voucher') return t('import.why_voucher')
+    if (s.source.kind === 'file') return t('import.why_file')
     return s.source.kind === 'rule' ? t('import.why_rule', { merchant: s.payee ?? (merchantText(row.description) || row.description) }) : t('import.why_history')
   }
   return null

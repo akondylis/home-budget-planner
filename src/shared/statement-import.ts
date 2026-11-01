@@ -41,8 +41,8 @@ export interface CategorySuggestion {
   categoryId: string
   payee: string | null
   /** A rule (with its pattern) or the category last used for this payee */
-  /** voucher: a top-up on a meal card goes to the Meal vouchers income category */
-  source: { kind: 'rule'; ruleId: string; pattern: string } | { kind: 'history' } | { kind: 'voucher' }
+  /** voucher: a top-up on a meal card goes to the Meal vouchers income category; file: the category named in the cash template */
+  source: { kind: 'rule'; ruleId: string; pattern: string } | { kind: 'history' } | { kind: 'voucher' } | { kind: 'file' }
 }
 
 export interface PreviewRow {
@@ -91,6 +91,8 @@ export type ProfileKey =
   | 'alpha-account' | 'alpha-card' | 'eurobank-account' | 'eurobank-card' | 'eurobank-reserved' | 'piraeus-account' | 'revolut-account' | 'viva-account'
   /** A meal card's pasted list or saved page (no export exists) */
   | 'card-list'
+  /** The app's CSV template for a Cash account (src/shared/cash-template.ts) */
+  | 'cash-template'
   | 'generic'
 
 /** The file name an import from pasted text keeps (the history shows it in the app language) */
