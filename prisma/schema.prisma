@@ -21,6 +21,8 @@ model AppSettings {
   notifyLeadDays Int      @default(3)
   /// Notifications: Windows toasts while the app is open
   notifyToasts   Boolean  @default(true)
+  /// Calendars: first day of the week, 1 = Monday, 0 = Sunday
+  weekStartsOn   Int      @default(1)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

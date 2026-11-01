@@ -8,7 +8,7 @@ export const TOUR_STEPS = [
   { id: 'transactions', anchors: ['transactions'] },
   { id: 'budget', anchors: ['budget'] },
   { id: 'accounts', anchors: ['accounts'] },
-  { id: 'recurring', anchors: ['recurring'] },
+  { id: 'recurring', anchors: ['recurring', 'calendar'] },
   { id: 'debts', anchors: ['debts'] },
   { id: 'insight', anchors: ['projections', 'reports'] },
   { id: 'notifications', anchors: ['notifications'] },

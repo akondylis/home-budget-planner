@@ -96,6 +96,7 @@ export function navItems(t: TFunction): PaletteItem[] {
     group: 'actions',
     title: t('palette.go_to', { name: t(n.labelKey) }),
     icon: n.icon,
+    keywords: n.keywords,
     target: { kind: 'view', view: n.id },
   }))
 }

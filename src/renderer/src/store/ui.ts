@@ -3,6 +3,10 @@ import { createJSONStorage, persist, type StateStorage } from 'zustand/middlewar
 import { DEFAULT_DATE_FORMAT, getDateFormat, setDateFormat, type DateFormat } from '../lib/date-format'
 import { ACCOUNT_GROUP_BYS, EMPTY_ACCOUNT_FILTER, type AccountFilter, type AccountGroupBy } from '../lib/account-groups'
 import { DEFAULT_HORIZON, HORIZONS, type Horizon } from '../../../shared/projection'
+import { DEFAULT_WEEK_START, isWeekStart, type WeekStart } from '../../../shared/calendar-grid'
+
+export type CalendarView = 'month' | 'list' | 'year'
+export const CALENDAR_VIEWS: CalendarView[] = ['month', 'list', 'year']
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type SidebarPosition = 'left' | 'right'
@@ -19,6 +23,14 @@ type UiStore = {
   sidebarWidth: number
   // Saved in AppSettings (main also uses it for exports), so not persisted here
   dateFormat: DateFormat
+  // First day of the week; saved in AppSettings (household-wide), so not persisted here
+  weekStartsOn: WeekStart
+  // Payment calendar view; remembered per PC (null = Month, or List on a narrow window)
+  calendarView: CalendarView | null
+  // Month the calendar shows ('yyyy-MM'); per session, null = this month
+  calendarMonth: string | null
+  // Year the calendar's Year view shows; per session, null = this year
+  calendarYear: number | null
   // CollapsibleCard ids the user folded away (e.g. 'overview.upcoming'); every card starts open
   collapsedSections: string[]
   // Command palette (Ctrl+K) is showing; per session
@@ -46,6 +58,10 @@ type UiStore = {
   toggleSidebar: () => void
   swapSidebarPosition: () => void
   setDateFormat: (format: string | null | undefined) => void
+  setWeekStartsOn: (day: unknown) => void
+  setCalendarView: (view: CalendarView) => void
+  setCalendarMonth: (month: string | null) => void
+  setCalendarYear: (year: number | null) => void
   toggleSection: (id: string) => void
   expandSection: (id: string) => void
   setPaletteOpen: (open: boolean) => void
@@ -94,6 +110,10 @@ export const useUiStore = create<UiStore>()(
       sidebarCollapsed: false,
       sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
       dateFormat: DEFAULT_DATE_FORMAT,
+      weekStartsOn: DEFAULT_WEEK_START,
+      calendarView: null,
+      calendarMonth: null,
+      calendarYear: null,
       collapsedSections: [],
       paletteOpen: false,
       shortcutsOpen: false,
@@ -115,6 +135,10 @@ export const useUiStore = create<UiStore>()(
         setDateFormat(format)
         set({ dateFormat: getDateFormat() })
       },
+      setWeekStartsOn: day => set({ weekStartsOn: isWeekStart(day) ? day : DEFAULT_WEEK_START }),
+      setCalendarView: calendarView => set({ calendarView }),
+      setCalendarMonth: calendarMonth => set({ calendarMonth }),
+      setCalendarYear: calendarYear => set({ calendarYear }),
       toggleSection: id => set(s => ({
         collapsedSections: s.collapsedSections.includes(id)
           ? s.collapsedSections.filter(c => c !== id)
@@ -148,6 +172,7 @@ export const useUiStore = create<UiStore>()(
         currentMemberId: s.currentMemberId,
         accountsGroupBy: s.accountsGroupBy,
         projectionMonths: s.projectionMonths,
+        calendarView: s.calendarView,
       }),
       // A stored value from a newer or older build falls back to the default
       merge: (stored, current) => {
@@ -159,6 +184,7 @@ export const useUiStore = create<UiStore>()(
           ...prefs,
           accountsGroupBy: groupBy && ACCOUNT_GROUP_BYS.includes(groupBy) ? groupBy : 'none',
           projectionMonths: months && HORIZONS.includes(months) ? months : DEFAULT_HORIZON,
+          calendarView: prefs.calendarView && CALENDAR_VIEWS.includes(prefs.calendarView) ? prefs.calendarView : null,
         }
       },
     },

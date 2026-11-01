@@ -14,10 +14,12 @@ export interface UpcomingBillsCardProps {
   data: OverviewMonth | null
   /** The Subscriptions & bills page */
   onOpen: () => void
+  /** The payment calendar */
+  onOpenCalendar: () => void
 }
 
 /** Overdue and soon-due bills, oldest first; each row and "See all" open the bills page */
-export function UpcomingBillsCard({ data, onOpen }: UpcomingBillsCardProps) {
+export function UpcomingBillsCard({ data, onOpen, onOpenCalendar }: UpcomingBillsCardProps) {
   const { t } = useTranslation()
   const today = todayDateOnly()
   const bills = data?.upcoming ?? []
@@ -50,6 +52,11 @@ export function UpcomingBillsCard({ data, onOpen }: UpcomingBillsCardProps) {
               {t('overview.upcoming_more', { count: rest })}
             </button>
           )}
+        </div>
+      )}
+      {data?.hasRules && (
+        <div className="border-t border-line px-2 py-1.5">
+          <Button size="sm" variant="ghost" icon="calendar-days" onClick={onOpenCalendar}>{t('overview.upcoming_calendar')}</Button>
         </div>
       )}
     </ListCard>

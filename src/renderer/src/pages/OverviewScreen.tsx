@@ -121,7 +121,7 @@ export function OverviewScreen({ onPrintWorksheet, onGoTo, onShowMonth, onShowUn
           </ListCard>
         )}
 
-        <UpcomingBillsCard data={data} onOpen={() => onGoTo('recurring')} />
+        <UpcomingBillsCard data={data} onOpen={() => onGoTo('recurring')} onOpenCalendar={() => onGoTo('calendar')} />
       </div>
     </div>
   )

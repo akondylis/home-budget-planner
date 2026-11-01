@@ -6,6 +6,7 @@ import { BanksSection } from '../components/banks/BanksSection'
 import { useUiStore, type SidebarPosition, type ThemeMode } from '../store/ui'
 import { changeLanguage, changeSidebarPosition, changeTheme } from '../lib/ui-actions'
 import { DATE_FORMATS, formatDate, type DateFormat } from '../lib/date-format'
+import type { WeekStart } from '../../../shared/calendar-grid'
 import type { AppLanguage } from '../types'
 import { LEAD_DAY_CHOICES, NOTIFY_LEAD_DAYS_DEFAULT, type NotificationSettings } from '../../../shared/notifications'
 import { leadDaysLabel } from '../lib/notifications'
@@ -30,6 +31,7 @@ export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
   const theme = useUiStore(s => s.theme)
   const sidebarPosition = useUiStore(s => s.sidebarPosition)
   const dateFormat = useUiStore(s => s.dateFormat)
+  const weekStartsOn = useUiStore(s => s.weekStartsOn)
   const [dataDir, setDataDir] = useState('')
   const [notify, setNotify] = useState<NotificationSettings>({ leadDays: NOTIFY_LEAD_DAYS_DEFAULT, toasts: true })
 
@@ -61,6 +63,17 @@ export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
   async function changeDateFormat(format: DateFormat) {
     useUiStore.getState().setDateFormat(format)
     await window.api.setDateFormat(format)
+  }
+
+  async function changeWeekStart(day: WeekStart) {
+    const before = useUiStore.getState().weekStartsOn
+    useUiStore.getState().setWeekStartsOn(day)
+    try {
+      await window.api.setWeekStart(day)
+    } catch (err) {
+      console.error('[settings] week start save failed:', err)
+      useUiStore.getState().setWeekStartsOn(before)
+    }
   }
 
   const sample = new Date(new Date().getFullYear(), 2, 25)
@@ -128,6 +141,17 @@ export function SettingsScreen({ onManageCategories }: SettingsScreenProps) {
               <option key={f} value={f}>{formatDate(sample, f)}</option>
             ))}
           </Select>
+        </Field>
+        <Field label={t('settings.week_start')} hint={t('settings.week_start_hint')}>
+          <Segmented<'1' | '0'>
+            label={t('settings.week_start')}
+            value={weekStartsOn === 0 ? '0' : '1'}
+            onChange={v => void changeWeekStart(v === '0' ? 0 : 1)}
+            options={[
+              { value: '1', label: t('settings.week_start_monday') },
+              { value: '0', label: t('settings.week_start_sunday') },
+            ]}
+          />
         </Field>
       </Section>
 

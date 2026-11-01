@@ -54,6 +54,7 @@
     "budget": "Budget",
     "accounts": "Accounts & cards",
     "recurring": "Subscriptions & bills",
+    "calendar": "Calendar",
     "debts": "Debts & loans",
     "projections": "Projections",
     "reports": "Reports",
@@ -122,7 +123,8 @@
     "upcoming_all": "See all",
     "upcoming_more_one": "and {{count}} more",
     "upcoming_more_other": "and {{count}} more",
-    "upcoming_add": "Add a bill"
+    "upcoming_add": "Add a bill",
+    "upcoming_calendar": "See them on the calendar"
   },
   "planned": {
     "title": "Coming soon",
@@ -146,7 +148,11 @@
     "banks": "Banks",
     "banks_intro": "The banks and meal-card issuers offered when you add an account. Their order is the order of the Bank groups on Accounts.",
     "categories": "Categories",
-    "categories_hint": "Rename, merge and archive categories, and fix the merchant rules that sort imports."
+    "categories_hint": "Rename, merge and archive categories, and fix the merchant rules that sort imports.",
+    "week_start": "Week starts on",
+    "week_start_hint": "Used by the payment calendar.",
+    "week_start_monday": "Monday",
+    "week_start_sunday": "Sunday"
   },
   "palette": {
     "title": "Search and commands",
@@ -234,7 +240,7 @@
       },
       "recurring": {
         "title": "$t(nav.recurring)",
-        "body": "Rent, utilities, insurance and subscriptions: what is due soon, what is paid, and what fixed costs take each month."
+        "body": "Rent, utilities, insurance and subscriptions: what is due soon, what is paid, and what fixed costs take each month. The Calendar shows them on their dates, with pay days."
       },
       "debts": {
         "title": "$t(nav.debts)",
@@ -363,7 +369,8 @@
     "INSTALMENT_TOO_LOW": "This instalment never pays it off: it does not cover the monthly interest.",
     "CSV_EXPORT_FAILED": "The CSV could not be saved there. Choose another folder or close the file if it is open in Excel.",
     "IBAN_INVALID": "This IBAN is not valid. Check the digits.",
-    "IBAN_IN_USE": "Another account already has this IBAN."
+    "IBAN_IN_USE": "Another account already has this IBAN.",
+    "ICS_EXPORT_FAILED": "The calendar file could not be saved there. Choose another folder."
   },
   "categories": {
     "choose": "Choose a category…",
@@ -1736,5 +1743,64 @@
     "total": "Total",
     "pdf_subtitle": "{{period}} · printed {{date}}",
     "pdf_footnote": "Transfers between your own accounts are left out. A refund lowers the category it belongs to."
+  },
+  "calendar": {
+    "open": "Calendar",
+    "subtitle": "Bills, instalments and pay days on their dates",
+    "next": "Next: {{name}} {{amount}} on {{date}}",
+    "nothing_next": "Nothing else to pay in this view",
+    "overdue_count_one": "{{count}} overdue",
+    "overdue_count_other": "{{count}} overdue",
+    "export": "Export .ics",
+    "export_hint": "Save the next {{months}} months of due dates and pay days as a file for a phone or Outlook calendar",
+    "export_disabled": "Add a bill first: there is nothing to export yet",
+    "export_title": "Save the payment calendar",
+    "export_none": "Nothing is due in the next {{months}} months, so there is nothing to export.",
+    "exported_one": "Saved {{count}} due date. Open the file to add it to your calendar.",
+    "exported_other": "Saved {{count}} due dates. Open the file to add them to your calendar.",
+    "open_file": "Open",
+    "ics_name": "Home Budget payments",
+    "ics_file": "payments-{{date}}",
+    "ics_bill": "Due payment (Home Budget)",
+    "ics_income": "Expected income (Home Budget)",
+    "empty_title": "No bills yet",
+    "empty_body": "Add rent, utilities, subscriptions or a salary, and they appear here on their dates.",
+    "open_bills": "Subscriptions & bills",
+    "view_label": "View",
+    "view_month": "Month",
+    "view_list": "List",
+    "view_year": "Year",
+    "status_label": "Show",
+    "status_all": "All",
+    "status_to_pay": "To pay",
+    "status_paid": "Paid",
+    "status_income": "Income",
+    "month_empty": "Nothing falls due this month.",
+    "filter_empty": "Nothing matches this filter.",
+    "list_empty_title": "Nothing due in the next 8 weeks",
+    "list_empty_body": "Bills and pay days further out are in the Month and Year views.",
+    "week": "Week",
+    "week_due": "Still to pay this week",
+    "week_in": "Coming in this week",
+    "day_due": "Still to pay this day",
+    "items_one": "{{count}} payment",
+    "items_other": "{{count}} payments",
+    "more_one": "+{{count}} more",
+    "more_other": "+{{count}} more",
+    "this_week": "This week",
+    "next_week": "Next week",
+    "week_of": "{{from}} – {{to}}",
+    "still_due": "Still to pay",
+    "coming_in": "Coming in",
+    "all_settled": "All settled",
+    "out": "Out",
+    "in": "In",
+    "heaviest": "Heaviest month",
+    "open_month": "Open {{month}} in the month view",
+    "month_nothing": "Nothing due",
+    "unpaid_count_one": "{{count}} bill to pay",
+    "unpaid_count_other": "{{count}} bills to pay",
+    "all_paid": "All paid",
+    "pay_days": "Pay days: {{days}}"
   }
 }

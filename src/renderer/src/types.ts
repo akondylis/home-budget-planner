@@ -6,6 +6,7 @@ export type View =
   | 'budget'
   | 'accounts'
   | 'recurring'
+  | 'calendar'
   | 'debts'
   | 'projections'
   | 'reports'
@@ -22,6 +23,8 @@ export interface AppSettings {
   currency: string
   notifyLeadDays: number
   notifyToasts: boolean
+  /** 1 = Monday, 0 = Sunday */
+  weekStartsOn: number
   createdAt: string
   updatedAt: string
 }

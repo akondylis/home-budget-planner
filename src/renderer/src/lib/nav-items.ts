@@ -7,6 +7,8 @@ export type NavItem = {
   id: View
   labelKey: string
   icon: IconName
+  /** Extra words the command palette matches (English and Greek, no accents) */
+  keywords?: string
 }
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
@@ -15,6 +17,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { id: 'budget', labelKey: 'nav.budget', icon: 'target' },
   { id: 'accounts', labelKey: 'nav.accounts', icon: 'bank' },
   { id: 'recurring', labelKey: 'nav.recurring', icon: 'repeat' },
+  { id: 'calendar', labelKey: 'nav.calendar', icon: 'calendar-days', keywords: 'calendar payment calendar pay days due dates bills month year ics ημερολογιο πληρωμων πληρωμες μισθος ημερομηνιες ληξη' },
   { id: 'debts', labelKey: 'nav.debts', icon: 'credit-card' },
   { id: 'projections', labelKey: 'nav.projections', icon: 'trending-up' },
   { id: 'reports', labelKey: 'nav.reports', icon: 'chart' },

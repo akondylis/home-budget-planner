@@ -11,6 +11,7 @@ interface Window {
     getAppInfo:    () => Promise<{ portable: boolean; dataDir: string }>
     openDataDir:   () => Promise<void>
     setNotificationSettings: (input: import('../../shared/notifications').NotificationSettings) => Promise<void>
+    setWeekStart:  (day: import('../../shared/calendar-grid').WeekStart) => Promise<void>
 
     listMembers:       (opts?: { includeArchived?: boolean }) => Promise<import('../../shared/members').MemberSummary[]>
     createMember:      (input: import('../../shared/members').MemberInput) => Promise<string>
@@ -118,6 +119,9 @@ interface Window {
     exportPdf:    (report: import('../../shared/report-document').ReportDocument, fileName: string, dialogTitle: string) =>
                      Promise<{ success: false } | { success: true; filePath: string }>
     openFile:      (filePath: string) => Promise<void>
+
+    exportCalendarIcs: (entries: import('../../shared/ics').IcsEntry[], calendarName: string, fileName: string, dialogTitle: string) =>
+                     Promise<{ success: false } | { success: true; filePath: string; count: number }>
 
     setTheme:      (mode: import('./store/ui').ThemeMode) => Promise<void>
 

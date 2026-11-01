@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer components {
+  /* Payment calendar: seven day columns and a narrow week-total column */
+  .calendar-cols {
+    @apply grid grid-cols-[repeat(7,minmax(0,1fr))_5.5rem];
+  }
+
   /*
    * Design system primitives. React wrappers live in components/ui/; pages use
    * those (or these classes) and never hand-roll colours, padding or radii.

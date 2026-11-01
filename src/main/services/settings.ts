@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma'
 import { isDateFormat, setDateFormat, setDateLanguage } from '../../shared/date-format'
 import { setMoneyLanguage } from '../../shared/money'
+import { isWeekStart } from '../../shared/calendar-grid'
 import { isLeadDays, LEAD_DAY_CHOICES, type NotificationSettings } from '../../shared/notifications'
 
 export type AppLanguage = 'el' | 'en'
@@ -48,4 +49,10 @@ export async function setNotificationSettings(input: unknown): Promise<void> {
   const maxLead = LEAD_DAY_CHOICES[LEAD_DAY_CHOICES.length - 1]
   if (!isLeadDays(leadDays, maxLead) || typeof toasts !== 'boolean') throw new Error('INVALID_INPUT')
   await prisma.appSettings.update({ where: { id: 1 }, data: { notifyLeadDays: leadDays, notifyToasts: toasts } })
+}
+
+/** Calendars: first day of the week (1 = Monday, 0 = Sunday). Throws: 'INVALID_INPUT' */
+export async function setWeekStart(day: unknown): Promise<void> {
+  if (!isWeekStart(day)) throw new Error('INVALID_INPUT')
+  await prisma.appSettings.update({ where: { id: 1 }, data: { weekStartsOn: day } })
 }

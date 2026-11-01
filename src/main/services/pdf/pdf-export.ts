@@ -49,9 +49,9 @@ export async function saveCsv(content: unknown, fileName: unknown, dialogTitle: 
   return { success: true, filePath }
 }
 
-/** Opens a file the app just saved (a PDF or a CSV) in its default program. Throws: 'OPEN_FILE_FAILED' */
+/** Opens a file the app just saved (a PDF, a CSV or an .ics) in its default program. Throws: 'OPEN_FILE_FAILED' */
 export async function openSavedFile(filePath: unknown): Promise<void> {
-  if (typeof filePath !== 'string' || !/\.(pdf|csv)$/i.test(filePath)) throw new Error('OPEN_FILE_FAILED')
+  if (typeof filePath !== 'string' || !/\.(pdf|csv|ics)$/i.test(filePath)) throw new Error('OPEN_FILE_FAILED')
   const error = await shell.openPath(filePath)
   if (error) throw new Error('OPEN_FILE_FAILED')
 }

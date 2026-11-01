@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('api', {
   getAppInfo:    ()              => ipcRenderer.invoke('settings:appInfo'),
   openDataDir:   ()              => ipcRenderer.invoke('settings:openDataDir'),
   setNotificationSettings: (input: unknown) => ipcRenderer.invoke('settings:setNotifications', input),
+  setWeekStart:  (day: number)   => ipcRenderer.invoke('settings:setWeekStart', day),
 
   // ── Members ─────────────────────────────────────────────────────────────────
   listMembers:       (opts?: unknown)                 => ipcRenderer.invoke('member:list', opts),
@@ -132,6 +133,10 @@ contextBridge.exposeInMainWorld('api', {
   // ── PDF ─────────────────────────────────────────────────────────────────────
   exportPdf:     (report: unknown, fileName: string, dialogTitle: string) => ipcRenderer.invoke('pdf:export', report, fileName, dialogTitle),
   openFile:      (filePath: string) => ipcRenderer.invoke('shell:openFile', filePath),
+
+  // ── Calendar ────────────────────────────────────────────────────────────────
+  exportCalendarIcs: (entries: unknown, calendarName: string, fileName: string, dialogTitle: string) =>
+    ipcRenderer.invoke('calendar:exportIcs', entries, calendarName, fileName, dialogTitle),
 
   // ── Window ──────────────────────────────────────────────────────────────────
   setTheme:      (mode: string)  => ipcRenderer.invoke('window:setTheme', mode),

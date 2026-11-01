@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActionMenu, Banner, Button, EmptyCard, ListCard, Money, PageHeader, RowTitle, SectionHeader, Segmented, Spinner, StatTile, type ActionMenuItem } from '../components/ui'
 import { BillRow } from '../components/recurring/BillRow'
-import { MarkPaidDialog } from '../components/recurring/MarkPaidDialog'
+import { useBillActions } from '../components/recurring/useBillActions'
 import { SubscriptionHints } from '../components/subscriptions/SubscriptionHints'
 import { useLedgerStore } from '../store/ledger'
 import { useRecurringStore } from '../store/recurring'
-import { useDebtsStore } from '../store/debts'
 import { formatDate } from '../lib/date-format'
 import { ipcErrorMessage } from '../lib/ipc-errors'
 import { groupRules, groupUpcoming, monthlyTotals, scheduleLabel } from '../lib/recurring'
@@ -21,14 +20,13 @@ type Tab = 'upcoming' | 'all'
 const TILE_DAYS = 30
 
 /** Subscriptions & bills: what is due soon, what is paid, and what fixed costs take each month */
-export function RecurringScreen() {
+export function RecurringScreen({ onOpenCalendar }: { onOpenCalendar: () => void }) {
   const { t } = useTranslation()
   const revision = useLedgerStore(s => s.revision)
   const dismissed = useLedgerStore(s => s.dismissedHints)
   const { rules, bills, loaded, error, load, openForm } = useRecurringStore()
   const [tab, setTab] = useState<Tab>('upcoming')
-  const [marking, setMarking] = useState<UpcomingBill | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+  const { billActions, run, error: actionError, dialog: markDialog } = useBillActions()
   const [hints, setHints] = useState<SubscriptionHint[]>([])
   const [showHints, setShowHints] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
@@ -54,36 +52,6 @@ export function RecurringScreen() {
   const activeCount = ownRules.filter(r => !r.archived).length
   const debtRuleCount = rules.filter(r => r.debtId && !r.archived).length
 
-  async function run(action: () => Promise<unknown>) {
-    setActionError(null)
-    try {
-      await action()
-      await useRecurringStore.getState().changed()
-    } catch (err) {
-      setActionError(ipcErrorMessage(err, t))
-    }
-  }
-
-  function billActions(bill: UpcomingBill): ActionMenuItem[] {
-    const due = { ruleId: bill.ruleId, dueDate: bill.dueDate }
-    const rule = rules.find(r => r.id === bill.ruleId)
-    const settled = bill.status === 'PAID' || bill.status === 'SKIPPED'
-    const items: ActionMenuItem[] = []
-    if (!settled) {
-      items.push({ id: 'paid', label: t('recurring.mark_paid_menu'), icon: 'check', onSelect: () => setMarking(bill) })
-      items.push({ id: 'skip', label: t('recurring.skip'), icon: 'minus', onSelect: () => void run(() => window.api.skipBill(due)) })
-    } else if (bill.paidBy !== 'AUTO') {
-      items.push({ id: 'unmark', label: t('recurring.unmark'), icon: 'undo', onSelect: () => void run(() => window.api.unmarkBill(due)) })
-    }
-    if (bill.debtId) {
-      const debtId = bill.debtId
-      items.push({ id: 'debt', label: t('debts.open_debt'), icon: 'credit-card', onSelect: () => useDebtsStore.getState().openDetail(debtId) })
-    } else if (rule) {
-      items.push({ id: 'edit', label: t('recurring.edit'), icon: 'pencil', onSelect: () => openForm({ mode: 'edit', rule }) })
-    }
-    return items
-  }
-
   function ruleActions(rule: RecurringRuleRow): ActionMenuItem[] {
     return [
       { id: 'edit', label: t('recurring.edit'), icon: 'pencil', onSelect: () => openForm({ mode: 'edit', rule }) },
@@ -100,7 +68,12 @@ export function RecurringScreen() {
       <PageHeader
         title={t('nav.recurring')}
         subtitle={t('recurring.subtitle')}
-        actions={<Button variant="primary" icon="plus" onClick={() => openForm()}>{t('recurring.add')}</Button>}
+        actions={
+          <>
+            <Button icon="calendar-days" onClick={onOpenCalendar}>{t('calendar.open')}</Button>
+            <Button variant="primary" icon="plus" onClick={() => openForm()}>{t('recurring.add')}</Button>
+          </>
+        }
       />
 
       {error !== null && error !== undefined && <Banner tone="warning" className="mb-4">{ipcErrorMessage(error, t)}</Banner>}
@@ -218,7 +191,7 @@ export function RecurringScreen() {
         </>
       )}
 
-      {marking && <MarkPaidDialog bill={marking} onClose={() => setMarking(null)} />}
+      {markDialog}
       {showHints && <SubscriptionHints hints={openHints} onClose={() => setShowHints(false)} />}
     </div>
   )

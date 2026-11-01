@@ -98,6 +98,7 @@ Copy the HomeBudget folder to a writable drive.`,
   const { registerRecurringHandlers } = await import('./ipc/recurring')
   const { registerDebtHandlers } = await import('./ipc/debt')
   const { registerNotificationHandlers } = await import('./ipc/notifications')
+  const { registerCalendarHandlers } = await import('./ipc/calendar')
   const { registerNotificationProvider } = await import('./services/notifications')
   const { NOTIFICATION_PROVIDERS } = await import('./services/notification-providers')
   const { startNotificationToasts } = await import('./services/notification-toasts')
@@ -130,6 +131,7 @@ Copy the HomeBudget folder to a writable drive.`,
   registerRecurringHandlers()
   registerDebtHandlers()
   registerNotificationHandlers()
+  registerCalendarHandlers()
   for (const provider of NOTIFICATION_PROVIDERS) registerNotificationProvider(provider)
   registerWindowHandlers(mainWindow)
 

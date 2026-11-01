@@ -16,6 +16,7 @@ import { SettingsScreen } from './pages/SettingsScreen'
 import { CategoriesScreen } from './pages/CategoriesScreen'
 import { BudgetScreen } from './pages/BudgetScreen'
 import { RecurringScreen } from './pages/RecurringScreen'
+import { CalendarScreen } from './pages/CalendarScreen'
 import { DebtsScreen } from './pages/DebtsScreen'
 import { DebtForm } from './components/debts/DebtForm'
 import { DebtDetail } from './components/debts/DebtDetail'
@@ -91,6 +92,7 @@ export default function App() {
   useEffect(() => {
     window.api.getSettings().then(s => {
       useUiStore.getState().setDateFormat(s?.dateFormat)
+      useUiStore.getState().setWeekStartsOn(s?.weekStartsOn)
       // AppSettings is the source of truth for the language once it exists
       if (s?.language && s.language !== i18next.language) void i18next.changeLanguage(s.language)
     }).catch(err => console.error('[settings] load failed:', err))
@@ -346,7 +348,8 @@ export default function App() {
             onManageCategories={() => openCategories()}
           />
         )
-      case 'recurring': return <RecurringScreen />
+      case 'recurring': return <RecurringScreen onOpenCalendar={() => setView('calendar')} />
+      case 'calendar': return <CalendarScreen onOpenRecurring={() => setView('recurring')} />
       case 'reports': return <ReportsScreen onOpenRows={showReportRows} />
       case 'projections':
         return <ProjectionsScreen onOpenBudget={openBudget} onOpenAccounts={() => setView('accounts')} onOpenRecurring={() => setView('recurring')} />
