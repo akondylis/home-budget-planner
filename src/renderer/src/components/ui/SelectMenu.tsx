@@ -4,6 +4,7 @@ import { Icon } from '../shell/icons'
 import { Popover } from './Popover'
 import { cx } from './cx'
 import { normalise } from '../../../../shared/search-normalise'
+import { scrollWithin } from '../../lib/scroll'
 
 export interface SelectMenuOption<T extends string | number> {
   value: T
@@ -38,6 +39,15 @@ export interface SelectMenuProps<T extends string | number> {
   createLabel?: (query: string) => ReactNode
   /** Opens the list as soon as it mounts (a picker shown as the next step of a menu) */
   defaultOpen?: boolean
+  /** On the trigger, for an external `<label htmlFor>` */
+  id?: string
+  /** Red border and `aria-invalid`, as on the other form fields */
+  invalid?: boolean
+  disabled?: boolean
+  /** Tooltip on the trigger, e.g. why it is disabled */
+  title?: string
+  /** `filter` (default): the filter-bar look; `field`: a regular form field */
+  appearance?: 'filter' | 'field'
 }
 
 const isChoosable = (o: { disabled?: boolean; kind?: string }) => !o.disabled && o.kind !== 'heading'
@@ -97,6 +107,11 @@ export function SelectMenu<T extends string | number>({
   onCreate,
   createLabel,
   defaultOpen = false,
+  id,
+  invalid = false,
+  disabled = false,
+  title,
+  appearance = 'filter',
 }: SelectMenuProps<T>) {
   const { t } = useTranslation()
   const anchorRef = useRef<HTMLButtonElement>(null)
@@ -121,9 +136,15 @@ export function SelectMenu<T extends string | number>({
   // Open on the current choice, not at the top of a long list
   useEffect(() => {
     if (!isOpen) return
-    const frame = requestAnimationFrame(() =>
-      listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'center' }),
-    )
+    // Scrolls the list only: scrollIntoView would also shift the app shell
+    const frame = requestAnimationFrame(() => {
+      const list = listRef.current
+      const el = list?.querySelector('[aria-selected="true"]')
+      if (!list || !el) return
+      const box = list.getBoundingClientRect()
+      const row = el.getBoundingClientRect()
+      list.scrollTop += row.top - box.top - (box.height - row.height) / 2
+    })
     return () => cancelAnimationFrame(frame)
   }, [isOpen])
 
@@ -131,10 +152,12 @@ export function SelectMenu<T extends string | number>({
   // the first option of a section brings its heading along
   useEffect(() => {
     if (!isOpen || highlighted < 0) return
-    const row = listRef.current?.querySelector<HTMLElement>(`[data-index="${highlighted}"]`)
-    const heading = row?.previousElementSibling
-    ;(heading?.getAttribute('role') === 'presentation' ? heading : row)?.scrollIntoView({ block: 'nearest' })
-    row?.scrollIntoView({ block: 'nearest' })
+    const list = listRef.current
+    const row = list?.querySelector<HTMLElement>(`[data-index="${highlighted}"]`)
+    if (!list || !row) return
+    const heading = row.previousElementSibling
+    if (heading?.getAttribute('role') === 'presentation') scrollWithin(heading, list, 'nearest')
+    scrollWithin(row, list, 'nearest')
   }, [isOpen, highlighted])
 
   const open = () => {
@@ -182,6 +205,10 @@ export function SelectMenu<T extends string | number>({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={ariaLabel}
+        id={id}
+        aria-invalid={invalid || undefined}
+        disabled={disabled}
+        title={title}
         onClick={() => (isOpen ? close() : open())}
         onKeyDown={e => {
           if (!isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
@@ -189,7 +216,12 @@ export function SelectMenu<T extends string | number>({
             open()
           }
         }}
-        className={cx('select-field flex items-center gap-1.5 text-left font-medium', triggerClassName)}
+        className={cx(
+          'select-field flex items-center gap-1.5 text-left',
+          appearance === 'filter' && 'font-medium',
+          invalid && 'border-red-500',
+          triggerClassName,
+        )}
       >
         <span className="min-w-0 flex-1 truncate">{selected ? selected.label : placeholder}</span>
         <Icon name="chevron-down" size={16} className={cx('shrink-0 text-gray-500 transition-transform', isOpen && 'rotate-180')} />

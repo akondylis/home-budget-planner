@@ -34,7 +34,8 @@ import {
   showCreate,
   visibleOptions,
 } from '.'
-import { createPanelRegistry, placePanel } from './Popover'
+import { autofocusTarget, createPanelRegistry, placePanel } from './Popover'
+import { ListCard, TableScroller, TruncCell } from './List'
 import { RulePrompt } from '../import/RulePrompt'
 import { DateInput, shiftDay } from './DateInput'
 import { setDateFormat } from '../../lib/date-format'
@@ -541,5 +542,102 @@ describe('EmptyCard', () => {
     expect(html).toContain('Nothing')
     expect(html).toContain('Clear the filters')
     expect(html).toContain('<button>Clear</button>')
+  })
+})
+
+describe('Banner (danger and block layout)', () => {
+  it('shows errors as a red alert with an accent edge', () => {
+    const html = renderToStaticMarkup(<Banner tone="danger">Could not save</Banner>)
+    expect(html).toContain('role="alert"')
+    expect(html).toContain('bg-danger')
+    expect(html).toContain('border-l-danger-fg')
+    expect(html).toContain('<svg')
+    expect(renderToStaticMarkup(<Banner tone="warning">x</Banner>)).toContain('role="status"')
+  })
+
+  it('switches to the block layout with a title and an action row', () => {
+    const html = renderToStaticMarkup(
+      <Banner tone="danger" title="Import failed" actions={<button type="button">Retry</button>}>The file is not a statement</Banner>,
+    )
+    expect(html).toContain('items-start')
+    expect(html).toContain('<div class="font-semibold">Import failed</div>')
+    expect(html).toContain('>Retry</button>')
+  })
+})
+
+describe('IconButton size="field"', () => {
+  it('matches a field height', () => {
+    const html = renderToStaticMarkup(<IconButton icon="trash" label="Remove" size="field" />)
+    expect(html).toContain('btn-icon-field')
+    expect(html).not.toContain('btn-icon-sm')
+  })
+})
+
+describe('TableScroller / TruncCell / ListCard scrollX', () => {
+  it('truncates one-line text and keeps the full text as a tooltip', () => {
+    const html = renderToStaticMarkup(<TruncCell text="Σούπερ μάρκετ Γαλαξίας Παγκρατίου" />)
+    expect(html).toContain('truncate')
+    expect(html).toContain('title="Σούπερ μάρκετ Γαλαξίας Παγκρατίου"')
+  })
+
+  it('wraps a fixed-layout table in a sideways scroller', () => {
+    const html = renderToStaticMarkup(<TableScroller minWidth="min-w-[44rem]"><tbody /></TableScroller>)
+    expect(html).toContain('<div class="overflow-x-auto"><table class="w-full table-fixed min-w-[44rem]">')
+  })
+
+  it('fills its column and scrolls both ways when the header should stay pinned', () => {
+    const html = renderToStaticMarkup(<TableScroller stickyHead><tbody /></TableScroller>)
+    expect(html).toContain('<div class="min-h-36 flex-1 overflow-auto">')
+    expect(html).not.toContain('overflow-x-auto')
+  })
+
+  it('lets a list card scroll sideways only when asked', () => {
+    expect(renderToStaticMarkup(<ListCard scrollX>x</ListCard>)).toContain('overflow-x-auto')
+    expect(renderToStaticMarkup(<ListCard>x</ListCard>)).not.toContain('overflow-x-auto')
+  })
+})
+
+describe('SelectMenu form props', () => {
+  const options = [{ value: 'a', label: 'Food' }]
+
+  it('marks an invalid, disabled field trigger', () => {
+    const html = renderToStaticMarkup(
+      <SelectMenu ariaLabel="Category" id="cat" value="a" options={options} onChange={() => {}} invalid disabled appearance="field" />,
+    )
+    expect(html).toContain('id="cat"')
+    expect(html).toContain('aria-invalid="true"')
+    expect(html).toContain('disabled=""')
+    expect(html).toContain('border-red-500')
+    expect(html).not.toContain('font-medium')
+  })
+})
+
+describe('autofocusTarget', () => {
+  const panel = (hits: Record<string, string>) => ({
+    querySelector: (selector: string) => (hits[selector] ?? null) as unknown as Element,
+  })
+
+  it('prefers the element marked data-autofocus', () => {
+    const target = autofocusTarget(panel({
+      '[data-autofocus]': 'search',
+      '[data-autofocus-within] [tabindex="0"]': 'day',
+    }) as unknown as ParentNode)
+    expect(target).toBe('search')
+  })
+
+  it('falls back to the roving-tabindex item inside data-autofocus-within', () => {
+    expect(autofocusTarget(panel({ '[data-autofocus-within] [tabindex="0"]': 'day' }) as unknown as ParentNode)).toBe('day')
+  })
+
+  it('falls back to the first enabled control inside data-autofocus-first', () => {
+    const calls: string[] = []
+    const target = autofocusTarget({
+      querySelector: (selector: string) => {
+        calls.push(selector)
+        return (selector.startsWith('[data-autofocus-first] button:not([disabled])') ? 'first' : null) as unknown as Element
+      },
+    } as unknown as ParentNode)
+    expect(target).toBe('first')
+    expect(calls[2]).toContain('[data-autofocus-first] input:not([disabled])')
   })
 })

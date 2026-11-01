@@ -30,7 +30,7 @@
 
   /* Inputs & Selects */
   .input-field {
-    @apply h-10 rounded-md border border-line bg-surface-input px-3 text-sm text-fg
+    @apply h-9 rounded-md border border-line bg-surface-input px-3 text-sm text-fg
            outline-none transition-shadow duration-150
            placeholder:text-fg-subtle
            focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40
@@ -47,11 +47,11 @@
   }
 
   .field-readonly {
-    @apply flex h-10 items-center rounded-md bg-neutral px-3 text-sm text-fg-muted cursor-default select-none;
+    @apply flex h-9 items-center rounded-md bg-neutral px-3 text-sm text-fg-muted cursor-default select-none;
   }
 
   .select-field {
-    @apply h-10 rounded-md border border-line bg-surface-input px-3 text-sm text-fg
+    @apply h-9 rounded-md border border-line bg-surface-input px-3 text-sm text-fg
            cursor-pointer outline-none transition-shadow duration-150
            hover:border-gray-400
            focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40
@@ -103,6 +103,14 @@
     @apply h-11 px-5 text-base;
   }
 
+  /* Inline text action (e.g. "Open settings" inside a hint); inherits the font size */
+  .btn-link {
+    @apply inline-flex items-center gap-1 rounded-sm font-medium text-accent underline-offset-2
+           hover:underline
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50
+           disabled:pointer-events-none disabled:opacity-50;
+  }
+
   /* Icon-only buttons: ghost square, never a filled block */
   .btn-icon {
     @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-fg-muted
@@ -114,6 +122,11 @@
 
   .btn-icon-sm {
     @apply h-7 w-7;
+  }
+
+  /* Same height as an input or select, for trailing buttons beside a field */
+  .btn-icon-field {
+    @apply h-9 w-9;
   }
 
   .btn-icon-danger {
@@ -214,6 +227,13 @@
 
   .table-header {
     @apply text-xs font-semibold uppercase tracking-wide text-gray-500;
+  }
+
+  /* Long tables: the header row stays at the top of its scroller. Solid so rows never show
+     through; the inset line replaces cell borders, which don't travel with sticky cells */
+  .table-head-sticky {
+    @apply sticky top-0 z-10 bg-surface;
+    box-shadow: inset 0 -1px 0 theme('colors.line / 100%');
   }
 
   /* Section title inside a dropdown list; stays pinned while its options scroll */

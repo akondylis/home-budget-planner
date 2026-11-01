@@ -36,8 +36,12 @@ export {
   RowTitle,
   SortHeader,
   TABLE_ROW,
+  TableScroller,
+  TruncCell,
   type MetaPart,
   type SortHeaderProps,
+  type TableScrollerProps,
+  type TruncCellProps,
 } from './List'
 export { MenuList, type MenuListProps } from './MenuList'
 export { Meter, type MeterProps, type MeterTone } from './Meter'
@@ -45,7 +49,7 @@ export { Modal, type ModalProps, type ModalSize } from './Modal'
 export { MultiSelectDropdown, type MultiSelectDropdownProps } from './MultiSelectDropdown'
 export { PageHeader, type PageHeaderProps } from './PageHeader'
 export { Pagination, type PaginationProps } from './Pagination'
-export { Popover, type PopoverProps } from './Popover'
+export { Popover, autofocusTarget, useHighlightIntoView, usePopoverEscape, type PopoverProps } from './Popover'
 export { SectionHeader, type SectionHeaderProps } from './SectionHeader'
 export { Segmented, type SegmentedProps } from './Segmented'
 export { SelectMenu, nextEnabledIndex, showCreate, visibleOptions, type SelectMenuOption, type SelectMenuProps } from './SelectMenu'

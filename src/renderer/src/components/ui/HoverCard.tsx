@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type ReactNode, type SyntheticEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { cx } from './cx'
+import { effectiveZoom, toZoomedBox } from '../../lib/zoom'
 
 const OPEN_DELAY_MS = 300
 /** Grace period to cross the gap between the row and the card */
@@ -53,7 +54,7 @@ export function HoverCard({ content, children, focusable = true, side = 'below',
   const timerRef = useRef<number | null>(null)
   const pointerInPanelRef = useRef(false)
   const [isOpen, setIsOpen] = useState(false)
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
+  const [position, setPosition] = useState<{ top: number; left: number; zoom: number } | null>(null)
 
   const clearTimer = () => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current)
@@ -90,13 +91,16 @@ export function HoverCard({ content, children, focusable = true, side = 'below',
       setPosition(null)
       return
     }
+    // Visual px; the card carries the trigger's zoom once shown (see lib/zoom.ts)
+    const zoom = effectiveZoom(triggerRef.current)
     const panel = panelRef.current
-    setPosition(placeHoverCard(
+    const spot = placeHoverCard(
       triggerRef.current.getBoundingClientRect(),
-      { width: panel.offsetWidth, height: panel.offsetHeight },
+      { width: panel.offsetWidth * zoom, height: panel.offsetHeight * zoom },
       { width: window.innerWidth, height: window.innerHeight },
       side,
-    ))
+    )
+    setPosition({ ...spot, zoom })
   }, [isOpen, side])
 
   useEffect(() => {
@@ -133,7 +137,11 @@ export function HoverCard({ content, children, focusable = true, side = 'below',
         <div
           ref={panelRef}
           role="tooltip"
-          style={{ top: position?.top ?? 0, left: position?.left ?? 0, visibility: position ? 'visible' : 'hidden' }}
+          style={{
+            zoom: position?.zoom,
+            ...toZoomedBox({ top: position?.top ?? 0, left: position?.left ?? 0 }, position?.zoom ?? 1),
+            visibility: position ? 'visible' : 'hidden',
+          }}
           onMouseEnter={() => { pointerInPanelRef.current = true; clearTimer() }}
           onMouseLeave={() => { pointerInPanelRef.current = false; closeSoon() }}
           onClick={stop}

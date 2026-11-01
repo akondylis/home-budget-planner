@@ -1,6 +1,7 @@
-import { useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { MenuList, type ActionMenuItem } from './MenuList'
 import { Popover } from './Popover'
+import { effectiveZoom, toZoomedBox } from '../../lib/zoom'
 
 export interface ContextMenuProps {
   /** Where the menu opens (window coordinates, e.g. the right-click); null = closed */
@@ -21,10 +22,15 @@ export interface ContextMenuProps {
  */
 export function ContextMenu({ point, label, heading, items, onClose, children }: ContextMenuProps) {
   const anchorRef = useRef<HTMLSpanElement>(null)
+  // The anchor sits in the zoomed content, where fixed left/top are scaled by the zoom; the point is in visual px
+  const [zoom, setZoom] = useState(1)
+  useLayoutEffect(() => {
+    if (point && anchorRef.current) setZoom(effectiveZoom(anchorRef.current.parentElement ?? anchorRef.current))
+  }, [point])
   return (
     <>
       {/* Zero-size anchor at the pointer; its position is only known at runtime */}
-      {point && <span ref={anchorRef} aria-hidden className="pointer-events-none fixed h-0 w-0" style={{ left: point.x, top: point.y }} />}
+      {point && <span ref={anchorRef} aria-hidden className="pointer-events-none fixed h-0 w-0" style={toZoomedBox({ left: point.x, top: point.y }, zoom)} />}
       <Popover open={point !== null} anchorRef={anchorRef} onClose={onClose}>
         {heading && <div className="menu-heading border-b border-line">{heading}</div>}
         {children ?? <MenuList label={label} items={items} onClose={onClose} />}

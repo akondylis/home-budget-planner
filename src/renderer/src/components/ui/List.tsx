@@ -11,12 +11,50 @@ export const LIST_GRID = 'grid items-center gap-x-3 px-3'
 export const TABLE_ROW = 'h-12 border-b border-line/60 transition-colors duration-150 hover:bg-surface-hover'
 
 export interface ListCardProps {
+  /** Scroll sideways when the columns are wider than the card, so header and rows move together */
+  scrollX?: boolean
   className?: string
   children: ReactNode
 }
 
-export function ListCard({ className, children }: ListCardProps) {
-  return <div className={cx('card', className)}>{children}</div>
+export function ListCard({ scrollX = false, className, children }: ListCardProps) {
+  return <div className={cx('card', scrollX && 'overflow-x-auto', className)}>{children}</div>
+}
+
+export interface TableScrollerProps {
+  /** Literal Tailwind min-width class (e.g. `min-w-[44rem]`); below it the table scrolls sideways */
+  minWidth?: string
+  /** Long tables: fill the parent flex column and scroll both ways inside it, so the toolbar above stays put.
+      Give the `<thead>` `table-head-sticky` so the column names stay visible */
+  stickyHead?: boolean
+  className?: string
+  /** `<colgroup>`, `<thead>` and `<tbody>` */
+  children: ReactNode
+}
+
+/** Fixed-layout data table in a sideways scroller: columns keep their widths, so `truncate` works in cells */
+export function TableScroller({ minWidth, stickyHead = false, className, children }: TableScrollerProps) {
+  return (
+    // One scroller for both axes: sticky only works against the nearest scrolling box
+    <div className={stickyHead ? 'min-h-36 flex-1 overflow-auto' : 'overflow-x-auto'}>
+      <table className={cx('w-full table-fixed', minWidth, className)}>{children}</table>
+    </div>
+  )
+}
+
+export interface TruncCellProps {
+  text: string
+  as?: 'span' | 'div'
+  className?: string
+}
+
+/** One-line text that truncates and shows the full text on hover */
+export function TruncCell({ text, as: Tag = 'span', className }: TruncCellProps) {
+  return (
+    <Tag className={cx('block min-w-0 truncate', className)} title={text}>
+      {text}
+    </Tag>
+  )
 }
 
 export interface ListHeaderProps {

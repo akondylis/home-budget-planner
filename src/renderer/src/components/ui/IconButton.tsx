@@ -8,7 +8,8 @@ export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   /** Translated text for the tooltip and screen readers */
   label: string
   variant?: 'default' | 'danger'
-  size?: 'sm' | 'md'
+  /** `field`: same height as an input/select, for a trailing button beside a field */
+  size?: 'sm' | 'md' | 'field'
   loading?: boolean
   /** Toggle buttons: on shows the accent colour and sets aria-pressed */
   pressed?: boolean
@@ -37,7 +38,7 @@ export function IconButton({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       aria-pressed={pressed}
-      className={cx('btn-icon', size === 'sm' && 'btn-icon-sm', variant === 'danger' && 'btn-icon-danger', pressed && 'btn-icon-pressed', className)}
+      className={cx('btn-icon', size === 'sm' && 'btn-icon-sm', size === 'field' && 'btn-icon-field', variant === 'danger' && 'btn-icon-danger', pressed && 'btn-icon-pressed', className)}
       {...rest}
     >
       {loading ? <Spinner size={iconSize} /> : <Icon name={icon} size={iconSize} />}

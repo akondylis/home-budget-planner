@@ -10,6 +10,8 @@ import {
   type RefObject,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { scrollWithin } from '../../lib/scroll'
+import { effectiveZoom, toZoomedBox } from '../../lib/zoom'
 import { cx } from './cx'
 
 const GAP = 4
@@ -82,11 +84,78 @@ export function createPanelRegistry() {
   return { register, contains, size: () => panels.size }
 }
 
+/**
+ * Escape for a floating panel: joins the shared stack so only the innermost open
+ * panel closes, runs in the capture phase (before a parent modal's handler) and
+ * returns focus to the anchor. Popover uses it; panels built without Popover
+ * (date pickers, input combo-boxes) call it directly.
+ */
+export function usePopoverEscape(
+  open: boolean,
+  onClose: () => void,
+  anchorRef: RefObject<HTMLElement | null>,
+  /** Gets focus back instead of the anchor (e.g. the calendar button of a date field) */
+  returnFocusRef?: RefObject<HTMLElement | null>,
+) {
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  useEffect(() => {
+    if (!open) return
+    const entry = {}
+    openStack.push(entry)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || openStack[openStack.length - 1] !== entry) return
+      e.preventDefault()
+      e.stopPropagation()
+      onCloseRef.current()
+      // An input anchor keeps focus; refocusing it would reopen combo-boxes that open on focus
+      const anchor = anchorRef.current
+      if (anchor && !anchor.contains(document.activeElement)) (returnFocusRef?.current ?? anchor).focus()
+    }
+    // Capture phase, so a modal's own Escape handler doesn't close the modal first
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true)
+      openStack.splice(openStack.indexOf(entry), 1)
+    }
+  }, [open, anchorRef, returnFocusRef])
+}
+
+const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]'
+
+/**
+ * What gets focus when a panel opens: the element marked `data-autofocus`, else the
+ * roving-tabindex item inside `data-autofocus-within` (e.g. the day picker's selected day),
+ * else the first enabled control inside `data-autofocus-first` (panels with arbitrary children)
+ */
+export function autofocusTarget(panel: Pick<ParentNode, 'querySelector'>): HTMLElement | null {
+  return (
+    panel.querySelector<HTMLElement>('[data-autofocus]') ??
+    panel.querySelector<HTMLElement>('[data-autofocus-within] [tabindex="0"]') ??
+    panel.querySelector<HTMLElement>(FOCUSABLE.split(', ').map(s => `[data-autofocus-first] ${s}`).join(', '))
+  )
+}
+
+/**
+ * Keeps the keyboard-highlighted option visible: scrolls only the list (not the
+ * window) to the child marked `data-index={highlighted}`
+ */
+export function useHighlightIntoView(listRef: RefObject<HTMLElement | null>, highlighted: number) {
+  useEffect(() => {
+    const list = listRef.current
+    if (!list || highlighted < 0) return
+    const el = list.querySelector(`[data-index="${highlighted}"]`)
+    if (el) scrollWithin(el, list, 'nearest')
+  }, [listRef, highlighted])
+}
+
 export interface PopoverProps {
   open: boolean
   /** Element the panel attaches to; clicks on it don't count as outside */
   anchorRef: RefObject<HTMLElement | null>
   onClose: () => void
+  /** Gets focus back on Escape instead of the anchor (for an anchor that can't take focus) */
+  returnFocusRef?: RefObject<HTMLElement | null>
   /** Which anchor edge the panel lines up with */
   align?: 'start' | 'end'
   /** Panel is at least as wide as the anchor */
@@ -107,13 +176,14 @@ export function Popover({
   open,
   anchorRef,
   onClose,
+  returnFocusRef,
   align = 'start',
   matchWidth = false,
   className = 'rounded-md border border-line bg-surface shadow-lg',
   children,
 }: PopoverProps) {
   const panelRef = useRef<HTMLDivElement>(null)
-  const [position, setPosition] = useState<PanelPosition | null>(null)
+  const [position, setPosition] = useState<(PanelPosition & { zoom: number }) | null>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
   const registerWithParent = useContext(PopoverParentContext)
@@ -131,19 +201,26 @@ export function Popover({
       if (position) setPosition(null)
       return
     }
-    const next = placePanel(
-      anchorRef.current.getBoundingClientRect(),
-      { width: panelRef.current.offsetWidth, height: panelRef.current.offsetHeight },
-      { width: window.innerWidth, height: window.innerHeight },
-      align,
-      matchWidth,
-    )
+    // All measured in visual px; the panel carries the anchor's zoom (see lib/zoom.ts)
+    const zoom = effectiveZoom(anchorRef.current)
+    const panelBox = panelRef.current.getBoundingClientRect()
+    const next = {
+      ...placePanel(
+        anchorRef.current.getBoundingClientRect(),
+        { width: panelBox.width, height: panelBox.height },
+        { width: window.innerWidth, height: window.innerHeight },
+        align,
+        matchWidth,
+      ),
+      zoom,
+    }
     if (
       !position ||
       position.top !== next.top ||
       position.left !== next.left ||
       position.maxWidth !== next.maxWidth ||
-      position.minWidth !== next.minWidth
+      position.minWidth !== next.minWidth ||
+      position.zoom !== next.zoom
     ) {
       setPosition(next)
     }
@@ -153,29 +230,10 @@ export function Popover({
   const visible = open && position !== null
   useEffect(() => {
     if (!visible) return
-    panelRef.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus()
+    if (panelRef.current) autofocusTarget(panelRef.current)?.focus()
   }, [visible])
 
-  useEffect(() => {
-    if (!open) return
-    const entry = {}
-    openStack.push(entry)
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || openStack[openStack.length - 1] !== entry) return
-      e.preventDefault()
-      e.stopPropagation()
-      onCloseRef.current()
-      // An input anchor keeps focus; refocusing it would reopen combo-boxes that open on focus
-      const anchor = anchorRef.current
-      if (anchor && !anchor.contains(document.activeElement)) anchor.focus()
-    }
-    // Capture phase, so a modal's own Escape handler doesn't close the modal first
-    document.addEventListener('keydown', handleKeyDown, true)
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown, true)
-      openStack.splice(openStack.indexOf(entry), 1)
-    }
-  }, [open, anchorRef])
+  usePopoverEscape(open, onClose, anchorRef, returnFocusRef)
 
   useEffect(() => {
     if (!open) return
@@ -208,10 +266,11 @@ export function Popover({
     <div
       ref={panelRef}
       style={{
-        top: position?.top ?? 0,
-        left: position?.left ?? 0,
-        maxWidth: position?.maxWidth,
-        minWidth: position?.minWidth,
+        zoom: position?.zoom,
+        ...toZoomedBox(
+          { top: position?.top ?? 0, left: position?.left ?? 0, maxWidth: position?.maxWidth, minWidth: position?.minWidth },
+          position?.zoom ?? 1,
+        ),
         visibility: position ? 'visible' : 'hidden',
       }}
       className={cx('app-no-drag fixed z-50', className)}

@@ -25,17 +25,29 @@ export interface MenuListProps {
   onClose: () => void
 }
 
-/** The items of a menu panel; ↑/↓ move, Enter runs, the first enabled item takes focus */
+/**
+ * The items of a menu panel; ↑/↓ move (wrapping), Home/End jump to the first/last item,
+ * Enter runs, Tab closes the menu (focus goes back to its trigger); the first enabled item takes focus
+ */
 export function MenuList({ label, items, onClose }: MenuListProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const firstEnabled = items.findIndex(i => !i.disabled)
 
   function onKeyDown(e: KeyboardEvent) {
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      onClose()
+      return
+    }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return
     e.preventDefault()
     const buttons = [...(listRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? [])]
+    if (buttons.length === 0) return
     const at = buttons.indexOf(document.activeElement as HTMLButtonElement)
-    const next = (at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
+    const next =
+      e.key === 'Home' ? 0
+      : e.key === 'End' ? buttons.length - 1
+      : (at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
     buttons[next]?.focus()
   }
 

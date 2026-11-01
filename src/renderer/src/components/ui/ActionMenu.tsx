@@ -12,10 +12,15 @@ export interface ActionMenuProps {
   size?: 'sm' | 'md'
 }
 
-/** "More" button with a short list of row actions; ↑/↓ move, Enter runs, Esc closes */
+/** "More" button with a short list of row actions; ↑/↓/Home/End move, Enter runs, Esc or Tab closes */
 export function ActionMenu({ label, items, size = 'sm' }: ActionMenuProps) {
   const [open, setOpen] = useState(false)
   const anchorRef = useRef<HTMLButtonElement>(null)
+  // The panel is portaled: give focus back to ⋮ so keyboard users don't land on <body>
+  const close = () => {
+    setOpen(false)
+    anchorRef.current?.focus()
+  }
 
   return (
     <>
@@ -29,7 +34,7 @@ export function ActionMenu({ label, items, size = 'sm' }: ActionMenuProps) {
         onClick={() => setOpen(o => !o)}
       />
       <Popover open={open} anchorRef={anchorRef} onClose={() => setOpen(false)} align="end">
-        <MenuList label={label} items={items} onClose={() => setOpen(false)} />
+        <MenuList label={label} items={items} onClose={close} />
       </Popover>
     </>
   )
