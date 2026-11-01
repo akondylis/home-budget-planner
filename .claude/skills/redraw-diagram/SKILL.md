@@ -1,5 +1,7 @@
 ---
 name: redraw-diagram
+model: opus
+context: fork
 description: Redraw the architecture + IPC diagram (docs/diagrams/architecture.svg and .png) from docs/diagrams/architecture.json, with every IPC channel checked against ipcMain.handle in src/main/ipc/ and every window.api method against src/preload/index.ts. Use when the user asks to draw, redraw, update or regenerate the diagram, or after a change to the IPC handlers or the preload leaves it out of date.
 argument-hint: "[what changed, optional]"
 ---

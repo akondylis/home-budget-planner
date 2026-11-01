@@ -1,5 +1,6 @@
 ---
 name: git-commit
+model: sonnet
 description: Grouped Conventional Commit and push workflow. Use when the user says /git-commit, "commit my changes", "commit and push", or "save changes" to git.
 ---
 

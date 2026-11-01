@@ -50,16 +50,17 @@ Theme, UI kit and UX rules are inherited from the Matchday project (`../chess-bo
 - **[docs/design-principles.md](docs/design-principles.md)** — Design & usability principles, UX plan template, review checklist
 - **[docs/code-quality-solid.md](docs/code-quality-solid.md)** — SOLID principles (S, D, I) with code examples
 - **[docs/code-quality-conventions.md](docs/code-quality-conventions.md)** — Naming, error handling, query optimization, modularity
+- **[docs/model-selection.md](docs/model-selection.md)** — Which Claude model runs which job (cost, efficiency, result), prices, how to change it
 
 ### Coding Rules (`.claude/rules/`, auto-loaded)
 - **database.md** — Prisma/SQLite conventions, migrations, money columns, query patterns
 - **frontend.md** — React, Zustand, Tailwind tokens, i18n, IPC, component patterns
 - **maintenance.md** — Docs upkeep, release triggers, file management
 
-### Skills (`.claude/skills/`)
-- **/git-commit** — Grouped Conventional Commit + push with confirmation
-- **/release** — CHANGELOG notes, version bump, tag & push
-- **/redraw-diagram** — Validate `docs/diagrams/architecture.json` against IPC/preload code and redraw the SVG/PNG
+### Skills (`.claude/skills/`) — model per skill set in frontmatter → [docs/model-selection.md](docs/model-selection.md)
+- **/git-commit** *(sonnet)* — Grouped Conventional Commit + push with confirmation
+- **/release** *(sonnet)* — CHANGELOG notes, version bump, tag & push
+- **/redraw-diagram** *(opus)* — Validate `docs/diagrams/architecture.json` against IPC/preload code and redraw the SVG/PNG
 
 ---
 

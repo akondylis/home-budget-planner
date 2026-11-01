@@ -1,5 +1,7 @@
 ---
 name: release
+model: sonnet
+disable-model-invocation: true
 description: Cut a versioned release - collect commits since the last tag, write human-readable CHANGELOG notes, bump package.json, then commit, tag and push. Use when the user says /release or "create a release".
 ---
 
