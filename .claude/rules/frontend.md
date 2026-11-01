@@ -28,6 +28,8 @@ paths:
 - Inline validation next to the field (hint turns into the error); disabled controls explain why; designed empty states
 - Reuse `components/ui` (`Modal`, `Field`, `Segmented`, `Banner`, `Button`, `IconButton`, `Badge`, `StatusBadge`, `Money`, `StatTile`, `List`, `PageHeader`); extend the kit rather than adding one-off variants
 - Check light/dark and ΕΛ/EN at the default window size; never truncate names, amounts or status
+- Controls are 36px tall (`.btn`, `.input-field`, `.select-field`); beside a field use `IconButton size="field"`, never `h-10 w-10`; inline text actions use `.btn-link`; action errors (save, load, import) use `Banner tone="danger"`, never a raw `text-red-*` line; field errors stay under the field
+- UI/UX work, renderer code reviews, design feedback and frontend refactors: act in the role and answer structure of `docs/design-principles.md` › Review role & response format
 
 ## Money in the UI
 

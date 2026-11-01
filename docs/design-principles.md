@@ -72,8 +72,10 @@ and the diagrams in `docs/diagrams/`.
 - **Preview before import or bulk change** (bank statement import, recurring rule that will create 12 rows).
 - **Inline validation next to the field**; the field hint turns into the error text in the same place. Toasts are for
   outcomes, not for field errors.
-- `Banner` for things that need action (over budget in a category, a bill due tomorrow, an account not reconciled
-  for 60 days); keep it above the content it refers to.
+- `Banner` above the content it refers to, by meaning: `warning` = something needs action (over budget in a
+  category, a bill due tomorrow, an account not reconciled for 60 days), `success` = all set, `info` = system notice,
+  `danger` = an action failed (load, save, import, delete). Use `title` + `actions` for a confirm box or a
+  follow-up step; never style a notice by hand (no raw `text-red-*` error lines).
 - Errors in plain language: main throws a code, the renderer maps it to `error.*` — never show a raw code or stack.
 
 ## 5. Consistency
@@ -82,6 +84,11 @@ and the diagrams in `docs/diagrams/`.
   `IconButton`, `Badge`, `StatusBadge`, `Money`, `StatTile`, `List` (`ListCard`, `ListRow`, `RowTitle`, `MetaLine`),
   `PageHeader`, `FilterPopover`, `ConfirmDialog`, `CollapsibleCard`. Extend the kit instead of creating one-off variants.
 - Same action, same place: row actions in a ⋮ menu, the primary row action as an icon.
+- One control height: buttons, inputs and selects are 36px (`btn-sm` 32px in toolbars). An icon button beside a field
+  uses `IconButton size="field"`; inline text actions use `.btn-link`. Data tables use `TableScroller` (fixed layout)
+  with `TruncCell` so rows stay one line (48px).
+- Long tables pin their header: `TableScroller stickyHead` + `table-head-sticky` (toolbar stays put), or only
+  `table-head-sticky` when the screen already scrolls. No `100vh` / `h-screen` content sizes: app zoom breaks them.
 - Charts follow the `dataviz` skill: one axis, legend for ≥ 2 series, a table view, colours from tokens.
 
 ## 6. Accessibility & languages
@@ -91,6 +98,23 @@ and the diagrams in `docs/diagrams/`.
   `aria-describedby` / `aria-invalid`.
 - Greek text is usually longer than English: check both languages at the default window size; key information
   (names, amounts, status) must never be truncated — truncate metadata first and show the full text on hover.
+
+## Review role & response format
+
+**When:** any request for UI/UX improvements, a review of renderer code, design feedback or a frontend refactor.
+
+**Role:** Principal Frontend Engineer and UX/UI Designer. Balance modern visual polish with the app's constraints
+(Electron, Tailwind tokens, `components/ui`, ΕΛ/EN text lengths, parents doing household admin in short sessions,
+often on a laptop).
+
+**Focus:** WCAG AA as the floor, AAA where cheap (7:1 body text, visible focus rings, 24px+ targets); visual hierarchy;
+typography (scale, weight, line length for Greek); component-driven, maintainable architecture (800-line split, extend
+the shared kit over one-offs). Sections 1–6 and the checklist below are the yardstick — cite them, don't restate them.
+
+**Answer structure** — always these headings, in this order; each finding gets a severity (high/medium/low) and a
+concrete fix:
+1. **Contrast & accessibility** 2. **Visual hierarchy & typography** 3. **Layout density**
+4. **User experience** (flows, defaults, states) 5. **Implementation** (components, files, effort)
 
 ## Plan template
 

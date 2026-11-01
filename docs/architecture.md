@@ -87,10 +87,15 @@ badge or modal styles.
 - **Components**: `Button` (primary/secondary/ghost/danger/success/warning/finalize, `loading`), `IconButton`,
   `Badge`/`StatusBadge` (payment status)/`DraftBadge`, `Money`, `StatTile`, `Modal` (Escape, focus trap), `ConfirmDialog`,
   `Field`/`Input`/`Select`/`Textarea`, `PageHeader`, `ListCard`/`ListHeader`/`ListRow`/`RowTitle`/`MetaLine`/`SortHeader`,
-  `TABLE_ROW`, `CollapsibleCard`, `CopyButton`, `Pagination`, `Segmented`, `Popover`, `SelectMenu`,
-  `MultiSelectDropdown`, `FilterPopoverButton`/`FilterChip`/`ActiveFilterPills`, `Banner`, `Spinner`.
+  `TABLE_ROW`, `TableScroller` (fixed layout, `stickyHead`)/`TruncCell`, `CollapsibleCard`, `CopyButton`, `Pagination`, `Segmented`, `Popover`, `SelectMenu`,
+  `MultiSelectDropdown`, `FilterPopoverButton`/`FilterChip`/`ActiveFilterPills`, `Banner` (`warning` amber with accent edge for open steps,
+  `success`, `info`, `danger` red with accent edge for failed actions; `title`/`actions` block layout), `Spinner`.
+  Inline field errors stay under the field (`Field error`). Popover hooks: `usePopoverEscape` (one Escape stack),
+  `autofocusTarget`, `useHighlightIntoView` (scrolls the list only, via `lib/scroll.ts`).
 - **Layering**: sticky headers `z-10`; dropdowns, popovers and modals `z-50` (floating panels portal to `<body>`);
-  toast `z-[60]`. Rows are 48px (`h-12`).
+  toast `z-[60]`. Rows are 48px (`h-12`); controls 36px (`h-9`). **Zoom**: the app zoom is CSS `zoom` on the
+  content wrapper, so portaled panels (Popover, HoverCard, CopyButton bubble, ContextMenu anchor) carry the anchor's
+  zoom (`lib/zoom.ts` `effectiveZoom`/`toZoomedBox`) and match the page they open from.
 
 ## Internationalization (i18n)
 
