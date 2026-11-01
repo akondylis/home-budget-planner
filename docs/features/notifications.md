@@ -92,6 +92,6 @@ what is due today or late. Ported from Matchday's bell (`../chess-board`). Plan:
 
 ## Later
 
-- Payment calendar (#17). Debt instalments shipped with [debts & loans](debts.md) as **Instalment due** / **not
+- Debt instalments shipped with [debts & loans](debts.md) as **Instalment due** / **not
   paid yet**, from the bills provider. A tray icon that toasts with the window closed
   would need a decision.

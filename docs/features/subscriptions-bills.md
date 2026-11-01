@@ -93,5 +93,5 @@ and `Ctrl+K` "Add a bill or subscription".
 
 ## Later
 
-- A payment calendar (#17). Reminders and the bell shipped with [notifications](notifications.md) (#8); rules feed
-  [projections](projections.md) (#11) on their due dates.
+- Reminders and the bell shipped with [notifications](notifications.md) (#8); rules feed
+  [projections](projections.md) (#11) and the [payment calendar](payment-calendar.md) (#17) on their due dates.

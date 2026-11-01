@@ -1,12 +1,12 @@
 # Home Budget — Feature Roadmap
 
-As of 2026-10-30 · Andrew Kondylis
+As of 2026-11-01 · Andrew Kondylis
 
 ## Overview
 
 The project starts from the Matchday shell (theme, UI kit, UX rules). The Matchday conveniences (palette, hover cards, tour, portable edition, PDF preview) have been ported.
 The first domain slice has shipped: accounts and cards, categories, transactions with quick cash entry, and Alpha
-Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **8 items** are queued
+Bank / Eurobank statement import (plan `.claude/plans/in-the-app-i-quizzical-stroustrup.md`). **7 items** are queued
 in Future, grouped by theme with one global priority (`#`); the order is a proposal to discuss. Three items wait on a
 decision.
 
@@ -22,6 +22,7 @@ Details live in the linked feature doc (`docs/features/`). Newest first.
 
 | Shipped | Feature | Notes |
 | --- | --- | --- |
+| 2026-11-01 | Payment calendar | **Calendar** page with **Month \| List \| Year**: bills, subscriptions, instalments and expected pay days on their dates with paid, skipped and overdue marks, day and week totals still due; Mark as paid / Skip from any item; year tiles of money out vs in per month; week starts Monday or Sunday in Settings (Monday by default, decided 2026-11-01); **Export .ics** of the next 12 months for phone calendars (decided 2026-11-01) · [payment calendar](features/payment-calendar.md) |
 | 2026-11-01 | Meal-card paste import | Up Hellas and Edenred have no export: on a meal card, **Import** takes the list copied from the issuer's page (or its saved `.mhtml` page) with a live "found" line; declined payments left out, top-ups in **Meal vouchers**, no transfer pairing; any import's row dated after today starts unticked (decided 2026-11-01) · [statement import](features/statement-import.md) |
 | 2026-11-01 | More statement formats (part 2) | Viva Wallet (an HTML table saved as `.xls`) and Eurobank's reserved card payments read with no mapping; **IBAN** on current and savings accounts, so money out to an own account's IBAN starts as a transfer and any other IBAN stays an expense (decided 2026-10-31); **pending** card payments imported and replaced by the booked row (decided 2026-10-31); a debit card's own file stops with a message, its payments being on the account statement (decided 2026-11-01); Alpha account header and rounded reference fixed from a real export · [statement import](features/statement-import.md) |
 | 2026-10-30 | More statement formats (part 1) | Piraeus (account, Excel) and Revolut (account and its cards, CSV) read with no column mapping, layouts taken from real exports (banks picked 2026-10-30: Piraeus, NBG, Revolut); Excel `.xlsx` read with no new dependency, for any bank through the mapping step (Piraeus offers no CSV, decided 2026-10-30); Revolut keeps completed rows only, takes fees off the amount and marks other currencies unreadable. NBG, Piraeus card and the Alpha/Eurobank real-file check stay in #13 · [statement import](features/statement-import.md) |
@@ -59,7 +60,6 @@ Sizes: S ≈ ½ day, M ≈ 1–2 days, L > 2 days. *New* marks items added after
 
 | # | Feature | Size | What it does | Depends on / plan | Open |
 | --- | --- | --- | --- | --- | --- |
-| 17 | Payment calendar *(new)* | M | Amounts due by date with paid marks, pay days across the year; week starts Monday or Sunday | #7 | — |
 | 20 | Pay-period budgeting *(new)* | M–L | Months that start on pay day (e.g. the 25th) for the budget, carry, Overview and notifications | Yearly budget | Which day; per household or per income? |
 
 ### Insight & data

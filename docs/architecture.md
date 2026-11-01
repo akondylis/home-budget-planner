@@ -62,7 +62,7 @@ prisma/
 ## Navigation
 
 Sidebar (`lib/nav-items.ts`): **Overview**, Transactions, Budget, Accounts & cards, Subscriptions & bills,
-Debts & loans, Projections, Reports; footer: **Settings**. Default view: `overview`. Areas not built yet render
+Calendar, Debts & loans, Projections, Reports; footer: **Settings**. Default view: `overview`. Areas not built yet render
 `PlannedScreen` with a one-line description of what they will do.
 
 ## Theme & Shell

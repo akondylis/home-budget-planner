@@ -339,6 +339,26 @@
       ]
     },
     {
+      "id": "calendar",
+      "title": "Payment calendar",
+      "screen": [
+        "Calendar page",
+        "Export .ics"
+      ],
+      "handler": "ipc/calendar.ts",
+      "service": [
+        "services/calendar-export.ts",
+        "shared/ics.ts"
+      ],
+      "store": ".ics file (save dialog)",
+      "calls": [
+        {
+          "api": "exportCalendarIcs",
+          "channel": "calendar:exportIcs"
+        }
+      ]
+    },
+    {
       "id": "debt",
       "title": "Debts & loans",
       "screen": [
@@ -489,11 +509,26 @@
       ],
       "store": "SQLite · Transaction, Account",
       "calls": [
-        { "api": "reportCategories", "channel": "report:categories" },
-        { "api": "reportTrend", "channel": "report:trend" },
-        { "api": "reportMembers", "channel": "report:members" },
-        { "api": "reportBalances", "channel": "report:balances" },
-        { "api": "saveCsv", "channel": "report:saveCsv" }
+        {
+          "api": "reportCategories",
+          "channel": "report:categories"
+        },
+        {
+          "api": "reportTrend",
+          "channel": "report:trend"
+        },
+        {
+          "api": "reportMembers",
+          "channel": "report:members"
+        },
+        {
+          "api": "reportBalances",
+          "channel": "report:balances"
+        },
+        {
+          "api": "saveCsv",
+          "channel": "report:saveCsv"
+        }
       ]
     },
     {
@@ -617,6 +652,10 @@
         {
           "api": "setNotificationSettings",
           "channel": "settings:setNotifications"
+        },
+        {
+          "api": "setWeekStart",
+          "channel": "settings:setWeekStart"
         },
         {
           "api": "getAppInfo",
