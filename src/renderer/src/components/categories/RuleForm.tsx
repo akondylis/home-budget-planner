@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Input, Modal, Segmented, Select, cx } from '../ui'
+import { Banner, Button, cx, Field, Input, Modal, Segmented, Select } from '../ui'
 import { Icon } from '../shell/icons'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
@@ -155,7 +155,7 @@ export function RuleForm({ rule, rules = [], initialPattern = '', defaultCategor
           {t('rules.apply_now')}
         </label>
       )}
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger">{error}</Banner>}
     </Modal>
   )
 }

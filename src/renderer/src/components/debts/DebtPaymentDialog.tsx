@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, DateInput, Field, Input, ListCard, Modal, Money, RowTitle, Select, Spinner, cx } from '../ui'
+import { Badge, Banner, Button, cx, DateInput, Field, Input, ListCard, Modal, Money, RowTitle, Select, Spinner } from '../ui'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { useDebtsStore } from '../../store/debts'
 import { useUiStore } from '../../store/ui'
@@ -145,7 +145,7 @@ export function DebtPaymentDialog({ debt, onClose }: DebtPaymentDialogProps) {
           <Button variant="ghost" size="sm" icon="plus" onClick={() => setCash(true)}>{t('debts.payment.not_in_bank')}</Button>
         )}
 
-        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        {error && <Banner tone="danger">{error}</Banner>}
       </div>
     </Modal>
   )

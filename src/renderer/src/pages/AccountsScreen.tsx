@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActiveFilterPills, Button, EmptyCard, ListCard, Money, PageHeader, RowTitle, SectionHeader, Spinner } from '../components/ui'
+import { ActiveFilterPills, Banner, Button, EmptyCard, ListCard, Money, PageHeader, RowTitle, SectionHeader, Spinner } from '../components/ui'
 import { AccountCard } from '../components/accounts/AccountCard'
 import { AccountsToolbar } from '../components/accounts/AccountsToolbar'
 import { MemberDot } from '../components/members/MemberDot'
@@ -162,7 +162,7 @@ export function AccountsScreen({ onOpenTransactions, onImport }: AccountsScreenP
               ))}
             </ListCard>
           )}
-          {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
+          {error && <Banner tone="danger" className="mt-2">{error}</Banner>}
         </div>
       )}
 

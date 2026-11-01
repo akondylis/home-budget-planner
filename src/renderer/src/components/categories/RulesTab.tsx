@@ -110,7 +110,7 @@ export function RulesTab() {
       </div>
 
       {notice && <Banner tone="success">{notice}</Banner>}
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger">{error}</Banner>}
 
       {rules.length > 0 && <RuleTester rules={rules} onShow={showRule} onEdit={setEditing} onAddFor={addRule} />}
 

@@ -369,7 +369,7 @@ export function TransactionForm({ request, onClose }: TransactionFormProps) {
             <p className="text-xs text-gray-500">{t('entry.entered_by', { name: editing.createdByName })}</p>
           )}
           {changedBankValues && <Banner tone="warning">{t('entry.differs_from_statement')}</Banner>}
-          {serverError && <p role="alert" className="text-sm text-red-700">{serverError}</p>}
+          {serverError && <Banner tone="danger">{serverError}</Banner>}
         </form>
       </Modal>
 

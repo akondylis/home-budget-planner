@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Input, Modal, SelectMenu } from '../ui'
+import { Banner, Button, Field, Input, Modal, SelectMenu } from '../ui'
 import { useLedgerStore } from '../../store/ledger'
 import { fitsKind, type PickerKind } from '../../lib/ledger'
 import { ipcErrorCode, ipcErrorMessage } from '../../lib/ipc-errors'
@@ -86,7 +86,7 @@ export function QuickCategoryDialog({ categories, initialName, kind, groupId, on
           triggerClassName="w-full"
         />
       </Field>
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger">{error}</Banner>}
     </Modal>
   )
 }

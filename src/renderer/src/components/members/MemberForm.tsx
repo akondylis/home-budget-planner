@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Input, Modal, Segmented } from '../ui'
+import { Banner, Button, Field, Input, Modal, Segmented } from '../ui'
 import { MemberDot } from './MemberDot'
 import { useLedgerStore } from '../../store/ledger'
 import { ipcErrorCode, ipcErrorMessage } from '../../lib/ipc-errors'
@@ -100,7 +100,7 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
             }))}
           />
         </Field>
-        {serverError && <p role="alert" className="text-sm text-red-700">{serverError}</p>}
+        {serverError && <Banner tone="danger">{serverError}</Banner>}
       </form>
     </Modal>
   )

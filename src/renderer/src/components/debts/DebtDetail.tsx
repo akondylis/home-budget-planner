@@ -150,7 +150,7 @@ export function DebtDetail({ id, onClose }: DebtDetailProps) {
             <SectionHeader title={t('debts.schedule')} meta={t('debts.schedule_hint')} />
             <ListCard className="max-h-96 overflow-y-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-surface text-xs text-fg-muted">
+                <thead className="table-head-sticky text-xs text-fg-muted">
                   <tr className="border-b border-line">
                     <th scope="col" className="px-3 py-2 text-left font-medium">#</th>
                     <th scope="col" className="px-3 py-2 text-left font-medium">{t('debts.col_due')}</th>

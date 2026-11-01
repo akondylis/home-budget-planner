@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, DateInput, Field, Input, ListCard } from '../ui'
+import { Banner, Button, DateInput, Field, Input, ListCard } from '../ui'
 import { Icon } from '../shell/icons'
 import { useLedgerStore } from '../../store/ledger'
 import { ACCOUNT_KIND_ICON, QUICK_SETUP, parseAccountDraft } from '../../lib/ledger'
@@ -104,7 +104,7 @@ export function QuickSetup() {
             {t('accounts.quick_create', { count: chosen.length })}
           </Button>
         </div>
-        {serverError && <p role="alert" className="mt-2 text-sm text-red-700">{serverError}</p>}
+        {serverError && <Banner tone="danger" className="mt-2">{serverError}</Banner>}
       </form>
     </ListCard>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, DateInput, Field, Input, Modal, Segmented, Select } from '../ui'
+import { Banner, Button, DateInput, Field, Input, Modal, Segmented, Select } from '../ui'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { MemberDot } from '../members/MemberDot'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
@@ -265,7 +265,7 @@ export function BillForm({ request, onClose }: BillFormProps) {
           )}
         </div>
 
-        {serverError && <p role="alert" className="text-sm text-red-700">{serverError}</p>}
+        {serverError && <Banner tone="danger">{serverError}</Banner>}
       </form>
     </Modal>
   )

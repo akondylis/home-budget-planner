@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, ConfirmDialog, IconButton, ListCard, Modal, RowTitle, SelectMenu, Spinner } from '../ui'
+import { Badge, Banner, Button, ConfirmDialog, IconButton, ListCard, Modal, RowTitle, SelectMenu, Spinner } from '../ui'
 import { ReconciliationBadge } from './ReconciliationNote'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { useImportStore } from '../../store/import'
@@ -85,7 +85,7 @@ export function ImportHistory({ accountId: initialAccountId, onClose, onShowRows
         />
         {message && <p role="status" className="text-sm text-success-fg">{message}</p>}
       </div>
-      {error && <p role="alert" className="mb-3 text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger" className="mb-3">{error}</Banner>}
 
       {!items ? (
         <div className="flex justify-center py-10 text-fg-muted"><Spinner size={20} /></div>

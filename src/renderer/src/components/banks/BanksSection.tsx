@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ConfirmDialog, IconButton, ListCard, MetaLine, cx } from '../ui'
+import { Banner, Button, ConfirmDialog, cx, IconButton, ListCard, MetaLine } from '../ui'
 import { Icon } from '../shell/icons'
 import { BankForm } from './BankForm'
 import { useLedgerStore } from '../../store/ledger'
@@ -103,7 +103,7 @@ export function BanksSection() {
             )}
           </div>
         )}
-        {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
+        {error && <Banner tone="danger" className="mt-2">{error}</Banner>}
 
         {editing !== undefined && (
           <BankForm

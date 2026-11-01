@@ -109,7 +109,7 @@ export function CategoriesTab({ onShowTransactions }: CategoriesTabProps) {
       </div>
 
       {notice && <Banner tone="success">{notice}</Banner>}
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger">{error}</Banner>}
 
       {groups.length === 0 && (
         <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-fg-muted">{t('categories.empty')}</p>

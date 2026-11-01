@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Modal } from '../ui'
+import { Banner, Button, Field, Modal } from '../ui'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { findCategory } from '../../lib/ledger'
 import { withoutCategory } from '../../lib/categories'
@@ -76,7 +76,7 @@ export function MergeCategoryDialog({ category, categories, onClose, onMerged }:
           {t('categories.merge_type_change', { type: t(`categories.type.${target.type}`) })}
         </p>
       )}
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger">{error}</Banner>}
     </Modal>
   )
 }

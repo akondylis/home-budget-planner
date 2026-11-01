@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Input, Modal, Select } from '../ui'
+import { Banner, Button, Field, Input, Modal, Select } from '../ui'
 import { groupRowCount } from '../../lib/categories'
 import { ipcErrorCode, ipcErrorMessage } from '../../lib/ipc-errors'
 import { CATEGORY_TYPES, type CategoryType, type ManagedCategoryNode } from '../../../../shared/ledger'
@@ -80,7 +80,7 @@ export function GroupForm({ group, onClose, onSave, onSaved }: GroupFormProps) {
           {CATEGORY_TYPES.map(ct => <option key={ct} value={ct}>{t(`categories.type.${ct}`)}</option>)}
         </Select>
       </Field>
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger">{error}</Banner>}
     </Modal>
   )
 }

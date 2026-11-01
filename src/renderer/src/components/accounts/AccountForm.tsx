@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ConfirmDialog, DateInput, Field, Input, Modal, Segmented, Select } from '../ui'
+import { Banner, Button, ConfirmDialog, DateInput, Field, Input, Modal, Segmented, Select } from '../ui'
 import { BankPicker } from './BankPicker'
 import { CardListEditor } from './CardListEditor'
 import { MemberDot } from '../members/MemberDot'
@@ -179,7 +179,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               />
             </Field>
           )}
-          {serverError && <p role="alert" className="text-sm text-red-700">{serverError}</p>}
+          {serverError && <Banner tone="danger">{serverError}</Banner>}
         </form>
       </Modal>
 

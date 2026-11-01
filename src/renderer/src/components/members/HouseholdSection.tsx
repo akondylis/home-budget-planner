@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, ConfirmDialog, IconButton, ListCard, MetaLine, cx } from '../ui'
+import { Badge, Banner, Button, ConfirmDialog, cx, IconButton, ListCard, MetaLine } from '../ui'
 import { MemberDot } from './MemberDot'
 import { MemberForm } from './MemberForm'
 import { useLedgerStore } from '../../store/ledger'
@@ -100,7 +100,7 @@ export function HouseholdSection() {
           )}
         </div>
       )}
-      {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger" className="mt-2">{error}</Banner>}
 
       {editing !== undefined && (
         <MemberForm

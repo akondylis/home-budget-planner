@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, DateInput, Field, Input, Modal, Money } from '../ui'
+import { Banner, Button, DateInput, Field, Input, Modal, Money } from '../ui'
 import { useDebtsStore } from '../../store/debts'
 import { ipcErrorMessage } from '../../lib/ipc-errors'
 import { todayDateOnly } from '../../../../shared/date-only'
@@ -68,7 +68,7 @@ export function DebtBalanceDialog({ debt, hasOverride, onClose }: DebtBalanceDia
             <DateInput id={ids.date} value={date} onChange={setDate} />
           </Field>
         </div>
-        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        {error && <Banner tone="danger">{error}</Banner>}
       </div>
     </Modal>
   )

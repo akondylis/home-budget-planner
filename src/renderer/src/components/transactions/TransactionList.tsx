@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { Badge, Button, IconButton, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SelectMenu, SortHeader, cx } from '../ui'
+import { Badge, Banner, Button, cx, IconButton, LIST_GRID, ListCard, ListHeader, ListRow, Money, RowTitle, SelectMenu, SortHeader } from '../ui'
 import { MemberDot } from '../members/MemberDot'
 import { Icon } from '../shell/icons'
 import { BulkPayee } from './BulkPayee'
@@ -258,7 +258,7 @@ export function TransactionList({ rows }: TransactionListProps) {
           </Button>
         </div>
       )}
-      {error && <p role="alert" className="mb-3 text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger" className="mb-3">{error}</Banner>}
 
       <ListCard>
         <ListHeader cols={COLS}>

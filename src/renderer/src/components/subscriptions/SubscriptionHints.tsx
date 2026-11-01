@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ListCard, Modal, RowTitle } from '../ui'
+import { Banner, Button, ListCard, Modal, RowTitle } from '../ui'
 import { CategoryPicker } from '../transactions/CategoryPicker'
 import { useLedgerStore } from '../../store/ledger'
 import { useRecurringStore } from '../../store/recurring'
@@ -49,7 +49,7 @@ export function SubscriptionHints({ hints, onClose }: SubscriptionHintsProps) {
       footer={<Button variant="ghost" icon="close" onClick={onClose} disabled={busy !== null}>{t('common.close')}</Button>}
     >
       {done && <p role="status" className="mb-3 text-sm text-success-fg">{done}</p>}
-      {error && <p role="alert" className="mb-3 text-sm text-red-700">{error}</p>}
+      {error && <Banner tone="danger" className="mb-3">{error}</Banner>}
       {hints.length === 0 ? (
         <p className="py-8 text-center text-sm text-fg-muted">{t('subscriptions.hints_empty')}</p>
       ) : (

@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, DateInput, Field, Input, ListCard, Modal, Money, RowTitle, Select, Spinner, cx } from '../ui'
+import { Badge, Banner, Button, cx, DateInput, Field, Input, ListCard, Modal, Money, RowTitle, Select, Spinner } from '../ui'
 import { activeAccounts, useLedgerStore } from '../../store/ledger'
 import { useRecurringStore } from '../../store/recurring'
 import { useUiStore } from '../../store/ui'
@@ -138,7 +138,7 @@ export function MarkPaidDialog({ bill, onClose }: MarkPaidDialogProps) {
           <Button variant="ghost" size="sm" icon="plus" onClick={() => setCash(true)}>{t('recurring.paid_in_cash')}</Button>
         )}
 
-        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        {error && <Banner tone="danger">{error}</Banner>}
       </div>
     </Modal>
   )

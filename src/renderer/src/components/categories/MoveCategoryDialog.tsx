@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Modal, SelectMenu } from '../ui'
+import { Banner, Button, Field, Modal, SelectMenu } from '../ui'
 import { ipcErrorCode, ipcErrorMessage } from '../../lib/ipc-errors'
 import type { ManagedCategoryNode } from '../../../../shared/ledger'
 
@@ -78,12 +78,12 @@ export function MoveCategoryDialog({ category, groups, onClose, onMoved, onMerge
         />
       </Field>
       {error && (
-        <div role="alert" className="space-y-2 text-sm text-red-700">
-          <p>{error}</p>
-          {clash && (
-            <Button size="sm" icon="swap" onClick={() => onMergeInstead(category)}>{t('categories.merge_instead')}</Button>
-          )}
-        </div>
+        <Banner
+          tone="danger"
+          actions={clash ? <Button size="sm" icon="swap" onClick={() => onMergeInstead(category)}>{t('categories.merge_instead')}</Button> : undefined}
+        >
+          {error}
+        </Banner>
       )}
     </Modal>
   )
